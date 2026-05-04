@@ -1,2 +1,2 @@
 # 42-webserv
-Web server galore.
+*get webserved lmao.*
