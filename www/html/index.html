@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Webserv — Test Page</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0f0f0f;
+            color: #e0e0e0;
+            padding: 40px 20px;
+            min-height: 100vh;
+        }
+        .container { max-width: 800px; margin: 0 auto; }
+        h1 {
+            font-size: 2rem;
+            color: #00ff88;
+            border-bottom: 1px solid #333;
+            padding-bottom: 12px;
+            margin-bottom: 24px;
+        }
+        h2 {
+            font-size: 1.1rem;
+            color: #888;
+            margin: 32px 0 12px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .card {
+            background: #1a1a1a;
+            border: 1px solid #2a2a2a;
+            border-radius: 4px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+        .card p { color: #aaa; margin-bottom: 12px; font-size: 0.9rem; }
+        a {
+            color: #00ff88;
+            text-decoration: none;
+        }
+        a:hover { text-decoration: underline; }
+        form { display: flex; flex-direction: column; gap: 10px; }
+        input[type="file"],
+        input[type="text"] {
+            background: #0f0f0f;
+            border: 1px solid #333;
+            color: #e0e0e0;
+            padding: 8px 12px;
+            font-family: inherit;
+            font-size: 0.9rem;
+            border-radius: 3px;
+            width: 100%;
+        }
+        button {
+            background: #00ff88;
+            color: #0f0f0f;
+            border: none;
+            padding: 8px 20px;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-radius: 3px;
+            width: fit-content;
+        }
+        button:hover { background: #00cc66; }
+        .badge {
+            display: inline-block;
+            background: #1a3a2a;
+            color: #00ff88;
+            border: 1px solid #00ff88;
+            padding: 2px 8px;
+            font-size: 0.75rem;
+            border-radius: 3px;
+            margin-right: 6px;
+        }
+        .result {
+            margin-top: 12px;
+            padding: 10px;
+            background: #0f0f0f;
+            border-left: 3px solid #00ff88;
+            font-size: 0.85rem;
+            color: #aaa;
+            display: none;
+        }
+        .status { color: #888; font-size: 0.8rem; margin-top: 8px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>webserv</h1>
+    <p style="color:#555; margin-bottom:32px;">HTTP/1.1 server written in C++98 &mdash; 42 project</p>
+
+    <h2>Static Serving</h2>
+    <div class="card">
+        <p>This page is a static HTML file served directly from the filesystem.</p>
+        <span class="badge">GET</span> <a href="/index.html">/index.html</a>
+    </div>
+
+    <h2>Directory Listing</h2>
+    <div class="card">
+        <p>Browse uploaded files. <code>autoindex on</code> generates this listing dynamically.</p>
+        <span class="badge">GET</span> <a href="/files">/files</a>
+    </div>
+
+    <h2>File Upload</h2>
+    <div class="card">
+        <p>POST a file to <code>/upload</code>. It will be saved in <code>www/uploads/</code>.</p>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <input type="file" id="fileInput" name="file">
+            <button type="button" onclick="uploadFile()">Upload</button>
+        </form>
+        <div class="result" id="uploadResult"></div>
+    </div>
+
+    <h2>File Delete</h2>
+    <div class="card">
+        <p>Send a DELETE request to remove a file from <code>www/uploads/</code>.</p>
+        <form>
+            <input type="text" id="deleteTarget" placeholder="filename (e.g. myfile.txt)">
+            <button type="button" onclick="deleteFile()">Delete</button>
+        </form>
+        <div class="result" id="deleteResult"></div>
+    </div>
+
+    <h2>CGI</h2>
+    <div class="card">
+        <p>Executes a Python CGI script. Environment variables and query strings are passed through.</p>
+        <span class="badge">GET</span>
+        <a href="/cgi-bin/info.py">/cgi-bin/info.py</a>
+        &nbsp;|&nbsp;
+        <a href="/cgi-bin/info.py?name=webserv&year=2024">/cgi-bin/info.py?name=webserv</a>
+    </div>
+
+    <h2>Redirect</h2>
+    <div class="card">
+        <p>The location <code>/old-page</code> issues a 301 redirect to <code>/index.html</code>.</p>
+        <span class="badge">301</span> <a href="/old-page">/old-page</a>
+    </div>
+
+    <h2>Second Server (port 8081)</h2>
+    <div class="card">
+        <p>A second server block listens on port 8081 with directory listing enabled at root.</p>
+        <span class="badge">GET</span>
+        <a href="http://localhost:8081/" target="_blank">http://localhost:8081/</a>
+    </div>
+</div>
+
+<script>
+// Upload a file via POST using XMLHttpRequest (no fetch — keeps it simple)
+function uploadFile() {
+    var input  = document.getElementById('fileInput');
+    var result = document.getElementById('uploadResult');
+    if (!input.files.length) {
+        showResult(result, 'Please select a file first.', '#ff4444');
+        return;
+    }
+    var file = input.files[0];
+    var xhr  = new XMLHttpRequest();
+    xhr.open('POST', '/upload', true);
+    // Send filename in Content-Disposition so the server can name the file
+    xhr.setRequestHeader('Content-Disposition',
+        'attachment; filename="' + file.name + '"');
+    xhr.onload = function() {
+        if (xhr.status === 201) {
+            showResult(result, '201 Created — file saved as: ' + file.name, '#00ff88');
+        } else {
+            showResult(result, 'Error: HTTP ' + xhr.status, '#ff4444');
+        }
+    };
+    xhr.onerror = function() {
+        showResult(result, 'Network error.', '#ff4444');
+    };
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        xhr.send(e.target.result);
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// Delete a file via DELETE request
+function deleteFile() {
+    var name   = document.getElementById('deleteTarget').value.trim();
+    var result = document.getElementById('deleteResult');
+    if (!name) {
+        showResult(result, 'Enter a filename.', '#ff4444');
+        return;
+    }
+    var xhr = new XMLHttpRequest();
+    xhr.open('DELETE', '/upload/' + name, true);
+    xhr.onload = function() {
+        if (xhr.status === 204) {
+            showResult(result, '204 No Content — file deleted.', '#00ff88');
+        } else if (xhr.status === 404) {
+            showResult(result, '404 Not Found — file does not exist.', '#ff4444');
+        } else {
+            showResult(result, 'Error: HTTP ' + xhr.status, '#ff4444');
+        }
+    };
+    xhr.send();
+}
+
+function showResult(el, msg, color) {
+    el.style.display  = 'block';
+    el.style.color    = color || '#aaa';
+    el.textContent    = msg;
+}
+</script>
+</body>
+</html>
