@@ -1,0 +1,51 @@
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
+#    Updated: 2026/07/11 21:28:34 by lyanga           ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
+
+NAME     = webserv
+CXX      = c++
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -MMD -MP -Iinclude
+
+# Folder structure definitions
+SRC_DIR   = src
+BUILD_DIR = build
+OBJ_DIR   = $(BUILD_DIR)/obj
+DEP_DIR   = $(BUILD_DIR)/deps
+
+# Explicitly list your source files here (just the file names, no paths)
+SRC_FILES = main.cpp \
+
+
+# Map files to their respective folders
+SRCS = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
+OBJS = $(addprefix $(OBJ_DIR)/, $(SRC_FILES:.cpp=.o))
+DEPS = $(addprefix $(DEP_DIR)/, $(SRC_FILES:.cpp=.d))
+
+all: $(NAME)
+
+$(NAME): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
+
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(OBJ_DIR) $(DEP_DIR)
+	$(CXX) $(CXXFLAGS) -MF $(DEP_DIR)/$*.d -c $< -o $@
+
+clean:
+	rm -rf $(BUILD_DIR)
+
+fclean: clean
+	rm -f $(NAME)
+
+re: fclean all
+
+-include $(DEPS)
+
+.PHONY: all clean fclean re
