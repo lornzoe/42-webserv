@@ -1,0 +1,17 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "LLDB DAP: Debug Webserv",
+            "type": "lldb",
+            "request": "launch",
+            "program": "${workspaceFolder}/webserv",
+            "args": [
+                "configs/commenthell.conf"
+            ],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Make Build",
+            "stopOnEntry": true
+        }
+    ]
+}
