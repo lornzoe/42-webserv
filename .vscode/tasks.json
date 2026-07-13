@@ -1,0 +1,43 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "Make Build",
+            "command": "make",
+            "args": [
+                "re",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "shell": {
+                    "executable": "/bin/bash",
+                    "args": ["-c"]
+                }
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "type": "shell",
+            "label": "Make Clean",
+            "command": "make",
+            "args": [
+                "clean"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}",
+                "shell": {
+                    "executable": "/bin/bash",
+                    "args": ["-c"]
+                }
+            },
+            "problemMatcher": []
+        }
+    ]
+}
