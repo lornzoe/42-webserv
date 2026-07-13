@@ -1,23 +1,15 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Directive.hpp                                      :+:      :+:    :+:   */
+/*   PermittedDirectives.hpp                            :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/11 21:06:29 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/13 17:11:18 by lyanga           ###   ########.fr       */
+/*   Created: 2026/07/13 21:00:23 by lyanga            #+#    #+#             */
+/*   Updated: 2026/07/13 21:07:14 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef DIRECTIVE_HPP
-#define DIRECTIVE_HPP
-
-class Directive
-{
-	public:
-		virtual ~Directive();
-		virtual void print(int depth) const = 0;
-};
-
+#ifndef PERMITTEDDIRECTIVES_HPP
+#define PERMITTEDDIRECTIVES_HPP
 #endif

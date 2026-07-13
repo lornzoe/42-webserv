@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 22:13:59 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/11 23:15:21 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/13 17:11:51 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,11 +20,11 @@
 class SimpleDirective : public Directive 
 {
 	protected:
-		std::string raw_arg; // debug
+		std::vector<std::string> args; // debug
 	public:
 		SimpleDirective();
-		SimpleDirective(char *raw_arg);
-		SimpleDirective(std::string raw_arg);
+		SimpleDirective(char *raw_directive);
+		SimpleDirective(std::string raw_directive);
 		virtual ~SimpleDirective();
 
 		virtual void print(int depth) const = 0;

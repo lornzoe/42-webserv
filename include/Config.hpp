@@ -1,23 +1,24 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Directive.hpp                                      :+:      :+:    :+:   */
+/*   Config.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/11 21:06:29 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/13 17:11:18 by lyanga           ###   ########.fr       */
+/*   Created: 2026/07/13 16:41:56 by lyanga            #+#    #+#             */
+/*   Updated: 2026/07/13 16:47:36 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef DIRECTIVE_HPP
-#define DIRECTIVE_HPP
+#ifndef CONFIG_HPP
+#define CONFIG_HPP
 
-class Directive
+#include <list>
+
+class Config
 {
-	public:
-		virtual ~Directive();
-		virtual void print(int depth) const = 0;
+	private:
+	
 };
 
 #endif
