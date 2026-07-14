@@ -6,40 +6,25 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/14 17:18:00 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/14 19:27:28 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
+#include "AllowedDirectives.hpp"
+
 #include <iostream>
 #include <sstream>
 #include <fstream>
+#include <stack>
 
 namespace {
-	std::vector<std::string> loadFile(char *file)
-	{
-		std::ifstream infile(file); 
-		if (!infile) { 
-			std::cerr << "Error: Could not open the file!" << std::endl;
-			throw std::exception(); // replace this with a better exception
-		}
-
-		std::string line;
-		std::vector<std::string> lines;
-		while (std::getline(infile, line)) {
-			lines.push_back(line);
-		}
-		infile.close();
-
-		return lines;
-	}
-
-	bool checkBraces(std::vector<std::string> lines)
+	bool checkBracesAndQuotations(const std::vector<std::string>& lines)
 	{
 		bool single_quotes = false;
 		bool double_quotes = false;
 		int indent = 0;
-		for (std::vector<std::string>::iterator it = lines.begin(); it != lines.end(); ++it)
+		for (std::vector<std::string>::const_iterator it = lines.begin(); it != lines.end(); ++it)
 		{
 			for (std::string::const_iterator cit = it->begin(); cit != it->end(); ++cit)
 			{
@@ -69,7 +54,7 @@ namespace {
 				}
 			}
 		}
-		return true;
+		return (!single_quotes && !double_quotes && indent == 0);
 	}
 
 	void stripComments(std::vector<std::string>& lines)
@@ -216,17 +201,83 @@ namespace {
 		}
 		return directives;
 	}
+
+	bool validateDirectiveStrings(const std::vector<std::vector<std::string> >& lines)
+	{
+		// validate if the directives are in the right context.
+		std::stack<AllowedDirectives::Context> context_stack;
+		context_stack.push(AllowedDirectives::CONTEXT_MAIN);
+
+		for (std::vector<std::vector<std::string> >::const_iterator cit = lines.begin(); cit != lines.end(); ++cit)
+		{
+			const std::string dir = cit->front();
+			if (dir == "}")
+			{
+				context_stack.pop();
+				continue;
+			}
+
+			AllowedDirectives::Context current_context = context_stack.top();
+
+			if (!AllowedDirectives::canExist(dir))
+				throw std::exception(); // invalid/unhandled directive
+			if (!(AllowedDirectives::isSimpleType(dir) && cit->back() == ";"))
+				throw std::exception(); // simple directive mismatch; expecting ;, saw cit->back() (usually curly brace);
+			if (!(AllowedDirectives::isBlockType(dir) && cit->back() == "{"))
+				throw std::exception(); // simple directive mismatch; expecting {, saw cit->back() (usually semicolon);
+			if (!AllowedDirectives::isValidInContext(dir, current_context))
+				throw std::exception(); // dir is not in allowed context (current context).
+
+			if (AllowedDirectives::isBlockType(dir))
+			{
+				if (dir == "server")
+					context_stack.push(AllowedDirectives::CONTEXT_SERVER);
+				else if (dir == "location")
+					context_stack.push(AllowedDirectives::CONTEXT_LOCATION);
+				else if (dir == "if")
+					context_stack.push(AllowedDirectives::CONTEXT_IF);
+			}
+		}
+		return context_stack.top() == AllowedDirectives::CONTEXT_MAIN;
+	}
 }
 
-Config::Config(char *infile)
+Config::Config(char *filename)
 {
-    std::vector<std::string> file = loadFile(infile);
-    if (!checkBraces(file))
-        throw std::exception(); // replace with better defined exception
+	// load the file
+	std::ifstream infile(filename);
+
+	if (!infile) { 
+		std::cerr << "Error: Could not open the file!" << std::endl;
+		throw std::exception(); // replace this with a better exception
+	}
+
+	std::vector<std::string> file;
+	{
+		std::string line;
+		while (std::getline(infile, line)) {
+			file.push_back(line);
+		}
+	}
+	infile.close();
+	
+	// strip the file of unnecessary content
     stripComments(file);
     stripEmptyLines(file);
 
+	// check contents of file
+    if (!checkBracesAndQuotations(file))
+        throw std::exception(); // replace with better defined exception
+
+	// tokenise it
     this->directives_string = generateTokenisedDirectives(file);
+	
+	// validate the tokens
+	if (!validateDirectiveStrings(this->directives_string)) // many validation-specific exceptions are here.
+		throw std::exception(); // unexpected error? stack did not end up at CONTEXT_MAIN.
+	
+	// create the directives to fill up config
+		
 }
 
 Config::~Config()
@@ -253,12 +304,7 @@ void Config::printConfig()
 
 		for (std::size_t j = 0; j < directives_string[i].size(); ++j)
 		{
-			std::cout << directives_string[i][j];
-			if (j + 1 < directives_string[i].size())
-			{
-				if (directives_string[i][j + 1] != ";")
-					std::cout << " ";
-			}
+			std::cout << "[" << directives_string[i][j] << "]";
 		}
 		std::cout << std::endl;
 
