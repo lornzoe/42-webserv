@@ -3,46 +3,60 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+         #
+#    By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/06/30 20:58:00 by ypua              #+#    #+#              #
-#    Updated: 2026/07/19 17:53:29 by ypua             ###   ########.fr        #
+#    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
+#    Updated: 2026/07/21 20:11:42 by ypua             ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
-NAME = webserv
+NAME     = webserv
+CXX      = c++
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -MMD -MP -Iinclude
 
-# CPP Files
-CPP_FILES = main.cpp
-O_FILES = $(CPP_FILES:.cpp=.o)
+# Folder structure definitions
+SRC_DIR   = src
+BUILD_DIR = build
+OBJ_DIR   = $(BUILD_DIR)/obj
+DEP_DIR   = $(BUILD_DIR)/deps
 
-# Add dependency files
-D_FILES = $(O_FILES:.o=.d)
+# Explicitly list your source files here (just the file names, no paths)
+SRC_FILES = main.cpp \
+			FileDescriptor.cpp \
+			Socket.cpp 
 
-# Commands
-CXX = c++
-# -MMD generates .d files, -MP prevents errors if a header gets deleted
-CFLAGS = -Wall -Werror -Wextra -std=c++98 -MMD -MP
-RM = rm -f
+# Map files to their respective folders
+SRCS = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
+OBJS = $(addprefix $(OBJ_DIR)/, $(SRC_FILES:.cpp=.o))
+DEPS = $(addprefix $(DEP_DIR)/, $(SRC_FILES:.cpp=.d))
 
-# Rules
 all: $(NAME)
 
-$(NAME): $(O_FILES)
-	$(CXX) $(CFLAGS) $(O_FILES) -o $@
+$(NAME): $(OBJS)
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
 
-$(O_FILES): %.o: %.cpp
-	$(CXX) $(CFLAGS) -c $< -o $@
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(OBJ_DIR) $(DEP_DIR)
+	$(CXX) $(CXXFLAGS) -MF $(DEP_DIR)/$*.d -c $< -o $@
 
 clean:
-	$(RM) $(O_FILES) $(D_FILES)
+	rm -rf $(BUILD_DIR)
 
 fclean: clean
-	$(RM) $(NAME)
+	rm -f $(NAME)
 
 re: fclean all
 
-# Include dependency files if they exist
--include $(D_FILES)
+x: $(NAME) clean
+	@echo =================================================
+	./$(NAME) configs/commenthell.conf
+	@echo =================================================
+	./$(NAME) configs/commenthell1.conf
 
-.PHONY: all clean fclean re
+	@echo this returned $?
+	@echo =================================================
+	./$(NAME) configs/commenthell2.conf
+
+-include $(DEPS)
+
+.PHONY: all clean fclean re x

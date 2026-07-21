@@ -1,0 +1,85 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   Socket.cpp                                         :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2026/07/21 19:30:26 by ypua              #+#    #+#             */
+/*   Updated: 2026/07/21 20:09:34 by ypua             ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
+#include "Socket.hpp"
+
+Socket::Socket()
+{
+	fd_ = socket(AF_INET, SOCK_STREAM, 0);
+}
+
+Socket::Socket(int fd) : fd_(fd)
+{
+}
+
+Socket::~Socket()
+{
+	if (fd_ != -1)
+		close(fd_);
+}
+
+int Socket::get()
+{
+	return fd_;
+}
+
+int Socket::bind_port(unsigned long port)
+{
+	// Define server address
+	sockaddr_in serverAddress;
+	serverAddress.sin_family = AF_INET;
+	serverAddress.sin_port = htons(port);
+	serverAddress.sin_addr.s_addr = INADDR_ANY;
+
+	if (bind(fd_,
+			 (struct sockaddr *)&serverAddress,
+			 sizeof(serverAddress)) == -1)
+		return -1;
+
+	return 1;
+}
+
+int Socket::listen_connection(int N)
+{
+	if (listen(fd_, N) == -1)
+		return -1;
+
+	return 1;
+}
+
+Socket Socket::accept_connection()
+{
+	int client_fd = accept(fd_, NULL, NULL);
+	return Socket(client_fd);
+}
+
+ssize_t Socket::receive(char *buffer, size_t len, int flag)
+{
+	return recv(fd_, buffer, len, flag);
+}
+
+ssize_t Socket::send_all(const char *buffer, size_t len, int flag)
+{
+	size_t sent = 0;
+
+	while (sent < len)
+	{
+		ssize_t n = send(fd_, buffer + sent, len - sent, flag);
+
+		if (n <= 0)
+			return -1;
+
+		sent += n;
+	}
+
+	return sent;
+}
