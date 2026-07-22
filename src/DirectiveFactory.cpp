@@ -1,18 +1,18 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   AllowedDirectives.cpp                              :+:      :+:    :+:   */
+/*   DirectiveFactory.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/13 21:00:51 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/22 15:20:13 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/22 18:06:42 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "AllowedDirectives.hpp"
+#include "DirectiveFactory.hpp"
 
-using namespace AllowedDirectives;
+using namespace DirectiveFactory;
 
 namespace {
     const std::map<std::string, DirectiveInfo>& getDirectiveMap()
@@ -42,19 +42,19 @@ namespace {
 }
 
 // this exists purely for map to initialise a default value
-AllowedDirectives::DirectiveInfo::DirectiveInfo()
+DirectiveFactory::DirectiveInfo::DirectiveInfo()
 {
 }
 
-AllowedDirectives::DirectiveInfo::DirectiveInfo(Type t, int i) : type(t), allowedContexts(i) {}
+DirectiveFactory::DirectiveInfo::DirectiveInfo(Type t, int i) : type(t), allowedContexts(i) {}
 
-bool AllowedDirectives::canExist(const std::string &directive)
+bool DirectiveFactory::canExist(const std::string &directive)
 {
     const std::map<std::string, DirectiveInfo>& m = getDirectiveMap();
     return m.find(directive) != m.end();
 }
 
-bool AllowedDirectives::isValidInContext(const std::string &directive, Context currentContext)
+bool DirectiveFactory::isValidInContext(const std::string &directive, Context currentContext)
 {
     const std::map<std::string, DirectiveInfo>& m = getDirectiveMap();
     std::map<std::string, DirectiveInfo>::const_iterator it = m.find(directive);
@@ -66,23 +66,23 @@ bool AllowedDirectives::isValidInContext(const std::string &directive, Context c
     return (it->second.allowedContexts & currentContext) != 0;
 }
 
-Type AllowedDirectives::getType(const std::string &directive)
+Type DirectiveFactory::getType(const std::string &directive)
 {
     const std::map<std::string, DirectiveInfo>& m = getDirectiveMap();
     std::map<std::string, DirectiveInfo>::const_iterator it = m.find(directive);
     
     if (it == m.end())
-        return AllowedDirectives::TYPE_NONE; // default fallback, value 0
+        return DirectiveFactory::TYPE_NONE; // default fallback, value 0
         
     return it->second.type;
 }
 
-bool AllowedDirectives::isBlockType(const std::string &directive)
+bool DirectiveFactory::isBlockType(const std::string &directive)
 {
-    return getType(directive) == AllowedDirectives::TYPE_BLOCK;
+    return getType(directive) == DirectiveFactory::TYPE_BLOCK;
 }
 
-bool AllowedDirectives::isSimpleType(const std::string &directive)
+bool DirectiveFactory::isSimpleType(const std::string &directive)
 {
-    return getType(directive) == AllowedDirectives::TYPE_SIMPLE;
+    return getType(directive) == DirectiveFactory::TYPE_SIMPLE;
 }

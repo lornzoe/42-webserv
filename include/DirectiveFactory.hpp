@@ -1,22 +1,22 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   AllowedDirectives.hpp                              :+:      :+:    :+:   */
+/*   DirectiveFactory.hpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/13 21:00:23 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/22 15:20:32 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/22 18:26:39 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef ALLOWEDDIRECTIVES_HPP
-#define ALLOWEDDIRECTIVES_HPP
+#ifndef DIRECTIVEFACTORY_HPP
+#define DIRECTIVEFACTORY_HPP
 
 #include <map>
 #include <string>
 
-namespace AllowedDirectives {
+namespace DirectiveFactory {
 
     enum Type {
         TYPE_NONE = 0,

@@ -11,11 +11,3 @@
 /* ************************************************************************** */
 
 #include "SimpleDirective.hpp"
-
-SimpleDirective::SimpleDirective() {}
-
-SimpleDirective::SimpleDirective(char *raw_arg) {}
-
-SimpleDirective::SimpleDirective(std::string raw_arg) {}
-
-SimpleDirective::~SimpleDirective() {}

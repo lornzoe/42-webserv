@@ -6,7 +6,7 @@
 #    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/07/22 15:18:36 by lyanga           ###   ########.fr        #
+#    Updated: 2026/07/22 18:25:59 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,7 +23,9 @@ DEP_DIR   = $(BUILD_DIR)/deps
 # Explicitly list your source files here (just the file names, no paths)
 SRC_FILES = main.cpp \
 			Config.cpp \
-			AllowedDirectives.cpp
+			DirectiveFactory.cpp \
+			Directive.cpp \
+			BlockDirective.cpp
 
 # Map files to their respective folders
 SRCS = $(addprefix $(SRC_DIR)/, $(SRC_FILES))

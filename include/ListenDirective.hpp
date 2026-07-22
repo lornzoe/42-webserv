@@ -1,30 +1,25 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ServerDirective.hpp                                :+:      :+:    :+:   */
+/*   ListenDirective.hpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/22 15:37:22 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/22 18:03:31 by lyanga           ###   ########.fr       */
+/*   Created: 2026/07/22 16:36:09 by lyanga            #+#    #+#             */
+/*   Updated: 2026/07/22 16:39:29 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef SERVERDIRECTIVE_HPP
-#define SERVERDIRECTIVE_HPP
+#ifndef LISTENDIRECTIVE_HPP
+#define LISTENDIRECTIVE_HPP
 
-#include "BlockDirective.hpp"
+#include "SimpleDirective.hpp"
 
-class ServerDirective : public BlockDirective
+class ListenDirective : public SimpleDirective
 {
 	private:
-		// typedefs are here to keep the definition within th
-		// what does this need again?		
+	
 	public:
-		ServerDirective(TokenisedBlock::const_iterator& cit);
-		~ServerDirective();
-
-		void print(int depth);
 };
 
 #endif

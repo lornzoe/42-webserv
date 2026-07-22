@@ -6,12 +6,12 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/22 15:31:06 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/22 18:07:48 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
-#include "AllowedDirectives.hpp"
+#include "DirectiveFactory.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -205,8 +205,8 @@ namespace {
 	bool validateDirectiveStrings(const std::vector<std::vector<std::string> >& lines)
 	{
 		// validate if the directives are in the right context.
-		std::stack<AllowedDirectives::Context> context_stack;
-		context_stack.push(AllowedDirectives::CONTEXT_MAIN);
+		std::stack<DirectiveFactory::Context> context_stack;
+		context_stack.push(DirectiveFactory::CONTEXT_MAIN);
 
 		for (std::vector<std::vector<std::string> >::const_iterator cit = lines.begin(); cit != lines.end(); ++cit)
 		{
@@ -217,28 +217,28 @@ namespace {
 				continue;
 			}
 
-			AllowedDirectives::Context current_context = context_stack.top();
+			DirectiveFactory::Context current_context = context_stack.top();
 
-			if (!AllowedDirectives::canExist(dir))
+			if (!DirectiveFactory::canExist(dir))
 				throw std::exception(); // invalid/unhandled directive
-			if (!(AllowedDirectives::isSimpleType(dir) && cit->back() == ";"))
+			if (!(DirectiveFactory::isSimpleType(dir) && cit->back() == ";"))
 				throw std::exception(); // simple directive mismatch; expecting ;, saw cit->back() (usually curly brace);
-			if (!(AllowedDirectives::isBlockType(dir) && cit->back() == "{"))
+			if (!(DirectiveFactory::isBlockType(dir) && cit->back() == "{"))
 				throw std::exception(); // simple directive mismatch; expecting {, saw cit->back() (usually semicolon);
-			if (!AllowedDirectives::isValidInContext(dir, current_context))
+			if (!DirectiveFactory::isValidInContext(dir, current_context))
 				throw std::exception(); // dir is not in allowed context (current context).
 
-			if (AllowedDirectives::isBlockType(dir))
+			if (DirectiveFactory::isBlockType(dir))
 			{
 				if (dir == "server")
-					context_stack.push(AllowedDirectives::CONTEXT_SERVER);
+					context_stack.push(DirectiveFactory::CONTEXT_SERVER);
 				else if (dir == "location")
-					context_stack.push(AllowedDirectives::CONTEXT_LOCATION);
+					context_stack.push(DirectiveFactory::CONTEXT_LOCATION);
 				else if (dir == "if")
-					context_stack.push(AllowedDirectives::CONTEXT_IF);
+					context_stack.push(DirectiveFactory::CONTEXT_IF);
 			}
 		}
-		return context_stack.top() == AllowedDirectives::CONTEXT_MAIN;
+		return context_stack.top() == DirectiveFactory::CONTEXT_MAIN;
 	}
 }
 
