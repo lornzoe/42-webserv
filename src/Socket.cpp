@@ -6,7 +6,7 @@
 /*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/21 19:30:26 by ypua              #+#    #+#             */
-/*   Updated: 2026/07/21 20:09:34 by ypua             ###   ########.fr       */
+/*   Updated: 2026/07/22 19:13:29 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -62,9 +62,24 @@ Socket Socket::accept_connection()
 	return Socket(client_fd);
 }
 
-ssize_t Socket::receive(char *buffer, size_t len, int flag)
+std::string Socket::receive_all(int flag)
 {
-	return recv(fd_, buffer, len, flag);
+	std::string request;
+	char buffer[4096];
+
+	while (true)
+	{
+		ssize_t n = recv(fd_, buffer, sizeof(buffer), flag);
+		 if (n <= 0)
+            break;
+
+		request.append(buffer, n);
+
+		if (request.find(HEADER_END) != std::string::npos)
+            break;
+	}
+
+	return request;
 }
 
 ssize_t Socket::send_all(const char *buffer, size_t len, int flag)

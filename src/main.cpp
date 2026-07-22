@@ -6,7 +6,7 @@
 /*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/19 17:53:42 by ypua              #+#    #+#             */
-/*   Updated: 2026/07/21 20:09:19 by ypua             ###   ########.fr       */
+/*   Updated: 2026/07/22 19:27:51 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,9 +16,24 @@
 
 #include <sstream>
 #include <sys/stat.h>
-#include <iostream>
 
-// TODO: properly parse HTTP request instead of ignoring received data
+// TODO: Parse HTTP request into Method, Request URL, HTTP Version + Host,
+// Headers: Content-Length, Transfer-Encoding and Content-Type, Body
+
+// Example:
+// GET /favicon.ico HTTP/1.1
+// Host: localhost:8080
+// User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0
+// Accept: image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5
+// Accept-Language: en-US,en;q=0.5
+// Accept-Encoding: gzip, deflate, br, zstd
+// Connection: keep-alive
+// Referer: http://localhost:8080/
+// Sec-Fetch-Dest: image
+// Sec-Fetch-Mode: no-cors
+// Sec-Fetch-Site: same-origin
+// Priority: u=6
+
 int main(void)
 {
 	FileDescriptor file("index.html");
@@ -52,8 +67,7 @@ int main(void)
 		"HTTP/1.1 200 OK\r\n"
 		"Content-Type: text/html\r\n"
 		"Content-Length: " +
-		length + "\r\n"
-				 "\r\n";
+		length + HEADER_END;
 
 	// Create server socket
 	Socket server;
@@ -76,11 +90,8 @@ int main(void)
 			return 1;
 
 		// Receive request
-		char buffer[1024] = {0};
-		ssize_t received = client.receive(buffer, sizeof(buffer), 0);
-		if (received <= 0)
-			continue;
-		std::cout << "Message from client: " << buffer << std::endl;
+		std::string request = client.receive_all(0);
+		std::cout << "Message from client: " << request << std::endl;
 
 		// Send response
 		client.send_all(header.c_str(), header.size(), 0);

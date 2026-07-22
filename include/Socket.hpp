@@ -6,7 +6,7 @@
 /*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/21 19:30:23 by ypua              #+#    #+#             */
-/*   Updated: 2026/07/21 20:08:04 by ypua             ###   ########.fr       */
+/*   Updated: 2026/07/22 19:17:49 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,9 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <netinet/in.h>
+#include <iostream>
+
+static const std::string HEADER_END = "\r\n\r\n";
 
 class Socket
 {
@@ -29,7 +32,7 @@ public:
 	int listen_connection(int N);
 	Socket accept_connection();
 
-	ssize_t receive(char *buffer, size_t len, int flag);
+	std::string receive_all(int flag);
 	ssize_t send_all(const char *buffer, size_t len, int flag);
 
 private:
