@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/13 21:00:51 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/14 19:11:50 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/22 15:20:13 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,7 +41,12 @@ namespace {
     }
 }
 
-AllowedDirectives::DirectiveInfo::DirectiveInfo(Type t, int i) : type(t), allowedContexts(i) {} 
+// this exists purely for map to initialise a default value
+AllowedDirectives::DirectiveInfo::DirectiveInfo()
+{
+}
+
+AllowedDirectives::DirectiveInfo::DirectiveInfo(Type t, int i) : type(t), allowedContexts(i) {}
 
 bool AllowedDirectives::canExist(const std::string &directive)
 {

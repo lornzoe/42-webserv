@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/14 19:27:28 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/22 15:31:06 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -165,8 +165,8 @@ namespace {
 						tokenised_line.push_back(current_token);
 						current_token.clear();
 					}
-					std::string s(1, c); // save it as its own string
-					tokenised_line.push_back(s);
+					// std::string s(1, c); // save it as its own string
+					tokenised_line.push_back(std::string(1, c));
 				}
 				else
 					current_token += c;
@@ -272,9 +272,16 @@ Config::Config(char *filename)
 	// tokenise it
     this->directives_string = generateTokenisedDirectives(file);
 	
-	// validate the tokens
-	if (!validateDirectiveStrings(this->directives_string)) // many validation-specific exceptions are here.
-		throw std::exception(); // unexpected error? stack did not end up at CONTEXT_MAIN.
+	// temporary try-catch for now.
+	try 
+	{
+		// validate the tokens
+		if (!validateDirectiveStrings(this->directives_string)) // many validation-specific exceptions are here.
+			throw std::exception(); // unexpected error? stack did not end up at CONTEXT_MAIN.
+	}
+	catch (std::exception e)
+	{
+	}	
 	
 	// create the directives to fill up config
 		
