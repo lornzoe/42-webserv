@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 23:12:29 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/13 17:10:49 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/22 17:14:42 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,11 +21,10 @@
 class BlockDirective : public Directive
 {
 	protected:
-		std::vector<std::string> args; // BlockDirective args, if any
-		std::list<Directive> directives; // list of directives in block
+		typedef const std::vector<std::vector<std::string> >	TokenisedBlock;
+		std::vector<Directive *> directives; // list of directives in block
 	public:
-		BlockDirective();
-		BlockDirective(std::string raw_block);
+		BlockDirective(TokenisedBlock::const_iterator& cit);
 		virtual ~BlockDirective();	
 		
 		virtual void print(int depth) const = 0;
