@@ -21,7 +21,6 @@
 class BlockDirective : public Directive
 {
 	protected:
-		typedef const std::vector<std::vector<std::string> >	TokenisedBlock;
 		std::vector<Directive *> directives; // list of directives in block
 	public:
 		BlockDirective(TokenisedBlock::const_iterator& cit);

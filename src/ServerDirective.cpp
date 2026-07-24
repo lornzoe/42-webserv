@@ -12,6 +12,7 @@
 
 #include "ServerDirective.hpp"
 #include "DirectiveFactory.hpp"
+#include <exception>
 
 namespace
 {
@@ -32,6 +33,7 @@ ServerDirective::~ServerDirective()
 {
 }
 
-void ServerDirective::print(int depth)
+void ServerDirective::print(int depth) const
 {
+	(void)depth;
 }

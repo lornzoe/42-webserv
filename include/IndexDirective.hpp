@@ -1,24 +1,27 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Utils.hpp                                          :+:      :+:    :+:   */
+/*   IndexDirective.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/13 17:12:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/13 17:24:33 by lyanga           ###   ########.fr       */
+/*   Created: 2026/07/24 08:30:00 by lyanga            #+#    #+#             */
+/*   Updated: 2026/07/24 08:30:00 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef UTILS_HPP
-#define UTILS_HPP
+#ifndef INDEXDIRECTIVE_HPP
+#define INDEXDIRECTIVE_HPP
 
-#include <vector>
-#include <string>
-namespace Utils 
+#include "SimpleDirective.hpp"
+
+class IndexDirective : public SimpleDirective
 {
-	std::vector<std::string> splitArgs(std::string line);
+	private:
 
-}
+	public:
+		IndexDirective(TokenisedBlock::const_iterator& cit) : SimpleDirective(cit) {}
+		void print(int) const {}
+};
 
 #endif

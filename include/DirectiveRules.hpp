@@ -13,11 +13,13 @@
 #ifndef DIRECTIVERULES_HPP
 #define DIRECTIVERULES_HPP
 
+#include "Directive.hpp"
 #include <map>
 #include <string>
 
 // Stateless registry describing the config grammar: which directives exist,
-// what shape they take (simple vs block) and which contexts they may appear in.
+// what shape they take (simple vs block), which contexts they may appear in,
+// and which concrete Directive subclass represents each one.
 // Not instantiable, everything is a static query against a single shared table.
 class DirectiveRules {
 public:
@@ -34,6 +36,9 @@ public:
         CONTEXT_IF       = 1 << 3  // inside an if {} block
     };
 
+    // constructs the concrete Directive subclass for a given directive name
+    typedef Directive* (*Creator)(Directive::TokenisedBlock::const_iterator&);
+
     static bool canExist(const std::string& directive);
     static bool isValidInContext(const std::string& directive, Context currentContext);
 
@@ -41,12 +46,15 @@ public:
     static bool isBlockType(const std::string& directive);
     static bool isSimpleType(const std::string& directive);
 
+    static Creator getCreator(const std::string& directive);
+
 private:
     struct DirectiveInfo {
         Type type;
         int allowedContexts;
+        Creator creator;
         DirectiveInfo();
-        DirectiveInfo(Type, int);
+        DirectiveInfo(Type, int, Creator);
     };
 
     static const std::map<std::string, DirectiveInfo>& getDirectiveMap();

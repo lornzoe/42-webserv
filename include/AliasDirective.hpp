@@ -1,32 +1,27 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Directive.hpp                                      :+:      :+:    :+:   */
+/*   AliasDirective.hpp                                 :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/11 21:06:29 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/24 08:24:02 by lyanga           ###   ########.fr       */
+/*   Created: 2026/07/24 08:30:00 by lyanga            #+#    #+#             */
+/*   Updated: 2026/07/24 08:30:42 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef DIRECTIVE_HPP
-#define DIRECTIVE_HPP
+#ifndef ALIASDIRECTIVE_HPP
+#define ALIASDIRECTIVE_HPP
 
-#include <vector>
-#include <string>
+#include "SimpleDirective.hpp"
 
-class Directive
+class AliasDirective : public SimpleDirective
 {
-	protected:
-		std::vector<std::string> args;
+	private:
+
 	public:
-		typedef const std::vector<std::string> TokenisedLine;
-		typedef const std::vector<std::vector<std::string> > TokenisedBlock;
-		Directive(TokenisedLine& raw_directive);
-		
-		virtual ~Directive();
-		virtual void print(int depth) const = 0;
+		AliasDirective(TokenisedBlock::const_iterator& cit) : SimpleDirective(cit) {}
+		void print(int) const {}
 };
 
 #endif

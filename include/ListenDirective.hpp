@@ -18,8 +18,10 @@
 class ListenDirective : public SimpleDirective
 {
 	private:
-	
+
 	public:
+		ListenDirective(TokenisedBlock::const_iterator& cit) : SimpleDirective(cit) {}
+		void print(int) const {}
 };
 
 #endif

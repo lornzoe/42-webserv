@@ -24,7 +24,7 @@ class ServerDirective : public BlockDirective
 		ServerDirective(TokenisedBlock::const_iterator& cit);
 		~ServerDirective();
 
-		void print(int depth);
+		void print(int depth) const;
 };
 
 #endif

@@ -6,7 +6,7 @@
 #    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/07/22 18:25:59 by lyanga           ###   ########.fr        #
+#    Updated: 2026/07/24 09:39:24 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,7 +26,9 @@ SRC_FILES = main.cpp \
 			DirectiveFactory.cpp \
 			DirectiveRules.cpp \
 			Directive.cpp \
-			BlockDirective.cpp
+			BlockDirective.cpp \
+			SimpleDirective.cpp \
+			ServerDirective.cpp
 
 # Map files to their respective folders
 SRCS = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
