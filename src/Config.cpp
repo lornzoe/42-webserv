@@ -6,17 +6,18 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/22 18:07:48 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/24 08:17:32 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
-#include "DirectiveFactory.hpp"
+#include "DirectiveRules.hpp"
 
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <stack>
+#include <exception>
 
 namespace {
 	bool checkBracesAndQuotations(const std::vector<std::string>& lines)
@@ -205,8 +206,8 @@ namespace {
 	bool validateDirectiveStrings(const std::vector<std::vector<std::string> >& lines)
 	{
 		// validate if the directives are in the right context.
-		std::stack<DirectiveFactory::Context> context_stack;
-		context_stack.push(DirectiveFactory::CONTEXT_MAIN);
+		std::stack<DirectiveRules::Context> context_stack;
+		context_stack.push(DirectiveRules::CONTEXT_MAIN);
 
 		for (std::vector<std::vector<std::string> >::const_iterator cit = lines.begin(); cit != lines.end(); ++cit)
 		{
@@ -217,28 +218,28 @@ namespace {
 				continue;
 			}
 
-			DirectiveFactory::Context current_context = context_stack.top();
+			DirectiveRules::Context current_context = context_stack.top();
 
-			if (!DirectiveFactory::canExist(dir))
+			if (!DirectiveRules::canExist(dir))
 				throw std::exception(); // invalid/unhandled directive
-			if (!(DirectiveFactory::isSimpleType(dir) && cit->back() == ";"))
+			if (!(DirectiveRules::isSimpleType(dir) && cit->back() == ";"))
 				throw std::exception(); // simple directive mismatch; expecting ;, saw cit->back() (usually curly brace);
-			if (!(DirectiveFactory::isBlockType(dir) && cit->back() == "{"))
+			if (!(DirectiveRules::isBlockType(dir) && cit->back() == "{"))
 				throw std::exception(); // simple directive mismatch; expecting {, saw cit->back() (usually semicolon);
-			if (!DirectiveFactory::isValidInContext(dir, current_context))
+			if (!DirectiveRules::isValidInContext(dir, current_context))
 				throw std::exception(); // dir is not in allowed context (current context).
 
-			if (DirectiveFactory::isBlockType(dir))
+			if (DirectiveRules::isBlockType(dir))
 			{
 				if (dir == "server")
-					context_stack.push(DirectiveFactory::CONTEXT_SERVER);
+					context_stack.push(DirectiveRules::CONTEXT_SERVER);
 				else if (dir == "location")
-					context_stack.push(DirectiveFactory::CONTEXT_LOCATION);
+					context_stack.push(DirectiveRules::CONTEXT_LOCATION);
 				else if (dir == "if")
-					context_stack.push(DirectiveFactory::CONTEXT_IF);
+					context_stack.push(DirectiveRules::CONTEXT_IF);
 			}
 		}
-		return context_stack.top() == DirectiveFactory::CONTEXT_MAIN;
+		return context_stack.top() == DirectiveRules::CONTEXT_MAIN;
 	}
 }
 
@@ -279,8 +280,9 @@ Config::Config(char *filename)
 		if (!validateDirectiveStrings(this->directives_string)) // many validation-specific exceptions are here.
 			throw std::exception(); // unexpected error? stack did not end up at CONTEXT_MAIN.
 	}
-	catch (std::exception e)
+	catch (const std::exception& e)
 	{
+		std::cerr << "e: " << e.what() << std::endl;
 	}	
 	
 	// create the directives to fill up config

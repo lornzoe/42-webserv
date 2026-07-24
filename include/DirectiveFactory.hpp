@@ -6,45 +6,21 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/13 21:00:23 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/22 18:26:39 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/24 08:22:04 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef DIRECTIVEFACTORY_HPP
 #define DIRECTIVEFACTORY_HPP
 
-#include <map>
-#include <string>
+#include "Directive.h"
 
-namespace DirectiveFactory {
-
-    enum Type {
-        TYPE_NONE = 0,
-        TYPE_SIMPLE,
-        TYPE_BLOCK
-    };
-
-    enum Context {
-        CONTEXT_MAIN     = 1 << 0, // root 
-        CONTEXT_SERVER   = 1 << 1, // inside a server {} block
-        CONTEXT_LOCATION = 1 << 2, // inside a location {} block
-        CONTEXT_IF       = 1 << 3  // inside an if {} block
-    };
-    
-    struct DirectiveInfo {
-        Type type;
-        int allowedContexts;
-        DirectiveInfo();
-        DirectiveInfo(Type, int);
-    };
-    
-    bool canExist(const std::string& directive);
-    bool isValidInContext(const std::string& directive, Context currentContext);
-
-    Type getType(const std::string& directive);
-    bool isBlockType(const std::string& directive);
-    bool isSimpleType(const std::string& directive);
-
-}
+// Responsible for constructing Directive objects from tokenised input.
+// The grammar/validation rules now live in DirectiveRules.
+class DirectiveFactory {
+    public:
+    private:
+        DirectiveFactory(); // never defined, class is not instantiable
+};
 
 #endif

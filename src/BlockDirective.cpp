@@ -11,7 +11,7 @@
 /* ************************************************************************** */
 
 #include "BlockDirective.hpp"
-#include "DirectiveFactory.hpp"
+#include "DirectiveRules.hpp"
 
 BlockDirective::BlockDirective(TokenisedBlock::const_iterator &cit) : Directive(*cit)
 {
@@ -26,11 +26,11 @@ BlockDirective::BlockDirective(TokenisedBlock::const_iterator &cit) : Directive(
 			braces--;
 			continue;
 		}
-		if (DirectiveFactory::isSimpleType(cit->front()))
+		if (DirectiveRules::isSimpleType(cit->front()))
 		{
 			// handle simple type
 		}
-		else if (DirectiveFactory::isBlockType(cit->front()))
+		else if (DirectiveRules::isBlockType(cit->front()))
 		{
 			// handle block type
 		}

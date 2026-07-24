@@ -24,6 +24,7 @@ DEP_DIR   = $(BUILD_DIR)/deps
 SRC_FILES = main.cpp \
 			Config.cpp \
 			DirectiveFactory.cpp \
+			DirectiveRules.cpp \
 			Directive.cpp \
 			BlockDirective.cpp
 
