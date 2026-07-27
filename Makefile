@@ -32,6 +32,7 @@ SRC_FILES = main.cpp \
 			ListenDirective.cpp \
 			ServerNameDirective.cpp \
 			AliasDirective.cpp \
+			RootDirective.cpp \
 			IndexDirective.cpp \
 			ClientMaxBodySizeDirective.cpp \
 			ErrorPageDirective.cpp \
