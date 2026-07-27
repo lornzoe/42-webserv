@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:37:22 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/22 18:03:31 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/27 12:44:51 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,9 +17,6 @@
 
 class ServerDirective : public BlockDirective
 {
-	private:
-		// typedefs are here to keep the definition within th
-		// what does this need again?		
 	public:
 		ServerDirective(TokenisedBlock::const_iterator& cit);
 		~ServerDirective();

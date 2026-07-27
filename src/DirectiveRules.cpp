@@ -19,7 +19,6 @@
 #include "ListenDirective.hpp"
 #include "ServerNameDirective.hpp"
 #include "AliasDirective.hpp"
-#include "RootDirective.hpp"
 #include "IndexDirective.hpp"
 #include "ClientMaxBodySizeDirective.hpp"
 #include "ErrorPageDirective.hpp"
@@ -55,7 +54,6 @@ const std::map<std::string, DirectiveRules::DirectiveInfo>& DirectiveRules::getD
         allowedMap["server_name"]          = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER, &createDirective<ServerNameDirective>);
         allowedMap["alias"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_LOCATION, &createDirective<AliasDirective>);
 
-        allowedMap["root"]                 = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<RootDirective>);
         allowedMap["index"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<IndexDirective>);
         allowedMap["client_max_body_size"] = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ClientMaxBodySizeDirective>);
         allowedMap["error_page"]           = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ErrorPageDirective>);

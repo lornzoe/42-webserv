@@ -6,12 +6,13 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/24 08:17:32 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/27 12:44:37 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 #include "DirectiveRules.hpp"
+#include "DirectiveFactory.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -222,10 +223,10 @@ namespace {
 
 			if (!DirectiveRules::canExist(dir))
 				throw std::exception(); // invalid/unhandled directive
-			if (!(DirectiveRules::isSimpleType(dir) && cit->back() == ";"))
+			if (DirectiveRules::isSimpleType(dir) && cit->back() != ";")
 				throw std::exception(); // simple directive mismatch; expecting ;, saw cit->back() (usually curly brace);
-			if (!(DirectiveRules::isBlockType(dir) && cit->back() == "{"))
-				throw std::exception(); // simple directive mismatch; expecting {, saw cit->back() (usually semicolon);
+			if (DirectiveRules::isBlockType(dir) && cit->back() != "{")
+				throw std::exception(); // block directive mismatch; expecting {, saw cit->back() (usually semicolon);
 			if (!DirectiveRules::isValidInContext(dir, current_context))
 				throw std::exception(); // dir is not in allowed context (current context).
 
@@ -272,25 +273,27 @@ Config::Config(char *filename)
 
 	// tokenise it
     this->directives_string = generateTokenisedDirectives(file);
-	
-	// temporary try-catch for now.
-	try 
-	{
-		// validate the tokens
-		if (!validateDirectiveStrings(this->directives_string)) // many validation-specific exceptions are here.
-			throw std::exception(); // unexpected error? stack did not end up at CONTEXT_MAIN.
-	}
-	catch (const std::exception& e)
-	{
-		std::cerr << "e: " << e.what() << std::endl;
-	}	
-	
+
+	// validate the tokens
+	if (!validateDirectiveStrings(this->directives_string)) // many validation-specific exceptions are here.
+		throw std::exception(); // unexpected error? stack did not end up at CONTEXT_MAIN.
+
 	// create the directives to fill up config
-		
+	Directive::TokenisedBlock::const_iterator cit = this->directives_string.begin();
+	while (cit != this->directives_string.end())
+		directives.push_back(DirectiveFactory::createDirective(cit));
 }
 
 Config::~Config()
 {
+	for (std::size_t i = 0; i < directives.size(); i++)
+		delete directives[i];
+}
+
+void Config::printDirectives() const
+{
+	for (std::size_t i = 0; i < directives.size(); i++)
+		directives[i]->print(0);
 }
 
 void Config::printConfig()

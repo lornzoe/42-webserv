@@ -6,38 +6,30 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 18:05:35 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/22 18:22:16 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/27 12:44:41 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "BlockDirective.hpp"
 #include "DirectiveRules.hpp"
+#include "DirectiveFactory.hpp"
+#include <exception>
 
 BlockDirective::BlockDirective(TokenisedBlock::const_iterator &cit) : Directive(*cit)
 {
-	std::size_t braces = 1;
-	cit++;
+	cit++; // move past this block's own opening line
 
-	// start cit from the first line in the contents
-	while (braces != 0)
+	// nested blocks fully consume their own contents (including their
+	// closing brace) recursively, so the only "}" this loop ever sees
+	// directly is this block's own.
+	while (cit->front() != "}")
 	{
-		if (cit->front() == "}")
-		{
-			braces--;
-			continue;
-		}
-		if (DirectiveRules::isSimpleType(cit->front()))
-		{
-			// handle simple type
-		}
-		else if (DirectiveRules::isBlockType(cit->front()))
-		{
-			// handle block type
-		}
+		if (DirectiveRules::isSimpleType(cit->front()) || DirectiveRules::isBlockType(cit->front()))
+			directives.push_back(DirectiveFactory::createDirective(cit));
 		else
 			throw std::exception(); // not a valid directive
-		cit++;
 	}
+	cit++; // consume this block's own closing "}"
 }
 
 BlockDirective::~BlockDirective()

@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 22:13:59 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/24 09:48:11 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/27 12:44:48 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,8 +19,6 @@
 
 class SimpleDirective : public Directive
 {
-	protected:
-		std::vector<std::string> args; // debug
 	public:
 		SimpleDirective(TokenisedBlock::const_iterator& cit);
 		virtual ~SimpleDirective();
