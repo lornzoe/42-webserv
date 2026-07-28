@@ -6,7 +6,7 @@
 #    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/07/27 12:45:14 by lyanga           ###   ########.fr        #
+#    Updated: 2026/07/28 13:44:53 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -37,7 +37,10 @@ SRC_FILES = main.cpp \
 			ClientMaxBodySizeDirective.cpp \
 			ErrorPageDirective.cpp \
 			ReturnDirective.cpp \
-			HttpStatus.cpp
+			HttpStatus.cpp \
+			\
+			FileDescriptor.cpp \
+			Socket.cpp 
 
 # Map files to their respective folders
 SRCS = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
@@ -73,4 +76,8 @@ x: $(NAME) clean
 
 -include $(DEPS)
 
+<<<<<<< HEAD
 .PHONY: all clean fclean re x
+=======
+.PHONY: all clean fclean re x
+>>>>>>> origin/socket-YH
