@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/24 08:04:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/24 08:04:50 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/28 13:12:25 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,6 @@
 #include "ServerDirective.hpp"
 #include "LocationDirective.hpp"
 #include "IfDirective.hpp"
-
 #include "ListenDirective.hpp"
 #include "ServerNameDirective.hpp"
 #include "AliasDirective.hpp"
@@ -25,92 +24,107 @@
 #include "ErrorPageDirective.hpp"
 #include "ReturnDirective.hpp"
 
+#include <map>
+
 namespace {
+
     template <typename T>
     Directive* createDirective(Directive::TokenisedBlock::const_iterator& cit)
     {
         return new T(cit);
     }
-}
 
-// this exists purely for map to initialise a default value
-DirectiveRules::DirectiveInfo::DirectiveInfo()
-{
-}
+    // DirectiveInfo is only used by this file
+    // If we need it for other files this struct will be moved to the header
+    struct DirectiveInfo {
+        DirectiveRules::Type type;
+        int allowedContexts;
+        DirectiveRules::Creator creator;
 
-DirectiveRules::DirectiveInfo::DirectiveInfo(Type t, int i, Creator c) : type(t), allowedContexts(i), creator(c) {}
+        DirectiveInfo() : type(DirectiveRules::TYPE_NONE), allowedContexts(0), creator(0) {}
+        DirectiveInfo(DirectiveRules::Type t, int i, DirectiveRules::Creator c) 
+            : type(t), allowedContexts(i), creator(c) {}
+    };
 
-const std::map<std::string, DirectiveRules::DirectiveInfo>& DirectiveRules::getDirectiveMap()
-{
-    static std::map<std::string, DirectiveInfo> allowedMap;
+    const std::map<std::string, DirectiveInfo>& getDirectiveMap()
+    {
+        static std::map<std::string, DirectiveInfo> allowedMap;
 
-    if (allowedMap.empty()) {
-        // block directives
-        allowedMap["server"]               = DirectiveInfo(TYPE_BLOCK, CONTEXT_MAIN, &createDirective<ServerDirective>);
-        allowedMap["location"]             = DirectiveInfo(TYPE_BLOCK, CONTEXT_SERVER, &createDirective<LocationDirective>);
-        allowedMap["if"]                   = DirectiveInfo(TYPE_BLOCK, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<IfDirective>);
+        if (allowedMap.empty()) {
+            using namespace DirectiveRules;
 
-        // simple directives
-        allowedMap["listen"]               = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER, &createDirective<ListenDirective>);
-        allowedMap["server_name"]          = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER, &createDirective<ServerNameDirective>);
-        allowedMap["alias"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_LOCATION, &createDirective<AliasDirective>);
+            // block directives
+            allowedMap["server"]               = DirectiveInfo(TYPE_BLOCK, CONTEXT_MAIN, &createDirective<ServerDirective>);
+            allowedMap["location"]             = DirectiveInfo(TYPE_BLOCK, CONTEXT_SERVER, &createDirective<LocationDirective>);
+            allowedMap["if"]                   = DirectiveInfo(TYPE_BLOCK, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<IfDirective>);
 
-        allowedMap["root"]                 = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<RootDirective>);
-        allowedMap["index"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<IndexDirective>);
-        allowedMap["client_max_body_size"] = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ClientMaxBodySizeDirective>);
-        allowedMap["error_page"]           = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ErrorPageDirective>);
+            // simple directives
+            allowedMap["listen"]               = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER, &createDirective<ListenDirective>);
+            allowedMap["server_name"]          = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER, &createDirective<ServerNameDirective>);
+            allowedMap["alias"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_LOCATION, &createDirective<AliasDirective>);
 
-        allowedMap["return"]               = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION | CONTEXT_IF, &createDirective<ReturnDirective>);
-    }
-    return allowedMap;
-}
+            allowedMap["root"]                 = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<RootDirective>);
+            allowedMap["index"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<IndexDirective>);
+            allowedMap["client_max_body_size"] = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ClientMaxBodySizeDirective>);
+            allowedMap["error_page"]           = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ErrorPageDirective>);
 
-bool DirectiveRules::canExist(const std::string &directive)
-{
-    const std::map<std::string, DirectiveInfo>& m = getDirectiveMap();
-    return m.find(directive) != m.end();
-}
-
-bool DirectiveRules::isValidInContext(const std::string &directive, Context currentContext)
-{
-    const std::map<std::string, DirectiveInfo>& m = getDirectiveMap();
-    std::map<std::string, DirectiveInfo>::const_iterator it = m.find(directive);
-
-    if (it == m.end()) {
-        return false;
+            allowedMap["return"]               = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION | CONTEXT_IF, &createDirective<ReturnDirective>);
+        }
+        return allowedMap;
     }
 
-    return (it->second.allowedContexts & currentContext) != 0;
-}
+} // anonymous namespace
 
-DirectiveRules::Type DirectiveRules::getType(const std::string &directive)
-{
-    const std::map<std::string, DirectiveInfo>& m = getDirectiveMap();
-    std::map<std::string, DirectiveInfo>::const_iterator it = m.find(directive);
+namespace DirectiveRules {
 
-    if (it == m.end())
-        return TYPE_NONE; // default fallback, value 0
+    bool canExist(const std::string &directive)
+    {
+        const std::map<std::string, DirectiveInfo>& m = getDirectiveMap();
+        return m.find(directive) != m.end();
+    }
 
-    return it->second.type;
-}
+    bool isValidInContext(const std::string &directive, Context currentContext)
+    {
+        const std::map<std::string, DirectiveInfo>& m = getDirectiveMap();
+        std::map<std::string, DirectiveInfo>::const_iterator it = m.find(directive);
 
-bool DirectiveRules::isBlockType(const std::string &directive)
-{
-    return getType(directive) == TYPE_BLOCK;
-}
+        if (it == m.end()) {
+            return false;
+        }
 
-bool DirectiveRules::isSimpleType(const std::string &directive)
-{
-    return getType(directive) == TYPE_SIMPLE;
-}
+        return (it->second.allowedContexts & currentContext) != 0;
+    }
 
-DirectiveRules::Creator DirectiveRules::getCreator(const std::string &directive)
-{
-    const std::map<std::string, DirectiveInfo>& m = getDirectiveMap();
-    std::map<std::string, DirectiveInfo>::const_iterator it = m.find(directive);
+    Type getType(const std::string &directive)
+    {
+        const std::map<std::string, DirectiveInfo>& m = getDirectiveMap();
+        std::map<std::string, DirectiveInfo>::const_iterator it = m.find(directive);
 
-    if (it == m.end())
-        return 0;
+        if (it == m.end())
+            return TYPE_NONE;
 
-    return it->second.creator;
+        return it->second.type;
+    }
+
+    bool isBlockType(const std::string &directive)
+    {
+        return getType(directive) == TYPE_BLOCK;
+    }
+
+    bool isSimpleType(const std::string &directive)
+    {
+        return getType(directive) == TYPE_SIMPLE;
+    }
+
+    Creator getCreator(const std::string &directive)
+    {
+        const std::map<std::string, DirectiveInfo>& m = getDirectiveMap();
+        std::map<std::string, DirectiveInfo>::const_iterator it = m.find(directive);
+
+        if (it == m.end())
+            return 0;
+
+        return it->second.creator;
+    }
+
 }
