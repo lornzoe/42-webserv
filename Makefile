@@ -36,7 +36,8 @@ SRC_FILES = main.cpp \
 			IndexDirective.cpp \
 			ClientMaxBodySizeDirective.cpp \
 			ErrorPageDirective.cpp \
-			ReturnDirective.cpp
+			ReturnDirective.cpp \
+			HttpStatus.cpp
 
 # Map files to their respective folders
 SRCS = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
