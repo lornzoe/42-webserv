@@ -32,6 +32,11 @@ BlockDirective::BlockDirective(TokenisedBlock::const_iterator &cit) : Directive(
 	cit++; // consume this block's own closing "}"
 }
 
+const std::vector<Directive *>& BlockDirective::getChildren() const
+{
+	return directives;
+}
+
 BlockDirective::~BlockDirective()
 {
 	for (std::size_t i = 0; i < directives.size(); i++)

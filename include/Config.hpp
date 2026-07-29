@@ -30,6 +30,8 @@ class Config
 		void printConfig();
 		void printDirectives() const;
 
+		const std::vector<Directive *>& getDirectives() const;
+
 };
 
 #endif

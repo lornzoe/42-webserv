@@ -290,6 +290,11 @@ Config::~Config()
 		delete directives[i];
 }
 
+const std::vector<Directive *>& Config::getDirectives() const
+{
+	return directives;
+}
+
 void Config::printDirectives() const
 {
 	for (std::size_t i = 0; i < directives.size(); i++)

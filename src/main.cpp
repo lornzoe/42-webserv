@@ -6,54 +6,16 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 21:19:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/28 13:51:16 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/29 00:00:00 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
-
 
 #include <iostream>
 #include <exception>
 
 #include "Config.hpp"
-
-int main_yh(void);
-int main(int argc, char** argv) {
-	
-	if (argc != 2)
-	{
-		std::cerr << "Usage: ./webserv <config_file>" << std::endl;
-		return 1;
-	}
-
-	try
-	{
-		Config c(argv[1]);
-		c.printConfig();
-		c.printDirectives();
-	}
-	catch (const std::exception& e)
-	{
-		std::cerr << "Error: " << e.what() << std::endl;
-		return 1;
-	}
-
-	main_yh();
-	
-	return 0;
-}
-
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/19 17:53:42 by ypua              #+#    #+#             */
-/*   Updated: 2026/07/22 19:27:51 by ypua             ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
+#include "ServerDirective.hpp"
+#include "ListenDirective.hpp"
 #include "FileDescriptor.hpp"
 #include "Socket.hpp"
 #include <vector>
@@ -78,8 +40,36 @@ int main(int argc, char** argv) {
 // Sec-Fetch-Site: same-origin
 // Priority: u=6
 
-int main_yh(void)
+// Finds the first "listen" directive under the first "server" block in the
+// parsed config. Returns false if none is found (caller should fall back).
+static bool findFirstListen(const Config& config, std::string& host, int& port)
 {
+	const std::vector<Directive *>& top = config.getDirectives();
+	for (std::size_t i = 0; i < top.size(); i++)
+	{
+		const ServerDirective* server = dynamic_cast<const ServerDirective*>(top[i]);
+		if (!server)
+			continue;
+
+		const std::vector<Directive *>& children = server->getChildren();
+		for (std::size_t j = 0; j < children.size(); j++)
+		{
+			const ListenDirective* listen = dynamic_cast<const ListenDirective*>(children[j]);
+			if (listen)
+			{
+				host = listen->getHost();
+				port = listen->getPort();
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+int runServer(const std::string& host, int port)
+{
+	(void)host; // Socket::bind_port only supports INADDR_ANY for now
+
 	FileDescriptor file("index.html");
 	if (file.get() == -1)
 		return 1;
@@ -119,7 +109,7 @@ int main_yh(void)
 		return 1;
 
 	// Bind socket to address
-	if (server.bind_port(8080) == -1)
+	if (server.bind_port(port) == -1)
 		return 1;
 
 	// Listen for incoming connections
@@ -143,4 +133,38 @@ int main_yh(void)
 	}
 
 	return 0;
+}
+
+int main(int argc, char** argv)
+{
+	if (argc != 2)
+	{
+		std::cerr << "Usage: ./webserv <config_file>" << std::endl;
+		return 1;
+	}
+
+	std::string host;
+	int port = 8080;
+
+	try
+	{
+		Config c(argv[1]);
+		c.printConfig();
+		c.printDirectives();
+
+		if (!findFirstListen(c, host, port))
+		{
+			std::cerr << "Warning: no 'listen' directive found in config, "
+						 "defaulting to port 8080" << std::endl;
+			host = "";
+			port = 8080;
+		}
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << "Error: " << e.what() << std::endl;
+		return 1;
+	}
+
+	return runServer(host, port);
 }

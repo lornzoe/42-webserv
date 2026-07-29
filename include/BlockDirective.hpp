@@ -27,5 +27,7 @@ class BlockDirective : public Directive
 		virtual ~BlockDirective();	
 		
 		virtual void print(int depth) const = 0;
+
+			const std::vector<Directive *>& getChildren() const;
 };
 #endif
