@@ -76,8 +76,4 @@ x: $(NAME) clean
 
 -include $(DEPS)
 
-<<<<<<< HEAD
 .PHONY: all clean fclean re x
-=======
-.PHONY: all clean fclean re x
->>>>>>> origin/socket-YH
