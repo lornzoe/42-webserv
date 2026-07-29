@@ -6,7 +6,7 @@
 #    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/07/28 13:44:53 by lyanga           ###   ########.fr        #
+#    Updated: 2026/07/29 12:37:33 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -37,6 +37,8 @@ SRC_FILES = main.cpp \
 			ClientMaxBodySizeDirective.cpp \
 			ErrorPageDirective.cpp \
 			ReturnDirective.cpp \
+			LimitExceptDirective.cpp \
+			\
 			HttpStatus.cpp \
 			\
 			FileDescriptor.cpp \

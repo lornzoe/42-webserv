@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/24 08:04:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/28 13:12:25 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/29 12:38:37 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 #include "ClientMaxBodySizeDirective.hpp"
 #include "ErrorPageDirective.hpp"
 #include "ReturnDirective.hpp"
+#include "LimitExceptDirective.hpp"
 
 #include <map>
 
@@ -54,21 +55,22 @@ namespace {
             using namespace DirectiveRules;
 
             // block directives
-            allowedMap["server"]               = DirectiveInfo(TYPE_BLOCK, CONTEXT_MAIN, &createDirective<ServerDirective>);
-            allowedMap["location"]             = DirectiveInfo(TYPE_BLOCK, CONTEXT_SERVER, &createDirective<LocationDirective>);
-            allowedMap["if"]                   = DirectiveInfo(TYPE_BLOCK, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<IfDirective>);
+            allowedMap["server"]                = DirectiveInfo(TYPE_BLOCK, CONTEXT_MAIN, &createDirective<ServerDirective>);
+            allowedMap["location"]              = DirectiveInfo(TYPE_BLOCK, CONTEXT_SERVER, &createDirective<LocationDirective>);
+            allowedMap["if"]                    = DirectiveInfo(TYPE_BLOCK, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<IfDirective>);
 
             // simple directives
-            allowedMap["listen"]               = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER, &createDirective<ListenDirective>);
-            allowedMap["server_name"]          = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER, &createDirective<ServerNameDirective>);
-            allowedMap["alias"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_LOCATION, &createDirective<AliasDirective>);
+            allowedMap["listen"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER, &createDirective<ListenDirective>);
+            allowedMap["server_name"]           = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER, &createDirective<ServerNameDirective>);
+            allowedMap["alias"]                 = DirectiveInfo(TYPE_SIMPLE, CONTEXT_LOCATION, &createDirective<AliasDirective>);
 
-            allowedMap["root"]                 = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<RootDirective>);
-            allowedMap["index"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<IndexDirective>);
-            allowedMap["client_max_body_size"] = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ClientMaxBodySizeDirective>);
-            allowedMap["error_page"]           = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ErrorPageDirective>);
+            allowedMap["root"]                  = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<RootDirective>);
+            allowedMap["index"]                 = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<IndexDirective>);
+            allowedMap["client_max_body_size"]  = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ClientMaxBodySizeDirective>);
+            allowedMap["error_page"]            = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ErrorPageDirective>);
 
-            allowedMap["return"]               = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION | CONTEXT_IF, &createDirective<ReturnDirective>);
+            allowedMap["return"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION | CONTEXT_IF, &createDirective<ReturnDirective>);
+            allowedMap["limit_except"]          = DirectiveInfo(TYPE_SIMPLE, CONTEXT_LOCATION, &createDirective<LimitExceptDirective>);
         }
         return allowedMap;
     }
