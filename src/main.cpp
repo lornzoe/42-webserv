@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 21:19:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/30 18:24:39 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/30 19:59:11 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,6 +59,8 @@ static bool findFirstListen(const Config& config, std::string& host, int& port)
 			{
 				host = listen->getHost();
 				port = listen->getPort();
+				std::cout << "[webserv] connecting to host "
+						<< host << " on port " << port << std::endl;
 				return true;
 			}
 		}
@@ -108,6 +110,7 @@ int runServer(const std::string& host, int port)
 	if (server.get() == -1)
 		return 1;
 
+	std::cout << "[webserv] binding port" << std::endl;
 	// Bind socket to address
 	if (server.bind_port(port) == -1)
 		return 1;
@@ -116,6 +119,7 @@ int runServer(const std::string& host, int port)
 	if (server.listen_connection(SOMAXCONN) == -1)
 		return 1;
 
+	std::cout << "[webserv] main loop, ctrl + c to end" << std::endl;
 	while (true)
 	{
 		// Accept Client Connection
@@ -167,5 +171,6 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
+	std::cout << "[webserv] running server now." << std::endl;
 	return runServer(host, port);
 }
