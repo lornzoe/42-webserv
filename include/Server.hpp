@@ -10,12 +10,16 @@
 class Server
 {
 private:
-	std::string					_host;
-	int							_port;
+	std::string				_host;
+	int						_port;
 
-	Listener					_listener;
-	std::map<int, Client>		_clients;
+	Listener				_listener;
 
+	typedef std::map<int, Client>	client_map_t;
+	client_map_t			_clients;
+
+	// No default construction
+	// No copying; so for container of multiple servers, use vector<Server *>
 	Server();
 	Server(Server const & other);
 	Server &	operator=(Server const & other);
@@ -25,8 +29,9 @@ public:
 	~Server();
 
 	Listener &		listener();
-	void			addClient(int fd);
-	Client	&		getClient(int fd);
+	Client	*		client(int fd);
+
+	bool			addClient(int fd);
 };
 
 #endif

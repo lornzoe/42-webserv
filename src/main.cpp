@@ -5,7 +5,6 @@
 
 #include <iostream>
 
-
 int main(void)
 {
 	Poller		p;
@@ -31,7 +30,7 @@ int main(void)
 					if (client_fd == -1)
 						continue;
 					s.addClient(client_fd);
-					p.add(client_fd, EPOLLIN, s.getClient(client_fd).ctx());
+					p.add(client_fd, EPOLLIN, s.client(client_fd)->ctx());
 				}
 				else if (ctx->type == SCK_CLIENT)
 				{
