@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 21:19:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/29 00:00:00 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/30 18:24:39 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -149,8 +149,9 @@ int main(int argc, char** argv)
 	try
 	{
 		Config c(argv[1]);
-		c.printConfig();
-		c.printDirectives();
+		std::cout << "[webserv] Config() completed." << std::endl;
+		// c.printConfig();
+		// c.printDirectives();
 
 		if (!findFirstListen(c, host, port))
 		{

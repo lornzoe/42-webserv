@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/27 12:44:37 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/07/30 18:34:55 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -277,6 +277,13 @@ Config::Config(char *filename)
 	// validate the tokens
 	if (!validateDirectiveStrings(this->directives_string)) // many validation-specific exceptions are here.
 		throw std::exception(); // unexpected error? stack did not end up at CONTEXT_MAIN.
+
+	/*
+		TODO: Ensure parameters in config have:
+			- valid parameters per directive
+			- ensure each context has the minimum, correct number of directives
+			- ensure information from multiple directives do not clash with each other (e.g. listen 0.0.0.0)
+	*/
 
 	// create the directives to fill up config
 	Directive::TokenisedBlock::const_iterator cit = this->directives_string.begin();
