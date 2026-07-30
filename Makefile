@@ -4,10 +4,13 @@ SRC_DIR = src
 
 MAIN_SRC_DIR = $(SRC_DIR)
 MAIN_SRC_BASE = main				\
-poller
+Server Listener Client Poller		\
+WUtils
 
 HEADER_BASE = 						\
-poller
+Server Listener Client Poller		\
+WUtils								\
+EventCtx
 
 HEADERS = $(addprefix $(INCLD_DIR)/, $(addsuffix .hpp, $(HEADER_BASE)))
 
