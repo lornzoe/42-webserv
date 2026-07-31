@@ -1,5 +1,5 @@
-#ifndef EVENTCTX_H
-# define EVENTCTX_H
+#ifndef W_EVENTCTX_H
+# define W_EVENTCTX_H
 
 enum e_type {
 	SCK_LISTENER,
@@ -8,7 +8,7 @@ enum e_type {
 	CGI_OUT
 };
 
-struct EventCtx
+struct eventCtx
 { 
 	int		fd;
 	e_type	type;

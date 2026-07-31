@@ -1,5 +1,8 @@
 #include "Listener.hpp"
-#include "WUtils.hpp"
+#include "Server.hpp"
+#include "w_utils.hpp"
+#include "w_logger.hpp"
+#include <iostream>
 
 #include <sys/socket.h>	//socket, bind, listen, accept, recv/send
 #include <sys/types.h>
@@ -15,17 +18,14 @@
 // OCF ------------------------------------------------------------------------
 
 Listener::~Listener() {
-	WUtils::safeClose(_fd);
+	wutils::safeClose(_fd);
 }
 
 // An empty host (empty str "") will bind to the wildcard address aka 0.0.0.0
-Listener::Listener(Server const &server, std::string const &host, int port) 
-: _fd(-1), _server(server)
+Listener::Listener(Server &server, std::string const &host, int port) 
+: _server(server), _fd(-1)
 {
-	std::stringstream	ss;
-	std::string			str_port;
-	ss << port;
-	str_port = ss.str();
+	std::string			str_port = wutils::ft_itoa(port);
 
 	struct addrinfo		hints = {};
 	hints.ai_family = PF_INET;
@@ -47,12 +47,12 @@ Listener::Listener(Server const &server, std::string const &host, int port)
 			|| listen(_fd, 1024) == -1)
 		{
 			if (cur->ai_next != NULL) {
-				WUtils::safeClose(_fd);
+				wutils::safeClose(_fd);
 				cur = cur->ai_next;
 			}
 			else {
 				int tmp_errno = errno;
-				WUtils::safeClose(_fd);
+				wutils::safeClose(_fd);
 				freeaddrinfo(res);
 				throw std::runtime_error(strerror(tmp_errno));
 			}
@@ -61,9 +61,10 @@ Listener::Listener(Server const &server, std::string const &host, int port)
 	}
 	freeaddrinfo(res);
 
-	_ctx.fd = _fd;
-	_ctx.type = SCK_LISTENER;
-	_ctx.owner = this;
+	_eCtx.fd = _fd;
+	_eCtx.type = SCK_LISTENER;
+	_eCtx.owner = this;
+	LOG_INFO("Listener fd " << _fd << " created on Server " << _server.name());
 }
 
 // Private --------------------------------------------------------------------
@@ -79,21 +80,24 @@ int		Listener::reuseAddr(int fd) {
 
 // ----------------------------------------------------------------------------
 
-int				Listener::fd() {
-	return _fd;
-}
-
-EventCtx *		Listener::ctx() {
-	return &_ctx;
-}
-
-int				Listener::regisClient() {
+int				Listener::welcome() const
+{
 	int client_fd = -1;
-	if ((client_fd = accept(_fd, NULL, NULL)) == -1
-		|| noBlock(client_fd) == -1)
+
+	client_fd = accept(_fd, NULL, NULL);
+	if (client_fd == -1)
 	{
-		WUtils::safeClose(client_fd);
+		if (errno != EAGAIN)
+			LOG_WARN(strerror(errno));
 		return -1;
 	}
+
+	if (noBlock(client_fd) == -1)
+	{
+		LOG_WARN(strerror(errno));
+		wutils::safeClose(client_fd);
+		return -1;
+	}
+
 	return client_fd;
 }

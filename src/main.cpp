@@ -1,8 +1,8 @@
 #include "Poller.hpp"
 #include "Server.hpp"
+#include "w_logger.hpp"
 
 #include <sys/socket.h>	//socket, bind, listen, accept, recv/send
-
 #include <iostream>
 
 int main(void)
@@ -10,7 +10,7 @@ int main(void)
 	Poller		p;
 	Server		s("", 8080);
 
-	p.add(s.listener().fd(), EPOLLIN, s.listener().ctx());
+	p.add(s.listener().fd(), EPOLLIN, &s.listener().ectx());
 	while (1)
 	{
 		int rdy_n = p.wait(10000);
@@ -21,16 +21,16 @@ int main(void)
 
 		for (int i = 0; i < rdy_n; ++i)
 		{
-			EventCtx *	ctx = reinterpret_cast<EventCtx *>(rdy_events[i].data.ptr);
+			eventCtx *	ctx = static_cast<eventCtx *>(rdy_events[i].data.ptr);
 			if (rdy_events[i].events & EPOLLIN)
 			{
 				if (ctx->type == SCK_LISTENER)
 				{
-					int client_fd = s.listener().regisClient();
+					int client_fd = s.listener().welcome();
 					if (client_fd == -1)
-						continue;
+						continue ;
 					s.addClient(client_fd);
-					p.add(client_fd, EPOLLIN, s.client(client_fd)->ctx());
+					p.add(client_fd, EPOLLIN, &s.client(client_fd)->ectx());
 				}
 				else if (ctx->type == SCK_CLIENT)
 				{

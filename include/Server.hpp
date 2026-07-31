@@ -12,6 +12,7 @@ class Server
 private:
 	std::string				_host;
 	int						_port;
+	std::string				_name;
 
 	Listener				_listener;
 
@@ -28,10 +29,13 @@ public:
 	Server(std::string const &host, int port);
 	~Server();
 
-	Listener &		listener();
+	std::string	const &		name()		{ return _name; }
+	Listener &				listener()	{ return _listener; }
+
 	Client	*		client(int fd);
 
 	bool			addClient(int fd);
+	bool			rmClient(int fd);
 };
 
 #endif

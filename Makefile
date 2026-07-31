@@ -5,12 +5,12 @@ SRC_DIR = src
 MAIN_SRC_DIR = $(SRC_DIR)
 MAIN_SRC_BASE = main				\
 Server Listener Client Poller		\
-WUtils
+w_utils
 
 HEADER_BASE = 						\
 Server Listener Client Poller		\
-WUtils								\
-EventCtx
+w_utils								\
+w_eventCtx w_logger
 
 HEADERS = $(addprefix $(INCLD_DIR)/, $(addsuffix .hpp, $(HEADER_BASE)))
 
@@ -28,6 +28,10 @@ COMPILE = c++
 CFLAGS = -std=c++98 -Wall -Wextra -pedantic -Werror
 INCLD_DIR = include
 INCLUDES = -I$(INCLD_DIR)
+
+ifdef DEBUG
+	CFLAGS += -DDEBUG
+endif
 
 all: $(NAME)
 

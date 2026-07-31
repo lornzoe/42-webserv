@@ -1,47 +1,29 @@
 #include "Client.hpp"
-#include "EventCtx.hpp"
-#include "WUtils.hpp"
+#include "w_eventCtx.hpp"
+#include "w_utils.hpp"
 
 // OCF ------------------------------------------------------------------------
 
-Client::Client() : _fd(-1) {}
+Client::Client() : _server(NULL), _fd(-1) {}
 
 Client::~Client() {
-	WUtils::safeClose(_fd);
-}
-
-Client::Client(Client const &other) : _fd(-1) { (void)other; }
-
-Client &	Client::operator=(Client const &other)
-{
-	if (this == &other)
-		return *this;
-	_fd = -1;
-	return *this;
+	wutils::safeClose(_fd);
 }
 
 // Private --------------------------------------------------------------------
 
 // ----------------------------------------------------------------------------
 
-void	Client::initClient(int fd, Server const * server) {
+void	Client::initClient(Server &server, int fd) {
 	if (_fd != -1)
 	{
-		WUtils::safeClose(_fd);
+		wutils::safeClose(_fd);
 		// and reset internal state
 	}
 	_fd = fd;
-	_server = server;
+	_server = &server;
 
-	_ctx.fd = _fd;
-	_ctx.type = SCK_CLIENT;
-	_ctx.owner = this;
-}
-
-int				Client::fd() {
-	return _fd;
-}
-
-EventCtx *		Client::ctx() {
-	return &_ctx;
+	_eCtx.fd = _fd;
+	_eCtx.type = SCK_CLIENT;
+	_eCtx.owner = this;
 }
