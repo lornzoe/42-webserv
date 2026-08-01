@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/01 19:11:46 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/01 19:30:35 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/02 04:13:13 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,14 @@ void LocationDirective::print(int depth) const
 	for (int i = 0; i < depth; i++)
 		std::cout << "  ";
 	std::cout << "}" << std::endl;
+}
+
+const std::string& LocationDirective::getPath() const
+{
+	static const std::string empty;
+	if (args.size() < 2)
+		return empty;
+	return args[1];
 }
 
 const RootDirective* LocationDirective::getRoot() const

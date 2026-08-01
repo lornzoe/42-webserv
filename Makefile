@@ -6,7 +6,7 @@
 #    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/08/01 18:57:53 by lyanga           ###   ########.fr        #
+#    Updated: 2026/08/02 03:36:46 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -41,6 +41,7 @@ SRC_FILES = main.cpp \
 			LimitExceptDirective.cpp \
 			\
 			HttpStatus.cpp \
+			MimeTypes.cpp \
 			\
 			FileDescriptor.cpp \
 			Socket.cpp 
@@ -58,6 +59,9 @@ $(NAME): $(OBJS)
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(OBJ_DIR) $(DEP_DIR)
 	$(CXX) $(CXXFLAGS) -MF $(DEP_DIR)/$*.d -c $< -o $@
+
+x: $(NAME)
+	./$(NAME) configs/basic.conf
 
 clean:
 	rm -rf $(BUILD_DIR)

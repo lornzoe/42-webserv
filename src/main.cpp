@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 21:19:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/01 21:27:37 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/02 04:16:55 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,15 +18,14 @@
 #include "ListenDirective.hpp"
 #include "FileDescriptor.hpp"
 #include "Socket.hpp"
+#include "HttpStatus.hpp"
+#include "MimeTypes.hpp"
 #include <vector>
 
 #include <sstream>
 #include <sys/stat.h>
 #include <sys/select.h>
 #include <set>
-
-// TODO: Parse HTTP request (method, URL, version, headers, body).
-// See __references/notes.md "HTTP request parsing" for the target shape.
 
 typedef std::pair<std::string, int> ListenAddr;
 static const char* WILDCARD_HOST = "0.0.0.0";
@@ -54,7 +53,8 @@ static bool hasOverlappingBind(const std::vector<ListenAddr>& addrs)
 	return false;
 }
 
-static bool collectListens(const Config& config, std::vector<ListenAddr>& out)
+static bool collectListens(const Config& config, std::vector<ListenAddr>& out,
+						   std::vector<const ServerDirective *>& outServers)
 {
 	const std::vector<Directive *>& top = config.getDirectives();
 	std::set<ListenAddr> seen;
@@ -79,46 +79,79 @@ static bool collectListens(const Config& config, std::vector<ListenAddr>& out)
 			}
 
 			out.push_back(addr);
+			outServers.push_back(server);
 		}
 	}
 	return !out.empty();
 }
 
-int runServer(const std::vector<ListenAddr>& addrs)
+// Minimal stand-in for the real HTTP request parser (owned separately):
+// pulls the request-target out of the request line "METHOD <URI> VERSION".
+static std::string extractRequestUri(const std::string& request)
 {
-	FileDescriptor file("index.html");
+	std::size_t lineEnd = request.find("\r\n");
+	std::string line = (lineEnd == std::string::npos) ? request : request.substr(0, lineEnd);
+
+	std::size_t methodEnd = line.find(' ');
+	if (methodEnd == std::string::npos)
+		return "/";
+
+	std::size_t uriEnd = line.find(' ', methodEnd + 1);
+	if (uriEnd == std::string::npos)
+		return "/";
+
+	return line.substr(methodEnd + 1, uriEnd - methodEnd - 1);
+}
+
+static const std::string& contentTypeFor(const std::string& path)
+{
+	std::size_t dot = path.rfind('.');
+	if (dot == std::string::npos)
+		return MimeTypes::getContentType("");
+
+	return MimeTypes::getContentType(path.substr(dot));
+}
+
+static bool readFile(const std::string& path, std::vector<char>& body)
+{
+	FileDescriptor file(path);
 	if (file.get() == -1)
-		return 1;
+		return false;
 
 	struct stat st;
-	if (stat("index.html", &st) == -1)
-		return 1;
+	if (stat(path.c_str(), &st) == -1)
+		return false;
 
-	std::vector<char> body(st.st_size);
+	body.resize(st.st_size);
 
 	ssize_t total = 0;
 	while (total < st.st_size)
 	{
-		ssize_t bytes = read(file.get(),
-							 &body[total],
-							 st.st_size - total);
-
+		ssize_t bytes = read(file.get(), &body[total], st.st_size - total);
 		if (bytes <= 0)
-			return 1;
-
+			return false;
 		total += bytes;
 	}
+	return true;
+}
 
+static std::string buildHeader(int code, const std::string& reason,
+							   const std::string& contentType, std::size_t length)
+{
 	std::stringstream ss;
-	ss << total;
-	std::string length = ss.str();
+	ss << length;
 
-	std::string header =
-		"HTTP/1.1 200 OK\r\n"
-		"Content-Type: text/html\r\n"
-		"Content-Length: " +
-		length + HEADER_END;
+	std::stringstream statusLine;
+	statusLine << "HTTP/1.1 " << code << " " << reason << "\r\n";
 
+	return statusLine.str() +
+		"Content-Type: " + contentType + "\r\n"
+		"Content-Length: " + ss.str() + HEADER_END;
+}
+
+int runServer(const std::vector<ListenAddr>& addrs,
+			 const std::vector<const ServerDirective *>& servers)
+{
 	// Create server socket
 	std::vector<Socket *> listeners;
 	for (std::size_t i = 0; i < addrs.size(); i++)
@@ -183,11 +216,37 @@ int runServer(const std::vector<ListenAddr>& addrs)
 
 			// Receive request
 			std::string request = client.receive_all(0);
-			std::cout << "Message from client: " << request << std::endl;
+			
+			// std::cout << "Message from client: " << request << std::endl;
+
+			std::string uri = extractRequestUri(request);
+
+			ServerDirective::ResourcePath resourcePath = servers[i]->getResource(uri);
+			bool found = resourcePath.first;
+			const std::string& path = resourcePath.second;
+
+			std::vector<char> body;
+			std::string header;
+
+
+			if (found && readFile(path, body))
+			{
+				std::cout << "[webserv] return 200 for uri: " << uri << ", path: " << path << std::endl;
+				header = buildHeader(200, "OK", contentTypeFor(path), body.size());
+			}
+			else
+			{
+				std::cout << "[webserv] return 404 for uri: " << uri << std::endl;
+
+				static const std::string notFoundBody = "<html><body><h1>404 Not Found</h1></body></html>";
+				body.assign(notFoundBody.begin(), notFoundBody.end());
+				header = buildHeader(404, HttpStatus::getDefaultResponse(404), "text/html", body.size());
+			}
 
 			// Send response
 			client.send_all(header.c_str(), header.size(), 0);
-			client.send_all(body.data(), body.size(), 0);
+			if (!body.empty())
+				client.send_all(&body[0], body.size(), 0);
 		}
 	}
 
@@ -328,30 +387,39 @@ int main(int argc, char** argv)
 	}
 
 	std::vector<ListenAddr> addrs;
+	std::vector<const ServerDirective *> servers;
+
+	Config* config = NULL;
 
 	try
 	{
-		Config c(argv[1]);
+		config = new Config(argv[1]);
 		std::cout << "[webserv] Config() completed." << std::endl;
-		// c.printConfig();
-		// c.printDirectives();
+		// config->printConfig();
+		// config->printDirectives();
 
-		if (!collectListens(c, addrs))
+		if (!collectListens(*config, addrs, servers))
 		{
-			std::cerr << "Warning: no 'listen' directive found in config, "
-						 "defaulting to port 8080" << std::endl;
-			addrs.push_back(std::make_pair(std::string(WILDCARD_HOST), 8080));
+			std::cerr << "Error: no 'listen' directive found in config" << std::endl;
+			delete config;
+			return 1;
 		}
 
 		if (hasOverlappingBind(addrs))
+		{
+			delete config;
 			return 1;
+		}
 	}
 	catch (const std::exception& e)
 	{
 		std::cerr << "Error: " << e.what() << std::endl;
+		delete config;
 		return 1;
 	}
 
 	std::cout << "[webserv] running server now." << std::endl;
-	return runServer(addrs);
+	int status = runServer(addrs, servers);
+	delete config;
+	return status;
 }

@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:37:22 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/01 19:25:11 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/02 04:14:10 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,10 +22,16 @@
 #include "ClientMaxBodySizeDirective.hpp"
 #include "LocationDirective.hpp"
 #include <vector>
+#include <string>
+#include <utility>
 
 class ServerDirective : public BlockDirective
 {
 	public:
+		// first: true if path exists and is a regular file.
+		// second: resolved filesystem path; empty if unresolved.
+		typedef std::pair<bool, std::string> ResourcePath;
+
 		ServerDirective(TokenisedBlock::const_iterator& cit);
 		~ServerDirective();
 
@@ -38,6 +44,8 @@ class ServerDirective : public BlockDirective
 		std::vector<const ErrorPageDirective *> getErrorPages() const;
 		const ClientMaxBodySizeDirective* getClientMaxBodySize() const;
 		std::vector<const LocationDirective *> getLocations() const;
+
+		ResourcePath getResource(const std::string& uri) const;
 };
 
 #endif

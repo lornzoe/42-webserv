@@ -32,6 +32,7 @@ class LocationDirective : public BlockDirective
 
 		void print(int depth) const;
 
+		const std::string& getPath() const;
 		const RootDirective* getRoot() const;
 		const AliasDirective* getAlias() const;
 		const IndexDirective* getIndex() const;
