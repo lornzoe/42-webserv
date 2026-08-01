@@ -15,6 +15,11 @@
 Socket::Socket()
 {
 	fd_ = socket(AF_INET, SOCK_STREAM, 0);
+	if (fd_ != -1)
+	{
+		int opt = 1;
+		setsockopt(fd_, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
+	}
 }
 
 Socket::Socket(int fd) : fd_(fd)

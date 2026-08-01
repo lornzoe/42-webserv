@@ -51,18 +51,14 @@ static bool findFirstListen(const Config& config, std::string& host, int& port)
 		if (!server)
 			continue;
 
-		const std::vector<Directive *>& children = server->getChildren();
-		for (std::size_t j = 0; j < children.size(); j++)
+		const std::vector<const ListenDirective *> listens = server->getListens();
+		if (!listens.empty())
 		{
-			const ListenDirective* listen = dynamic_cast<const ListenDirective*>(children[j]);
-			if (listen)
-			{
-				host = listen->getHost();
-				port = listen->getPort();
-				std::cout << "[webserv] connecting to host "
-						<< host << " on port " << port << std::endl;
-				return true;
-			}
+			host = listens[0]->getHost();
+			port = listens[0]->getPort();
+			std::cout << "[webserv] connecting to host "
+					<< host << " on port " << port << std::endl;
+			return true;
 		}
 	}
 	return false;
