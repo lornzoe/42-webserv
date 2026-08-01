@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 00:00:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/27 00:00:00 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/02 03:35:37 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,10 @@ RootDirective::RootDirective(TokenisedBlock::const_iterator& cit) : SimpleDirect
 		throw std::exception(); // root takes exactly one argument
 
 	path = args[1];
+	
+	// append '/' to end of path if there isn't one
+	if (path[path.size() - 1] != '/')
+		path += '/';
 }
 
 void RootDirective::print(int depth) const
