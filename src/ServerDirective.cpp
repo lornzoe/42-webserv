@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:44:33 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/27 12:44:21 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/01 19:25:19 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,41 @@ ServerDirective::ServerDirective(TokenisedBlock::const_iterator& cit) : BlockDir
 
 ServerDirective::~ServerDirective()
 {
+}
+
+std::vector<const ListenDirective *> ServerDirective::getListens() const
+{
+	return getChildren<ListenDirective>();
+}
+
+const ServerNameDirective* ServerDirective::getServerName() const
+{
+	return getChild<ServerNameDirective>();
+}
+
+const RootDirective* ServerDirective::getRoot() const
+{
+	return getChild<RootDirective>();
+}
+
+const IndexDirective* ServerDirective::getIndex() const
+{
+	return getChild<IndexDirective>();
+}
+
+std::vector<const ErrorPageDirective *> ServerDirective::getErrorPages() const
+{
+	return getChildren<ErrorPageDirective>();
+}
+
+const ClientMaxBodySizeDirective* ServerDirective::getClientMaxBodySize() const
+{
+	return getChild<ClientMaxBodySizeDirective>();
+}
+
+std::vector<const LocationDirective *> ServerDirective::getLocations() const
+{
+	return getChildren<LocationDirective>();
 }
 
 void ServerDirective::print(int depth) const
