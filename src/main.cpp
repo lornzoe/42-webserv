@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 21:19:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/30 19:59:11 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/01 19:59:11 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,8 @@
 
 #include <sstream>
 #include <sys/stat.h>
+
+#include <sys/epoll.h>
 
 // TODO: Parse HTTP request into Method, Request URL, HTTP Version + Host,
 // Headers: Content-Length, Transfer-Encoding and Content-Type, Body
@@ -106,9 +108,16 @@ int runServer(const std::string& host, int port)
 	if (server.get() == -1)
 		return 1;
 
+	// Configure socket to be reuseable and non-blocking
+	if (!server.configure())
+		return 1;
+
 	std::cout << "[webserv] binding port" << std::endl;
+	std::stringstream port_ss;
+	port_ss << port;
+
 	// Bind socket to address
-	if (server.bind_port(port) == -1)
+	if (server.bind_port(port_ss.str()) == -1)
 		return 1;
 
 	// Listen for incoming connections
@@ -130,6 +139,128 @@ int runServer(const std::string& host, int port)
 		// Send response
 		client.send_all(header.c_str(), header.size(), 0);
 		client.send_all(body.data(), body.size(), 0);
+
+		// // Create epoll
+		// int epoll_fd = epoll_create(1);
+		// if (epoll_fd == -1)
+		// 	return 1;
+
+		// // Add server socket to epoll
+		// epoll_event ev = {};
+		// ev.events = EPOLLIN;
+		// ev.data.fd = server.get();
+
+		// if (epoll_ctl(epoll_fd,
+		// 			  EPOLL_CTL_ADD,
+		// 			  server.get(),
+		// 			  &ev) == -1)
+		// 	return 1;
+
+		// // Create event storage
+		// int MAX_EVENTS = 64;
+		// epoll_event events[MAX_EVENTS];
+
+		// while (true)
+		// {
+		// 	// Get ready file descriptors
+		// 	int ready = epoll_wait(
+		// 		epoll_fd,
+		// 		events,
+		// 		MAX_EVENTS,
+		// 		-1);
+
+		// 	if (ready == -1)
+		// 		break;
+
+		// 	// Iterate over all ready events
+		// 	for (int i = 0; i < ready; i++)
+		// 	{
+		// 		int fd = events[i].data.fd;
+		// 		if (fd == server.get())
+		// 		{
+		// 			// New connection
+		// 			// Accept every pending client
+		// 			while (true)
+		// 			{
+		// 				Socket client = server.accept_connection();
+
+		// 				if (client.get() == -1)
+		// 				{
+		// 					if (errno == EAGAIN ||
+		// 						errno == EWOULDBLOCK)
+		// 					{
+		// 						// No more clients waiting
+		// 						break;
+		// 					}
+
+		// 					break;
+		// 				}
+
+		// 				epoll_event ev = {};
+		// 				ev.events = EPOLLIN;
+		// 				ev.data.fd = client.get();
+
+		// 				epoll_ctl(epoll_fd,
+		// 						  EPOLL_CTL_ADD,
+		// 						  client.get(),
+		// 						  &ev);
+
+		// 				// Save the Socket object somewhere!
+		// 			}
+		// 		}
+		// 		else
+		// 		{
+		// 			// Existing client
+		// 			char buffer[4096];
+
+		// 			ssize_t n = recv(fd,
+		// 							 buffer,
+		// 							 sizeof(buffer),
+		// 							 0);
+
+		// 			if (n == 0)
+		// 			{
+		// 				std::cout << "Client disconnected\n";
+
+		// 				epoll_ctl(epoll_fd,
+		// 						  EPOLL_CTL_DEL,
+		// 						  fd,
+		// 						  NULL);
+
+		// 				close(fd);
+
+		// 				continue;
+		// 			}
+
+		// 			if (n == -1)
+		// 			{
+		// 				if (errno == EAGAIN ||
+		// 					errno == EWOULDBLOCK)
+		// 					continue;
+
+		// 				epoll_ctl(epoll_fd,
+		// 						  EPOLL_CTL_DEL,
+		// 						  fd,
+		// 						  NULL);
+
+		// 				close(fd);
+
+		// 				continue;
+		// 			}
+
+		// 			std::cout.write(buffer, n);
+
+		// 			send(fd,
+		// 				 header.c_str(),
+		// 				 header.size(),
+		// 				 0);
+
+		// 			send(fd,
+		// 				 body.data(),
+		// 				 body.size(),
+		// 				 0);
+		// 		}
+		// 	}
 	}
 
 	return 0;
