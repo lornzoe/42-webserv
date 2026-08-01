@@ -6,7 +6,7 @@
 #    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/07/29 12:37:33 by lyanga           ###   ########.fr        #
+#    Updated: 2026/08/01 18:57:53 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -65,16 +65,6 @@ fclean: clean
 	rm -f $(NAME)
 
 re: fclean all
-
-x: $(NAME) clean
-	@echo =================================================
-	./$(NAME) configs/commenthell.conf
-	@echo =================================================
-	./$(NAME) configs/commenthell1.conf
-
-	@echo this returned $?
-	@echo =================================================
-	./$(NAME) configs/commenthell2.conf
 
 -include $(DEPS)
 
