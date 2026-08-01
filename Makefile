@@ -6,7 +6,7 @@
 #    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/08/02 03:36:46 by lyanga           ###   ########.fr        #
+#    Updated: 2026/08/02 07:13:11 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -51,26 +51,36 @@ SRCS = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
 OBJS = $(addprefix $(OBJ_DIR)/, $(SRC_FILES:.cpp=.o))
 DEPS = $(addprefix $(DEP_DIR)/, $(SRC_FILES:.cpp=.d))
 
-all: $(NAME)
+# Config checker: only for seeing tokenisation and print info
+CHECKER_NAME     = checker
+CHECKER_SRC_FILES = $(filter-out main.cpp, $(SRC_FILES)) ConfigChecker.cpp
+CHECKER_OBJS = $(addprefix $(OBJ_DIR)/, $(CHECKER_SRC_FILES:.cpp=.o))
+CHECKER_DEPS = $(addprefix $(DEP_DIR)/, $(CHECKER_SRC_FILES:.cpp=.d))
+
+all: $(NAME) $(CHECKER_NAME)
 
 $(NAME): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
+
+$(CHECKER_NAME): $(CHECKER_OBJS)
+	$(CXX) $(CXXFLAGS) $(CHECKER_OBJS) -o $(CHECKER_NAME)
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(OBJ_DIR) $(DEP_DIR)
 	$(CXX) $(CXXFLAGS) -MF $(DEP_DIR)/$*.d -c $< -o $@
 
 x: $(NAME)
+	./$(CHECKER_NAME) configs/basic.conf
 	./$(NAME) configs/basic.conf
 
 clean:
 	rm -rf $(BUILD_DIR)
 
 fclean: clean
-	rm -f $(NAME)
+	rm -f $(NAME) $(CHECKER_NAME)
 
 re: fclean all
 
--include $(DEPS)
+-include $(DEPS) $(CHECKER_DEPS)
 
-.PHONY: all clean fclean re x
+.PHONY: all clean fclean re x checker
