@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 00:00:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/27 12:44:30 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/01 21:08:15 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,6 +46,9 @@ ListenDirective::ListenDirective(TokenisedBlock::const_iterator& cit) : SimpleDi
 	}
 	else
 		port_str = value;
+
+	if (host.empty() || host == "*")
+		host = "0.0.0.0";
 
 	if (!isAllDigits(port_str))
 		throw std::exception(); // port must be numeric

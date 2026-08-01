@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.hpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/21 19:30:23 by ypua              #+#    #+#             */
-/*   Updated: 2026/07/29 20:57:27 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/01 21:07:49 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -30,7 +30,7 @@ public:
 	~Socket();
 
 	int get();
-	int bind_port(const std::string &port);
+	int bind_port(const std::string &host, const std::string &port);
 	int listen_connection(int N);
 	Socket accept_connection();
 

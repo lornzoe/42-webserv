@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   Socket.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/21 19:30:26 by ypua              #+#    #+#             */
-/*   Updated: 2026/07/29 21:22:25 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/01 21:29:54 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Socket.hpp"
+#include <cstring>
 
 Socket::Socket()
 {
@@ -33,25 +34,45 @@ int Socket::get()
 	return fd_;
 }
 
-int Socket::bind_port(const std::string &port)
+int Socket::bind_port(const std::string &host, const std::string &port)
 {
 	// Configure hints
 	struct addrinfo hints = {};
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
+	// only matters when node is NULL, it is ignored otherwise.
 	hints.ai_flags = AI_PASSIVE;
 
-	// Define server address
-	struct addrinfo *res = NULL;
-	if (getaddrinfo(NULL, port.c_str(), &hints, &res) != 0)
-		return -1;
+	const char *node = host.empty() ? NULL : host.c_str();
 
-	// Bind to the address
-	int status = 1;
-	if (bind(fd_, res->ai_addr, res->ai_addrlen) == -1)
-		status = -1;
+	struct addrinfo *res = NULL;
+	int rc = getaddrinfo(node, port.c_str(), &hints, &res);
+	if (rc != 0)
+	{
+		std::cerr << "[webserv] getaddrinfo(" << host << ":" << port
+				  << "): " << gai_strerror(rc) << std::endl;
+		return -1;
+	}
+
+	// bind the first address that works
+	int status = -1;
+	int saved_errno = 0;
+	for (struct addrinfo *p = res; p != NULL; p = p->ai_next)
+	{
+		if (bind(fd_, p->ai_addr, p->ai_addrlen) == 0)
+		{
+			status = 1;
+			break;
+		}
+		saved_errno = errno;
+	}
 
 	freeaddrinfo(res);
+
+	if (status == -1)
+		std::cerr << "[webserv] bind(" << host << ":" << port
+				  << "): " << std::strerror(saved_errno) << std::endl;
+
 	return status;
 }
 

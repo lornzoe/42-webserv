@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 21:19:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/01 19:59:11 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/01 21:27:37 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,31 +22,43 @@
 
 #include <sstream>
 #include <sys/stat.h>
+#include <sys/select.h>
+#include <set>
 
-#include <sys/epoll.h>
+// TODO: Parse HTTP request (method, URL, version, headers, body).
+// See __references/notes.md "HTTP request parsing" for the target shape.
 
-// TODO: Parse HTTP request into Method, Request URL, HTTP Version + Host,
-// Headers: Content-Length, Transfer-Encoding and Content-Type, Body
+typedef std::pair<std::string, int> ListenAddr;
+static const char* WILDCARD_HOST = "0.0.0.0";
 
-// Example:
-// GET /favicon.ico HTTP/1.1
-// Host: localhost:8080
-// User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0
-// Accept: image/avif,image/webp,image/png,image/svg+xml,image/*;q=0.8,*/*;q=0.5
-// Accept-Language: en-US,en;q=0.5
-// Accept-Encoding: gzip, deflate, br, zstd
-// Connection: keep-alive
-// Referer: http://localhost:8080/
-// Sec-Fetch-Dest: image
-// Sec-Fetch-Mode: no-cors
-// Sec-Fetch-Site: same-origin
-// Priority: u=6
+static bool hasOverlappingBind(const std::vector<ListenAddr>& addrs)
+{
+	for (std::size_t i = 0; i < addrs.size(); i++)
+	{
+		if (addrs[i].first != WILDCARD_HOST)
+			continue;
 
-// Finds the first "listen" directive under the first "server" block in the
-// parsed config. Returns false if none is found (caller should fall back).
-static bool findFirstListen(const Config& config, std::string& host, int& port)
+		for (std::size_t j = 0; j < addrs.size(); j++)
+		{
+			if (addrs[j].second == addrs[i].second
+				&& addrs[j].first != WILDCARD_HOST)
+			{
+				std::cerr << "[webserv] Error: cannot listen on both "
+						  << WILDCARD_HOST << ":" << addrs[i].second << " and "
+						  << addrs[j].first << ":" << addrs[j].second
+						  << " (overlapping bind)" << std::endl;
+				return true;
+			}
+		}
+	}
+	return false;
+}
+
+static bool collectListens(const Config& config, std::vector<ListenAddr>& out)
 {
 	const std::vector<Directive *>& top = config.getDirectives();
+	std::set<ListenAddr> seen;
+
 	for (std::size_t i = 0; i < top.size(); i++)
 	{
 		const ServerDirective* server = dynamic_cast<const ServerDirective*>(top[i]);
@@ -54,22 +66,26 @@ static bool findFirstListen(const Config& config, std::string& host, int& port)
 			continue;
 
 		const std::vector<const ListenDirective *> listens = server->getListens();
-		if (!listens.empty())
+		for (std::size_t j = 0; j < listens.size(); j++)
 		{
-			host = listens[0]->getHost();
-			port = listens[0]->getPort();
-			std::cout << "[webserv] connecting to host "
-					<< host << " on port " << port << std::endl;
-			return true;
+			ListenAddr addr = std::make_pair(listens[j]->getHost(),
+											 listens[j]->getPort());
+
+			if (!seen.insert(addr).second)
+			{
+				std::cout << "[webserv] note: " << addr.first << ":" << addr.second
+						  << " already bound by an earlier server block" << std::endl;
+				continue;
+			}
+
+			out.push_back(addr);
 		}
 	}
-	return false;
+	return !out.empty();
 }
 
-int runServer(const std::string& host, int port)
+int runServer(const std::vector<ListenAddr>& addrs)
 {
-	(void)host; // Socket::bind_port only supports INADDR_ANY for now
-
 	FileDescriptor file("index.html");
 	if (file.get() == -1)
 		return 1;
@@ -104,41 +120,79 @@ int runServer(const std::string& host, int port)
 		length + HEADER_END;
 
 	// Create server socket
-	Socket server;
-	if (server.get() == -1)
-		return 1;
+	std::vector<Socket *> listeners;
+	for (std::size_t i = 0; i < addrs.size(); i++)
+	{
+		const std::string& host = addrs[i].first;
+		const int port = addrs[i].second;
 
-	// Configure socket to be reuseable and non-blocking
-	if (!server.configure())
-		return 1;
+		Socket* server = new Socket();
+		std::stringstream port_ss;
+		port_ss << port;
 
-	std::cout << "[webserv] binding port" << std::endl;
-	std::stringstream port_ss;
-	port_ss << port;
+		if (server->get() == -1
+			|| !server->configure()
+			|| server->bind_port(host, port_ss.str()) == -1
+			|| server->listen_connection(SOMAXCONN) == -1)
+		{
+			std::cerr << "[webserv] Error: failed to listen on "
+					  << host << ":" << port << std::endl;
+			delete server;
+			for (std::size_t j = 0; j < listeners.size(); j++)
+				delete listeners[j];
+			return 1;
+		}
 
-	// Bind socket to address
-	if (server.bind_port(port_ss.str()) == -1)
-		return 1;
+		std::cout << "[webserv] listening on " << host << ":" << port << std::endl;
+		listeners.push_back(server);
+	}
 
-	// Listen for incoming connections
-	if (server.listen_connection(SOMAXCONN) == -1)
+	if (listeners.empty())
 		return 1;
 
 	std::cout << "[webserv] main loop, ctrl + c to end" << std::endl;
 	while (true)
 	{
-		// Accept Client Connection
-		Socket client = server.accept_connection();
-		if (client.get() == -1)
+		fd_set readfds;
+		FD_ZERO(&readfds);
+		int maxfd = -1;
+		for (std::size_t i = 0; i < listeners.size(); i++)
+		{
+			int fd = listeners[i]->get();
+			FD_SET(fd, &readfds);
+			if (fd > maxfd)
+				maxfd = fd;
+		}
+
+		if (select(maxfd + 1, &readfds, NULL, NULL, NULL) == -1)
+		{
+			for (std::size_t j = 0; j < listeners.size(); j++)
+				delete listeners[j];
 			return 1;
+		}
 
-		// Receive request
-		std::string request = client.receive_all(0);
-		std::cout << "Message from client: " << request << std::endl;
+		for (std::size_t i = 0; i < listeners.size(); i++)
+		{
+			if (!FD_ISSET(listeners[i]->get(), &readfds))
+				continue;
 
-		// Send response
-		client.send_all(header.c_str(), header.size(), 0);
-		client.send_all(body.data(), body.size(), 0);
+			// accept connection
+			Socket client = listeners[i]->accept_connection();
+			if (client.get() == -1)
+				continue;
+
+			// Receive request
+			std::string request = client.receive_all(0);
+			std::cout << "Message from client: " << request << std::endl;
+
+			// Send response
+			client.send_all(header.c_str(), header.size(), 0);
+			client.send_all(body.data(), body.size(), 0);
+		}
+	}
+
+		for (std::size_t i = 0; i < listeners.size(); i++)
+			delete listeners[i];
 
 		// // Create epoll
 		// int epoll_fd = epoll_create(1);
@@ -261,8 +315,7 @@ int runServer(const std::string& host, int port)
 		// 				 0);
 		// 		}
 		// 	}
-	}
-
+		
 	return 0;
 }
 
@@ -274,8 +327,7 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	std::string host;
-	int port = 8080;
+	std::vector<ListenAddr> addrs;
 
 	try
 	{
@@ -284,13 +336,15 @@ int main(int argc, char** argv)
 		// c.printConfig();
 		// c.printDirectives();
 
-		if (!findFirstListen(c, host, port))
+		if (!collectListens(c, addrs))
 		{
 			std::cerr << "Warning: no 'listen' directive found in config, "
 						 "defaulting to port 8080" << std::endl;
-			host = "";
-			port = 8080;
+			addrs.push_back(std::make_pair(std::string(WILDCARD_HOST), 8080));
 		}
+
+		if (hasOverlappingBind(addrs))
+			return 1;
 	}
 	catch (const std::exception& e)
 	{
@@ -299,5 +353,5 @@ int main(int argc, char** argv)
 	}
 
 	std::cout << "[webserv] running server now." << std::endl;
-	return runServer(host, port);
+	return runServer(addrs);
 }
