@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 12:22:58 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/29 12:42:33 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/01 19:27:41 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,13 @@ LimitExceptDirective::LimitExceptDirective(TokenisedBlock::const_iterator &cit) 
 {
 	if (args.size() > 4)
 		throw std::exception(); // limit_except can take up to 3 args
+	for (std::size_t i = 1; i < args.size(); i++)
+		methods.push_back(args[i]);
+}
+
+const std::vector<std::string>& LimitExceptDirective::getMethods() const
+{
+	return methods;
 }
 
 void LimitExceptDirective::print(int depth) const
