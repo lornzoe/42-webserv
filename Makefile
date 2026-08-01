@@ -29,6 +29,7 @@ SRC_FILES = main.cpp \
 			BlockDirective.cpp \
 			SimpleDirective.cpp \
 			ServerDirective.cpp \
+			LocationDirective.cpp \
 			ListenDirective.cpp \
 			ServerNameDirective.cpp \
 			AliasDirective.cpp \
