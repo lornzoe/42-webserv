@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/30 18:34:55 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/02 07:17:48 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@
 #include <sstream>
 #include <fstream>
 #include <stack>
-#include <exception>
+#include <stdexcept>
 
 namespace {
 	bool checkBracesAndQuotations(const std::vector<std::string>& lines)
@@ -222,13 +222,13 @@ namespace {
 			DirectiveRules::Context current_context = context_stack.top();
 
 			if (!DirectiveRules::canExist(dir))
-				throw std::exception(); // invalid/unhandled directive
+				throw std::runtime_error("unknown directive '" + dir + "'");
 			if (DirectiveRules::isSimpleType(dir) && cit->back() != ";")
-				throw std::exception(); // simple directive mismatch; expecting ;, saw cit->back() (usually curly brace);
+				throw std::runtime_error("'" + dir + "': expected ';' terminator, got '" + cit->back() + "'");
 			if (DirectiveRules::isBlockType(dir) && cit->back() != "{")
-				throw std::exception(); // block directive mismatch; expecting {, saw cit->back() (usually semicolon);
+				throw std::runtime_error("'" + dir + "': expected '{' to open block, got '" + cit->back() + "'");
 			if (!DirectiveRules::isValidInContext(dir, current_context))
-				throw std::exception(); // dir is not in allowed context (current context).
+				throw std::runtime_error("'" + dir + "' is not allowed in this context");
 
 			if (DirectiveRules::isBlockType(dir))
 			{
@@ -249,10 +249,8 @@ Config::Config(char *filename)
 	// load the file
 	std::ifstream infile(filename);
 
-	if (!infile) { 
-		std::cerr << "Error: Could not open the file!" << std::endl;
-		throw std::exception(); // replace this with a better exception
-	}
+	if (!infile)
+		throw std::runtime_error("Config: could not open file '" + std::string(filename) + "'");
 
 	std::vector<std::string> file;
 	{
@@ -269,14 +267,14 @@ Config::Config(char *filename)
 
 	// check contents of file
     if (!checkBracesAndQuotations(file))
-        throw std::exception(); // replace with better defined exception
+        throw std::runtime_error("Config: mismatched braces or quotes in file '" + std::string(filename) + "'");
 
 	// tokenise it
     this->directives_string = generateTokenisedDirectives(file);
 
 	// validate the tokens
 	if (!validateDirectiveStrings(this->directives_string)) // many validation-specific exceptions are here.
-		throw std::exception(); // unexpected error? stack did not end up at CONTEXT_MAIN.
+		throw std::runtime_error("Config: unbalanced blocks in file '" + std::string(filename) + "' (a block was never closed)");
 
 	/*
 		TODO: Ensure parameters in config have:

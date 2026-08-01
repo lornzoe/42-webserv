@@ -6,13 +6,13 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:44:33 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/02 04:14:10 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/02 07:18:30 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ServerDirective.hpp"
 #include "DirectiveFactory.hpp"
-#include <exception>
+#include <stdexcept>
 #include <iostream>
 #include <sys/stat.h>
 
@@ -51,7 +51,7 @@ ServerDirective::ServerDirective(TokenisedBlock::const_iterator& cit) : BlockDir
 {
 	// validation
 	if (args[0] != "server")
-		throw std::exception(); // first line necessary elements are not detected
+		throw std::runtime_error("server: malformed server block (first token was not 'server')");
 }
 
 ServerDirective::~ServerDirective()

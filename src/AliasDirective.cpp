@@ -6,18 +6,18 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 00:00:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/27 12:44:45 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/02 07:16:59 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "AliasDirective.hpp"
-#include <exception>
+#include <stdexcept>
 #include <iostream>
 
 AliasDirective::AliasDirective(TokenisedBlock::const_iterator& cit) : SimpleDirective(cit)
 {
 	if (args.size() != 2)
-		throw std::exception(); // alias takes exactly one argument
+		throw std::runtime_error("alias: expects exactly one argument (e.g. 'alias /var/www/html;')");
 
 	path = args[1];
 }

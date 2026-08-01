@@ -6,18 +6,18 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 00:00:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/27 12:44:33 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/02 07:18:11 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "IndexDirective.hpp"
-#include <exception>
+#include <stdexcept>
 #include <iostream>
 
 IndexDirective::IndexDirective(TokenisedBlock::const_iterator& cit) : SimpleDirective(cit)
 {
 	if (args.size() < 2)
-		throw std::exception(); // index requires at least one file
+		throw std::runtime_error("index: requires at least one file argument");
 
 	for (std::size_t i = 1; i < args.size(); i++)
 		files.push_back(args[i]);
