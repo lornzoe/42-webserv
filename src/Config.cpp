@@ -6,13 +6,14 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/02 08:14:14 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/02 09:06:20 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 #include "DirectiveRules.hpp"
 #include "DirectiveFactory.hpp"
+#include "QuoteTracker.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -23,32 +24,25 @@
 namespace {
 	bool checkBracesAndQuotations(const std::vector<std::string>& lines)
 	{
-		bool single_quotes = false;
-		bool double_quotes = false;
+		QuoteTracker tracker;
 		int indent = 0;
 		for (std::vector<std::string>::const_iterator it = lines.begin(); it != lines.end(); ++it)
 		{
+			tracker.newLine();
 			for (std::string::const_iterator cit = it->begin(); cit != it->end(); ++cit)
 			{
-				if (*cit == '\'')
+				if (!tracker.feed(*cit))
+					continue;
+
+				if (*cit == '{')
 				{
-					if (!double_quotes)
-						single_quotes = !single_quotes;
-				}	
-				else if (*cit == '"')
-				{
-					if (!single_quotes)
-						double_quotes = !double_quotes;
-				}
-				else if (*cit == '{')
-				{
-					if (single_quotes || double_quotes)
-							continue;
+					if (tracker.inQuotes())
+						continue;
 					indent++;
 				}
 				else if (*cit == '}')
 				{
-					if (single_quotes || double_quotes)
+					if (tracker.inQuotes())
 						continue;
 					if (indent == 0)
 						return false;
@@ -56,32 +50,24 @@ namespace {
 				}
 			}
 		}
-		return (!single_quotes && !double_quotes && indent == 0);
+		return (!tracker.inQuotes() && indent == 0);
 	}
 
 	void stripComments(std::vector<std::string>& lines)
 	{
-		bool single_quotes = false;
-		bool double_quotes = false;
 		for (std::vector<std::string>::iterator it = lines.begin(); it != lines.end(); ++it)
 		{
+			QuoteTracker tracker;
 			std::size_t pos = std::string::npos;
 			std::size_t idx = 0;
 			for (std::string::const_iterator cit = it->begin(); cit != it->end(); ++cit, ++idx)
 			{
-				if (*cit == '\'')
-				{
-					if (!double_quotes)
-						single_quotes = !single_quotes;
-				}
-				else if (*cit == '"')
-				{
-					if (!single_quotes)
-						double_quotes = !double_quotes;
-				}
+				if (!tracker.feed(*cit))
+					continue;
+
 				if (*cit == '#')
 				{
-					if (single_quotes || double_quotes)
+					if (tracker.inQuotes())
 							continue;
 					pos = idx;
 					break;
@@ -94,24 +80,18 @@ namespace {
 
 	void stripEmptyLines(std::vector<std::string>& lines)
 	{
-		bool single_quotes = false;
-		bool double_quotes = false;
 		for (std::vector<std::string>::iterator it = lines.begin(); it != lines.end(); )
 		{
+			QuoteTracker tracker;
 			bool is_empty = true;
 			for (std::string::const_iterator cit = it->begin(); cit != it->end(); ++cit)
 			{
-				if (*cit == '\'')
+				if (!tracker.feed(*cit))
 				{
-					if (!double_quotes)
-						single_quotes = !single_quotes;
-				}	
-				else if (*cit == '"')
-				{
-					if (!single_quotes)
-						double_quotes = !double_quotes;
+					is_empty = false;
+					continue;
 				}
-				if (!std::isspace(static_cast<unsigned char>(*cit)) || single_quotes || double_quotes)
+				if (!std::isspace(static_cast<unsigned char>(*cit)) || tracker.inQuotes())
 					is_empty = false;
 			}
 			if (is_empty)
@@ -124,36 +104,22 @@ namespace {
 	std::vector<std::vector<std::string> > generateTokenisedDirectives(const std::vector<std::string>& lines)
 	{
 		std::vector<std::vector<std::string> > tokenised_lines;
-		bool single_quotes = false;
-		bool double_quotes = false;
 		for (std::vector<std::string>::const_iterator it = lines.begin(); it != lines.end(); ++it)
 		{
+			QuoteTracker tracker;
 			std::vector<std::string> tokenised_line;
 			std::string current_token;
 			// iterate by the character
 			for (std::string::const_iterator cit = it->begin(); cit != it->end(); ++cit)
 			{
 				char c = *cit;
-				if (c == '\'')
-				{
-					if (!double_quotes)
-						single_quotes = !single_quotes;
+				if (!tracker.feed(c))
+					continue;
+
+				if (tracker.inQuotes() || c == '\'' || c == '"')
 					current_token += c;
-				}
-				else if (c == '"')
+				else if (std::isspace(static_cast<unsigned char>(c)))
 				{
-					if (!single_quotes)
-						double_quotes = !double_quotes;
-					current_token += c;
-				}
-				else if (single_quotes || double_quotes) // everything stays together in quotes
-				{
-					current_token += c;
-				}
-				else if (std::isspace(static_cast<unsigned char>(c))) 
-				{
-					// if whitespace, push token and clear current
-					// keep the 2 conditions seperate so that multiple whitespace in a row get caught
 					if (!current_token.empty())
 					{
 						tokenised_line.push_back(current_token);
@@ -167,7 +133,6 @@ namespace {
 						tokenised_line.push_back(current_token);
 						current_token.clear();
 					}
-					// std::string s(1, c); // save it as its own string
 					tokenised_line.push_back(std::string(1, c));
 				}
 				else

@@ -6,7 +6,7 @@
 #    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/08/02 07:13:11 by lyanga           ###   ########.fr        #
+#    Updated: 2026/08/02 09:07:42 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -23,8 +23,10 @@ DEP_DIR   = $(BUILD_DIR)/deps
 # Explicitly list your source files here (just the file names, no paths)
 SRC_FILES = main.cpp \
 			Config.cpp \
+			QuoteTracker.cpp \
 			DirectiveFactory.cpp \
 			DirectiveRules.cpp \
+			\
 			Directive.cpp \
 			BlockDirective.cpp \
 			SimpleDirective.cpp \
