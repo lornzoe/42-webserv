@@ -8,9 +8,9 @@
 int main(void)
 {
 	Poller		p;
-	Server		s("", 8080);
+	Server		s0("", 8080);
 
-	p.add(s.listener().fd(), EPOLLIN, &s.listener().ectx());
+	p.add(s0.listener().fd(), EPOLLIN, &s0.listener().ectx());
 	while (1)
 	{
 		int rdy_n = p.wait(10000);
@@ -26,21 +26,59 @@ int main(void)
 			{
 				if (ctx->type == SCK_LISTENER)
 				{
-					int client_fd = s.listener().welcome();
+					Listener &	lis = *(static_cast<Listener *>(ctx->owner));
+					Server &	ser = lis.server();
+					int client_fd = lis.welcome();
 					if (client_fd == -1)
 						continue ;
-					s.addClient(client_fd);
-					p.add(client_fd, EPOLLIN, &s.client(client_fd)->ectx());
+					ser.addClient(client_fd);
+					p.add(client_fd, EPOLLIN, &ser.client(client_fd)->ectx());
 				}
 				else if (ctx->type == SCK_CLIENT)
 				{
-					unsigned char	buf[42];
-					Client *client = static_cast<Client *>(ctx->owner);
-					ssize_t bytesrd = recv(client->fd(), buf, 41, 0);
-					buf[bytesrd] = '\0';
-					std::cout << buf;
+					Client &	cli = *(static_cast<Client *>(ctx->owner));
+					if (cli.isClosing())
+						continue;
+					int ret = cli.recv1();
+					if (ret <= 0)
+						cli.toClose();
 				}
 			}
+			if (rdy_events[i].events & EPOLLOUT)
+			{
+				if (ctx->type == SCK_CLIENT)
+				{
+					Client &	cli = *(static_cast<Client *>(ctx->owner));
+					if (cli.isClosing())
+						continue;
+					int ret = cli.send1();
+					(void)ret;
+					if (!cli.isSending())
+						p.mod(cli.fd(), EPOLLIN, &cli.ectx());
+				}
+			}
+		}
+
+		client_map_t::iterator i = s0.clients().begin();
+		while (i != s0.clients().end())
+		{
+			Client & cli = i->second;
+			if (cli.isClosing())
+			{
+				int cls_fd = cli.fd();
+				++i;
+				p.del(cls_fd);
+				s0.rmClient(cls_fd);
+				continue;
+			}
+			std::string const & inbox = cli.readInbox();
+			if (inbox.size() >= 10 && !cli.isSending())
+			{
+				std::string tmp_resp = "Responding to inbox size 10\n";
+				cli.req_resp(10, tmp_resp);
+				p.mod(cli.fd(), EPOLLOUT | EPOLLIN, &cli.ectx());
+			}
+			++i;
 		}
 	}
 	return 0;

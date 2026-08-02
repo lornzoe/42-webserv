@@ -7,6 +7,8 @@
 #include <string>
 #include <map>
 
+typedef std::map<int, Client>	client_map_t;
+
 class Server
 {
 private:
@@ -15,8 +17,6 @@ private:
 	std::string				_name;
 
 	Listener				_listener;
-
-	typedef std::map<int, Client>	client_map_t;
 	client_map_t			_clients;
 
 	// No default construction
@@ -32,6 +32,7 @@ public:
 	std::string	const &		name()		{ return _name; }
 	Listener &				listener()	{ return _listener; }
 
+	client_map_t &	clients() { return _clients; }
 	Client	*		client(int fd);
 
 	bool			addClient(int fd);

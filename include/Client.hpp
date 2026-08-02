@@ -8,6 +8,11 @@
 
 class Server;
 
+enum cli_status {
+	SENDING = 1 << 0,
+	CLOSING = 1 << 1
+};
+
 class Client
 {
 private:
@@ -15,8 +20,12 @@ private:
 	int				_fd;
 	eventCtx		_eCtx;
 
+	int				_status;
+
 	std::string		_inbox;
-	std::string		_outbox;
+	std::string		_outBox;
+	int				_outPend;
+	int				_outCursor;
 
 public:
 	Client();
@@ -31,6 +40,15 @@ public:
 	eventCtx &		ectx()		{ return _eCtx; }
 
 	void			initClient(Server &server, int fd);
+	
+	std::string const &		readInbox() const { return _inbox; }
+	bool					isSending() const { return _status & SENDING; }
+	bool					isClosing() const { return _status & CLOSING; }
+	void					toClose() { _status |= CLOSING; }
+
+	ssize_t			recv1();
+	void			req_resp(size_t req_offset, std::string const &resp);
+	ssize_t			send1();
 };
 
 #endif
