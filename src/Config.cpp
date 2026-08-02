@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/02 07:17:48 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/02 08:14:14 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,13 +67,13 @@ namespace {
 		{
 			std::size_t pos = std::string::npos;
 			std::size_t idx = 0;
-			for (std::string::const_iterator cit = it->begin(); cit != it->end(); ++cit)
+			for (std::string::const_iterator cit = it->begin(); cit != it->end(); ++cit, ++idx)
 			{
 				if (*cit == '\'')
 				{
 					if (!double_quotes)
 						single_quotes = !single_quotes;
-				}	
+				}
 				else if (*cit == '"')
 				{
 					if (!single_quotes)
