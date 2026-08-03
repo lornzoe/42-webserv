@@ -18,7 +18,7 @@ Server::~Server() {}
 
 // ----------------------------------------------------------------------------
 
-bool			Server::addClient(int fd)
+Client *		Server::addClient(int fd)
 {
 	std::pair<client_map_t::iterator, bool>	kv;
 
@@ -27,11 +27,11 @@ bool			Server::addClient(int fd)
 	{
 		LOG_WARN("Cannot add duplicate Client fd " << fd << " to Server " << _name);
 		close(fd);
-		return false;
+		return NULL;
 	}
 	kv.first->second.initClient(*this, fd);
 	LOG_INFO("Added Client fd " << fd << " to Server " << _name);
-	return true;
+	return &kv.first->second;
 }
 
 //remove client from server storage

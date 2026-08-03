@@ -35,7 +35,7 @@ public:
 	client_map_t &	clients() { return _clients; }
 	Client	*		client(int fd);
 
-	bool			addClient(int fd);
+	Client *		addClient(int fd);
 	bool			rmClient(int fd);
 };
 

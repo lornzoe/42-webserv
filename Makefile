@@ -3,11 +3,11 @@ NAME = webserv
 SRC_DIR = src
 
 MAIN_SRC_DIR = $(SRC_DIR)
-MAIN_SRC_BASE = main				\
+MAIN_SRC_BASE = main WSApp			\
 Server Listener Client Poller		\
 w_utils
 
-HEADER_BASE = 						\
+HEADER_BASE = WSApp					\
 Server Listener Client Poller		\
 w_utils								\
 w_eventCtx w_logger
