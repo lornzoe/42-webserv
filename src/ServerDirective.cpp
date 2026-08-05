@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:44:33 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/02 07:18:30 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/06 02:20:40 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,14 @@ ServerDirective::ServerDirective(TokenisedBlock::const_iterator& cit) : BlockDir
 	// validation
 	if (args[0] != "server")
 		throw std::runtime_error("server: malformed server block (first token was not 'server')");
+
+	requireAtLeastOne<ListenDirective>("server", "listen");
+
+	requireAtMostOne<RootDirective>("server", "root");
+	requireAtMostOne<IndexDirective>("server", "index");
+	requireAtMostOne<ClientMaxBodySizeDirective>("server", "client_max_body_size");
+	requireAtMostOne<ReturnDirective>("server", "return");
+	requireAtMostOne<ServerNameDirective>("server", "server_name");
 }
 
 ServerDirective::~ServerDirective()

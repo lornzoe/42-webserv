@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 23:12:29 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/01 19:15:12 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/06 02:18:04 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 #include <cstddef>
+#include <stdexcept>
 
 class BlockDirective : public Directive
 {
@@ -52,6 +53,25 @@ class BlockDirective : public Directive
 					return match;
 			}
 			return NULL;
+		}
+
+		// Checks for a block's own contents. 
+		// Like getChild/getChildren, these only see direct children.
+		// We'll see if this suffices.
+		template <typename T>
+		void requireAtMostOne(const std::string& blockName, const std::string& directiveName) const
+		{
+			if (getChildren<T>().size() > 1)
+				throw std::runtime_error(blockName + ": duplicate '" + directiveName
+										 + "' directive (only one allowed per block)");
+		}
+
+		template <typename T>
+		void requireAtLeastOne(const std::string& blockName, const std::string& directiveName) const
+		{
+			if (getChildren<T>().empty())
+				throw std::runtime_error(blockName + ": requires at least one '"
+										 + directiveName + "' directive");
 		}
 };
 

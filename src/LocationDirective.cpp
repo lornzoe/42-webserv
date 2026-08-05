@@ -6,15 +6,33 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/01 19:11:46 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/02 04:13:13 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/06 02:20:32 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "LocationDirective.hpp"
+#include <stdexcept>
 #include <iostream>
 
 LocationDirective::LocationDirective(TokenisedBlock::const_iterator& cit) : BlockDirective(cit)
 {
+	// validation
+	if (args[0] != "location")
+		throw std::runtime_error("location: malformed location block (first token was not 'location')");
+	if (args.size() != 2)
+		throw std::runtime_error("location: expects exactly one path argument (e.g. 'location /uploads {')");
+
+	requireAtMostOne<RootDirective>("location", "root");
+	requireAtMostOne<AliasDirective>("location", "alias");
+	requireAtMostOne<IndexDirective>("location", "index");
+	requireAtMostOne<ClientMaxBodySizeDirective>("location", "client_max_body_size");
+	requireAtMostOne<ReturnDirective>("location", "return");
+	requireAtMostOne<LimitExceptDirective>("location", "limit_except");
+
+	// even though getResource() prefers alias,
+	// throw an error so that we won't have to deal with this ambiguity.
+	if (getRoot() && getAlias())
+		throw std::runtime_error("location: 'root' and 'alias' cannot both be set in the same block");
 }
 
 void LocationDirective::print(int depth) const
@@ -36,9 +54,7 @@ void LocationDirective::print(int depth) const
 
 const std::string& LocationDirective::getPath() const
 {
-	static const std::string empty;
-	if (args.size() < 2)
-		return empty;
+	// the constructor guarantees args[1] exists
 	return args[1];
 }
 

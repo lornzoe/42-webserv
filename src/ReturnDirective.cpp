@@ -6,11 +6,12 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 00:00:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/02 07:18:26 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/06 02:18:54 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ReturnDirective.hpp"
+#include "HttpStatus.hpp"
 #include <stdexcept>
 #include <cctype>
 #include <cstdlib>
@@ -29,7 +30,13 @@ ReturnDirective::ReturnDirective(TokenisedBlock::const_iterator& cit) : SimpleDi
 		if (!std::isdigit(static_cast<unsigned char>(*it)))
 			throw std::runtime_error("return: status code must be numeric (got '" + code_str + "')");
 	}
+	if (code_str.size() > 3)
+		throw std::runtime_error("return: unknown HTTP status code '" + code_str + "'");
+
 	code = std::atoi(code_str.c_str());
+
+	if (!HttpStatus::isKnown(code))
+		throw std::runtime_error("return: unknown HTTP status code '" + code_str + "'");
 
 	if (args.size() == 3)
 		body = args[2];

@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/02 09:06:20 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/06 02:24:53 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -246,6 +246,16 @@ Config::Config(char *filename)
 			- valid parameters per directive
 			- ensure each context has the minimum, correct number of directives
 			- ensure information from multiple directives do not clash with each other (e.g. listen 0.0.0.0)
+		update: checks are handled on each directive constructor. 
+				block directives check there is at most/at least x directive as a direct child in their block.
+
+		TODO: ensure info from multiple directives do not clash with each other
+		(e.g. listen 0.0.0.0 vs listen 127.0.0.1 on the same port, or two locations sharing a prefix).
+		
+		These span server blocks, so they should be implemented here in Config
+		rather than in a single directive.
+		hasOverlappingBind() in main.cpp is the existing function to reference for this.
+
 	*/
 
 	// create the directives to fill up config
