@@ -6,7 +6,7 @@
 /*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:55 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/04 20:07:00 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/05 20:19:21 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,7 @@ private:
 	// bool is_complete;
 	// bool is_chunked;
 	// size_t content_length;
+	std::string toLowercase(std::string str);
 };
 
 #endif
