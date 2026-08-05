@@ -30,24 +30,23 @@ private:
 public:
 	Client();
 	~Client();
-
 	//faux copy constructor & assignment equivalent to default
-	Client(Client const & other) : _fd(-1) { (void)other; }
-	Client &	operator=(Client const &other) { if (this != &other) _fd = -1; return *this; }
+	Client(Client const & other);
+	Client &	operator=(Client const &other);
+
+	void			initClient(Server &server, int fd);
 
 	Server &		server()	{ return *_server; }
 	int				fd() 		{ return _fd; }
 	eventCtx &		ectx()		{ return _eCtx; }
-
-	void			initClient(Server &server, int fd);
 	
 	std::string const &		readInbox() const { return _inbox; }
-	bool					isSending() const { return _status & SENDING; }
-	bool					isClosing() const { return _status & CLOSING; }
-	void					toClose() { _status |= CLOSING; }
+	bool					isStat(int flag) const { return ((_status & flag) == flag); }
+	void					addStat(int flag) { _status |= flag; }
+	void					rmStat(int flag) { _status &= ~flag; }
 
 	ssize_t			recv1();
-	void			req_resp(size_t req_offset, std::string const &resp);
+	void			tmp_req_for_resp(size_t req_offset, std::string const &resp);
 	ssize_t			send1();
 };
 

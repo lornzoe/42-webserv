@@ -6,19 +6,25 @@
 
 # include <csignal>
 # include <vector>
+# include <map>
 
 struct epoll_res {
 	int								n;
-	struct epoll_event 	const *		ep_res;
+	struct epoll_event 	const *		ep_ev;
 };
 
 class WSApp
 {
 private:
-	Poller					_p;
-	std::vector<Server *>	_servs;
-	
+	Poller							_pol;
+	std::vector<Server *>			_servs;
 	static volatile sig_atomic_t	g_shutdownReq;
+
+	void		regisListeners();
+	epoll_res	wait(int timeout_ms);
+
+	int		hndl_Lis(eventCtx *ctx);
+	int		hndl_Cli(eventCtx *ctx, uint32_t events);
 
 	WSApp(WSApp const & other);
 	WSApp &	operator=(WSApp const & other);
@@ -27,16 +33,9 @@ public:
 	WSApp();
 	~WSApp();
 
+	//to eventually pass the entire config object, and construct all
 	void		addServ(std::string const &host, int port);
-	void		regisListeners();
-	epoll_res	wait4events(int timeout_ms);
-
-	int		hndl_Lis(eventCtx *ctx);
-	int		hndl_Cli(eventCtx *ctx, uint32_t events);
-
-	Poller &							poller() { return _p; }
-	std::vector<Server *>::iterator		servBgn() { return _servs.begin(); }
-	std::vector<Server *>::iterator		servEnd() { return _servs.end(); }
+	int			run();
 };
 
 #endif

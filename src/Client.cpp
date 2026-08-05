@@ -8,7 +8,25 @@
 
 // OCF ------------------------------------------------------------------------
 
-Client::Client() : _server(NULL), _fd(-1), _status(0), _outPend(0), _outCursor(0) {}
+Client::Client()
+: _server(NULL), _fd(-1), _eCtx(eventCtx()), _status(0), _outPend(0), _outCursor(0) {}
+
+Client::Client(Client const & other)
+: _server(NULL), _fd(-1), _eCtx(eventCtx()), _status(0), _outPend(0), _outCursor(0)
+{ (void)other; }
+
+Client &	Client::operator=(Client const &other)
+{
+	if (this == &other)
+		return *this;
+	_server = NULL;
+	_fd = -1;
+	_eCtx = eventCtx();
+	_status = 0;
+	_outPend = 0;
+	_outCursor = 0;
+	return *this;
+}
 
 Client::~Client() {
 	wutils::safeClose(_fd);
@@ -43,7 +61,7 @@ ssize_t		Client::recv1()
 	return bytesRd;
 }
 
-void	Client::req_resp(size_t req_offset, std::string const &resp)
+void	Client::tmp_req_for_resp(size_t req_offset, std::string const &resp)
 {
 	if (req_offset >= _inbox.size())
 		_inbox.erase();
