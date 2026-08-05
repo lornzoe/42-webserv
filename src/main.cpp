@@ -1,21 +1,10 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/07/11 21:19:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/30 19:59:11 by lyanga           ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include <iostream>
 #include <exception>
 
 #include "Config.hpp"
 #include "ServerDirective.hpp"
 #include "ListenDirective.hpp"
+#include "WSApp.hpp"
 #include "FileDescriptor.hpp"
 #include "Socket.hpp"
 #include <vector>
@@ -68,79 +57,9 @@ static bool findFirstListen(const Config& config, std::string& host, int& port)
 	return false;
 }
 
-int runServer(const std::string& host, int port)
+int main(int argc, char** argv, char **evp)
 {
-	(void)host; // Socket::bind_port only supports INADDR_ANY for now
-
-	FileDescriptor file("index.html");
-	if (file.get() == -1)
-		return 1;
-
-	struct stat st;
-	if (stat("index.html", &st) == -1)
-		return 1;
-
-	std::vector<char> body(st.st_size);
-
-	ssize_t total = 0;
-	while (total < st.st_size)
-	{
-		ssize_t bytes = read(file.get(),
-							 &body[total],
-							 st.st_size - total);
-
-		if (bytes <= 0)
-			return 1;
-
-		total += bytes;
-	}
-
-	std::stringstream ss;
-	ss << total;
-	std::string length = ss.str();
-
-	std::string header =
-		"HTTP/1.1 200 OK\r\n"
-		"Content-Type: text/html\r\n"
-		"Content-Length: " +
-		length + HEADER_END;
-
-	// Create server socket
-	Socket server;
-	if (server.get() == -1)
-		return 1;
-
-	std::cout << "[webserv] binding port" << std::endl;
-	// Bind socket to address
-	if (server.bind_port(port) == -1)
-		return 1;
-
-	// Listen for incoming connections
-	if (server.listen_connection(SOMAXCONN) == -1)
-		return 1;
-
-	std::cout << "[webserv] main loop, ctrl + c to end" << std::endl;
-	while (true)
-	{
-		// Accept Client Connection
-		Socket client = server.accept_connection();
-		if (client.get() == -1)
-			return 1;
-
-		// Receive request
-		std::string request = client.receive_all(0);
-		std::cout << "Message from client: " << request << std::endl;
-
-		// Send response
-		client.send_all(header.c_str(), header.size(), 0);
-		client.send_all(body.data(), body.size(), 0);
-	}
-
-	return 0;
-}
-
-int main(int argc, char** argv)
-{
+	(void)evp;
 	if (argc != 2)
 	{
 		std::cerr << "Usage: ./webserv <config_file>" << std::endl;
@@ -149,7 +68,6 @@ int main(int argc, char** argv)
 
 	std::string host;
 	int port = 8080;
-
 	try
 	{
 		Config c(argv[1]);
@@ -171,6 +89,8 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	std::cout << "[webserv] running server now." << std::endl;
-	return runServer(host, port);
+	std::cout << "[webserv] running server now." << std::endl;	
+	WSApp	ws;
+	ws.addServ(host, port);
+	return ws.run();
 }

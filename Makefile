@@ -42,20 +42,25 @@ SRC_FILES = main.cpp \
 			HttpStatus.cpp \
 			\
 			FileDescriptor.cpp \
-			Socket.cpp 
+			Socket.cpp
+
+WSAPP_SRC_DIR = $(SRC_DIR)/wsapp
+WSAPP_SRC_BASE = 	WSApp Poller Server Listener Client \
+					w_utils
 
 # Map files to their respective folders
-SRCS = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
-OBJS = $(addprefix $(OBJ_DIR)/, $(SRC_FILES:.cpp=.o))
-DEPS = $(addprefix $(DEP_DIR)/, $(SRC_FILES:.cpp=.d))
+SRCS =	$(addprefix $(SRC_DIR)/, $(SRC_FILES)) \
+		$(addprefix $(WSAPP_SRC_DIR)/, $(addsuffix .cpp, $(WSAPP_SRC_BASE)))
+OBJS =	$(patsubst %.cpp,$(OBJ_DIR)/%.o,$(SRCS))
+DEPS =	$(patsubst %.cpp,$(DEP_DIR)/%.d,$(SRCS))
 
 all: $(NAME)
 
 $(NAME): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(OBJ_DIR) $(DEP_DIR)
+$(OBJ_DIR)/%.o: %.cpp
+	@mkdir -p $(dir $@) $(dir $(DEP_DIR)/$*.d)
 	$(CXX) $(CXXFLAGS) -MF $(DEP_DIR)/$*.d -c $< -o $@
 
 clean:

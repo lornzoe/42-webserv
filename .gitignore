@@ -1,10 +1,7 @@
 en.subject.pdf
-<<<<<<< HEAD
 .devcontainer
 .DS_Store
-=======
 webserv
 build/*/*
 .vscode/*
 docs/*
->>>>>>> master

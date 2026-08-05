@@ -1,6 +1,12 @@
 #include "WSApp.hpp"
+#include "FileDescriptor.hpp"
+
+#include <string>
+#include <sstream>
+#include <sys/stat.h>
 
 volatile sig_atomic_t	WSApp::g_shutdownReq = 0;
+static const std::string HEADER_END = "\r\n\r\n";
 
 // OCF ------------------------------------------------------------------------
 
@@ -15,8 +21,52 @@ WSApp::~WSApp()
 
 // ----------------------------------------------------------------------------
 
+static int	fill_tmp_resp(std::string &resp)
+{
+	FileDescriptor file("index.html");
+	if (file.get() == -1)
+		return 1;
+
+	struct stat st;
+	if (stat("index.html", &st) == -1)
+		return 1;
+
+	std::vector<char> body(st.st_size);
+
+	ssize_t total = 0;
+	while (total < st.st_size)
+	{
+		ssize_t bytes = read(file.get(),
+							 &body[total],
+							 st.st_size - total);
+
+		if (bytes <= 0)
+			return 1;
+
+		total += bytes;
+	}
+
+	std::stringstream ss;
+	ss << total;
+	std::string length = ss.str();
+
+	std::string header =
+		"HTTP/1.1 200 OK\r\n"
+		"Content-Type: text/html\r\n"
+		"Content-Length: " +
+		length + HEADER_END;
+
+	resp = header;
+	resp.append(body.begin(), body.end());
+	return 0;
+}
+
 int		WSApp::run()
 {
+	std::string tmp_resp;
+	if (fill_tmp_resp(tmp_resp) == 1)
+		return 1;
+
 	regisListeners();
 	while (1)
 	{
@@ -57,10 +107,9 @@ int		WSApp::run()
 					continue;
 				}
 				std::string const & inbox = cli.readInbox();
-				if (inbox.size() >= 10 && !cli.isStat(SENDING))
+				if (inbox.size() > 0 && !cli.isStat(SENDING))
 				{
-					std::string tmp_resp = "Responding to inbox size 10\n";
-					cli.tmp_req_for_resp(10, tmp_resp);
+					cli.tmp_req_for_resp(-1, tmp_resp);
 					_pol.mod(cli.fd(), EPOLLOUT | EPOLLIN, &cli.ectx());
 				}
 				++i;
@@ -68,6 +117,7 @@ int		WSApp::run()
 			++it;
 		}
 	}
+	return 0;
 }
 
 void	WSApp::addServ(std::string const &host, int port)

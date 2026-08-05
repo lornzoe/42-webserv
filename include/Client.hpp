@@ -46,7 +46,7 @@ public:
 	void					rmStat(int flag) { _status &= ~flag; }
 
 	ssize_t			recv1();
-	void			tmp_req_for_resp(size_t req_offset, std::string const &resp);
+	void			tmp_req_for_resp(ssize_t req_offset, std::string const &resp);
 	ssize_t			send1();
 };
 

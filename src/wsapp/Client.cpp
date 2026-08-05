@@ -52,18 +52,23 @@ void	Client::initClient(Server &server, int fd) {
 
 ssize_t		Client::recv1()
 {
-	char	buf[1000];
+	char	buf[4096];
 	ssize_t bytesRd = recv(_fd, buf, 1000, 0);
 
 	if (bytesRd > 0)
+	{
 		_inbox.append(buf, bytesRd);
+		if (bytesRd < 4096) buf[bytesRd] = '\0';
+		std::string	request = buf;
+		std::cout << "Message from client: \n" << request << std::endl;
+	}
 
 	return bytesRd;
 }
 
-void	Client::tmp_req_for_resp(size_t req_offset, std::string const &resp)
+void	Client::tmp_req_for_resp(ssize_t req_offset, std::string const &resp)
 {
-	if (req_offset >= _inbox.size())
+	if (req_offset == -1 || static_cast<size_t>(req_offset) >= _inbox.size())
 		_inbox.erase();
 	else
 		_inbox = _inbox.substr(req_offset);
