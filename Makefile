@@ -1,54 +1,81 @@
-NAME = webserv
+# **************************************************************************** #
+#                                                                              #
+#                                                         :::      ::::::::    #
+#    Makefile                                           :+:      :+:    :+:    #
+#                                                     +:+ +:+         +:+      #
+#    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
+#                                                 +#+#+#+#+#+   +#+            #
+#    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
+#    Updated: 2026/07/29 12:37:33 by lyanga           ###   ########.fr        #
+#                                                                              #
+# **************************************************************************** #
 
-SRC_DIR = src
+NAME     = webserv
+CXX      = c++
+CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -MMD -MP -Iinclude
 
-MAIN_SRC_DIR = $(SRC_DIR)
-MAIN_SRC_BASE = main WSApp			\
-Server Listener Client Poller		\
-w_utils
+# Folder structure definitions
+SRC_DIR   = src
+BUILD_DIR = build
+OBJ_DIR   = $(BUILD_DIR)/obj
+DEP_DIR   = $(BUILD_DIR)/deps
 
-HEADER_BASE = WSApp					\
-Server Listener Client Poller		\
-w_utils								\
-w_eventCtx w_logger
+# Explicitly list your source files here (just the file names, no paths)
+SRC_FILES = main.cpp \
+			Config.cpp \
+			DirectiveFactory.cpp \
+			DirectiveRules.cpp \
+			Directive.cpp \
+			BlockDirective.cpp \
+			SimpleDirective.cpp \
+			ServerDirective.cpp \
+			ListenDirective.cpp \
+			ServerNameDirective.cpp \
+			AliasDirective.cpp \
+			RootDirective.cpp \
+			IndexDirective.cpp \
+			ClientMaxBodySizeDirective.cpp \
+			ErrorPageDirective.cpp \
+			ReturnDirective.cpp \
+			LimitExceptDirective.cpp \
+			\
+			HttpStatus.cpp \
+			\
+			FileDescriptor.cpp \
+			Socket.cpp 
 
-HEADERS = $(addprefix $(INCLD_DIR)/, $(addsuffix .hpp, $(HEADER_BASE)))
-
-# OTHR_SRC_DIR = $(SRC_DIR)/others
-# OTHR_SRC_BASE = Contact PhoneBook
-
-SRCS = \
-	$(addprefix $(MAIN_SRC_DIR)/, $(addsuffix .cpp, $(MAIN_SRC_BASE)))
-# 	$(addprefix $(OTHR_SRC_DIR)/, $(addsuffix .cpp, $(OTHR_SRC_BASE)))
-
-OBJ_DIR = objs
-OBJS = $(patsubst %.cpp,$(OBJ_DIR)/%.o,$(SRCS))
-
-COMPILE = c++
-CFLAGS = -std=c++98 -Wall -Wextra -pedantic -Werror
-INCLD_DIR = include
-INCLUDES = -I$(INCLD_DIR)
-
-ifdef DEBUG
-	CFLAGS += -DDEBUG
-endif
+# Map files to their respective folders
+SRCS = $(addprefix $(SRC_DIR)/, $(SRC_FILES))
+OBJS = $(addprefix $(OBJ_DIR)/, $(SRC_FILES:.cpp=.o))
+DEPS = $(addprefix $(DEP_DIR)/, $(SRC_FILES:.cpp=.d))
 
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(COMPILE) $(CFLAGS) $(OBJS) -o $@
+	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
 
-$(OBJ_DIR)/%.o: %.cpp $(HEADERS)
-	mkdir -p $(dir $@)
-	$(COMPILE) -c $(CFLAGS) $(INCLUDES) $< -o $@
-
-.PHONY:	all re fclean clean
-
-#Cleanup
-re: fclean all
-
-fclean: clean
-	rm -rf $(NAME)
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(OBJ_DIR) $(DEP_DIR)
+	$(CXX) $(CXXFLAGS) -MF $(DEP_DIR)/$*.d -c $< -o $@
 
 clean:
-	rm -rf $(OBJ_DIR)
+	rm -rf $(BUILD_DIR)
+
+fclean: clean
+	rm -f $(NAME)
+
+re: fclean all
+
+x: $(NAME) clean
+	@echo =================================================
+	./$(NAME) configs/commenthell.conf
+	@echo =================================================
+	./$(NAME) configs/commenthell1.conf
+
+	@echo this returned $?
+	@echo =================================================
+	./$(NAME) configs/commenthell2.conf
+
+-include $(DEPS)
+
+.PHONY: all clean fclean re x
