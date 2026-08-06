@@ -1,15 +1,3 @@
-# **************************************************************************** #
-#                                                                              #
-#                                                         :::      ::::::::    #
-#    Makefile                                           :+:      :+:    :+:    #
-#                                                     +:+ +:+         +:+      #
-#    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
-#                                                 +#+#+#+#+#+   +#+            #
-#    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/07/29 12:37:33 by lyanga           ###   ########.fr        #
-#                                                                              #
-# **************************************************************************** #
-
 NAME     = webserv
 CXX      = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -MMD -MP -Iinclude
@@ -51,8 +39,8 @@ WSAPP_SRC_BASE = 	WSApp Poller Server Listener Client \
 # Map files to their respective folders
 SRCS =	$(addprefix $(SRC_DIR)/, $(SRC_FILES)) \
 		$(addprefix $(WSAPP_SRC_DIR)/, $(addsuffix .cpp, $(WSAPP_SRC_BASE)))
-OBJS =	$(patsubst %.cpp,$(OBJ_DIR)/%.o,$(SRCS))
-DEPS =	$(patsubst %.cpp,$(DEP_DIR)/%.d,$(SRCS))
+OBJS =	$(addprefix $(OBJ_DIR)/, $(SRCS:.cpp=.o))
+DEPS =	$(addprefix $(DEP_DIR)/, $(SRCS:.cpp=.d))
 
 all: $(NAME)
 
