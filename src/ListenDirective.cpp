@@ -6,12 +6,12 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 00:00:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/27 12:44:30 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/06 02:20:59 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "ListenDirective.hpp"
-#include <exception>
+#include <stdexcept>
 #include <cctype>
 #include <cstdlib>
 #include <iostream>
@@ -33,7 +33,7 @@ namespace {
 ListenDirective::ListenDirective(TokenisedBlock::const_iterator& cit) : SimpleDirective(cit), host("0.0.0.0")
 {
 	if (args.size() != 2)
-		throw std::exception(); // listen takes exactly one argument
+		throw std::runtime_error("listen: expects exactly one argument (e.g. 'listen 127.0.0.1:8080;')");
 
 	const std::string& value = args[1];
 	std::size_t colon = value.find(':');
@@ -47,10 +47,20 @@ ListenDirective::ListenDirective(TokenisedBlock::const_iterator& cit) : SimpleDi
 	else
 		port_str = value;
 
+	if (host.empty() || host == "*")
+		host = "0.0.0.0";
+
 	if (!isAllDigits(port_str))
-		throw std::exception(); // port must be numeric
+		throw std::runtime_error("listen: port must be numeric (got '" + port_str + "')");
+
+	// bound the digit count first so the conversion below cannot overflow
+	if (port_str.size() > 5)
+		throw std::runtime_error("listen: port must be between 1 and 65535 (got '" + port_str + "')");
 
 	port = std::atoi(port_str.c_str());
+
+	if (port < 1 || port > 65535)
+		throw std::runtime_error("listen: port must be between 1 and 65535 (got '" + port_str + "')");
 }
 
 void ListenDirective::print(int depth) const

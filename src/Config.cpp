@@ -6,49 +6,43 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/30 18:34:55 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/06 02:24:53 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Config.hpp"
 #include "DirectiveRules.hpp"
 #include "DirectiveFactory.hpp"
+#include "QuoteTracker.hpp"
 
 #include <iostream>
 #include <sstream>
 #include <fstream>
 #include <stack>
-#include <exception>
+#include <stdexcept>
 
 namespace {
 	bool checkBracesAndQuotations(const std::vector<std::string>& lines)
 	{
-		bool single_quotes = false;
-		bool double_quotes = false;
+		QuoteTracker tracker;
 		int indent = 0;
 		for (std::vector<std::string>::const_iterator it = lines.begin(); it != lines.end(); ++it)
 		{
+			tracker.newLine();
 			for (std::string::const_iterator cit = it->begin(); cit != it->end(); ++cit)
 			{
-				if (*cit == '\'')
+				if (!tracker.feed(*cit))
+					continue;
+
+				if (*cit == '{')
 				{
-					if (!double_quotes)
-						single_quotes = !single_quotes;
-				}	
-				else if (*cit == '"')
-				{
-					if (!single_quotes)
-						double_quotes = !double_quotes;
-				}
-				else if (*cit == '{')
-				{
-					if (single_quotes || double_quotes)
-							continue;
+					if (tracker.inQuotes())
+						continue;
 					indent++;
 				}
 				else if (*cit == '}')
 				{
-					if (single_quotes || double_quotes)
+					if (tracker.inQuotes())
 						continue;
 					if (indent == 0)
 						return false;
@@ -56,32 +50,24 @@ namespace {
 				}
 			}
 		}
-		return (!single_quotes && !double_quotes && indent == 0);
+		return (!tracker.inQuotes() && indent == 0);
 	}
 
 	void stripComments(std::vector<std::string>& lines)
 	{
-		bool single_quotes = false;
-		bool double_quotes = false;
 		for (std::vector<std::string>::iterator it = lines.begin(); it != lines.end(); ++it)
 		{
+			QuoteTracker tracker;
 			std::size_t pos = std::string::npos;
 			std::size_t idx = 0;
-			for (std::string::const_iterator cit = it->begin(); cit != it->end(); ++cit)
+			for (std::string::const_iterator cit = it->begin(); cit != it->end(); ++cit, ++idx)
 			{
-				if (*cit == '\'')
-				{
-					if (!double_quotes)
-						single_quotes = !single_quotes;
-				}	
-				else if (*cit == '"')
-				{
-					if (!single_quotes)
-						double_quotes = !double_quotes;
-				}
+				if (!tracker.feed(*cit))
+					continue;
+
 				if (*cit == '#')
 				{
-					if (single_quotes || double_quotes)
+					if (tracker.inQuotes())
 							continue;
 					pos = idx;
 					break;
@@ -94,24 +80,18 @@ namespace {
 
 	void stripEmptyLines(std::vector<std::string>& lines)
 	{
-		bool single_quotes = false;
-		bool double_quotes = false;
 		for (std::vector<std::string>::iterator it = lines.begin(); it != lines.end(); )
 		{
+			QuoteTracker tracker;
 			bool is_empty = true;
 			for (std::string::const_iterator cit = it->begin(); cit != it->end(); ++cit)
 			{
-				if (*cit == '\'')
+				if (!tracker.feed(*cit))
 				{
-					if (!double_quotes)
-						single_quotes = !single_quotes;
-				}	
-				else if (*cit == '"')
-				{
-					if (!single_quotes)
-						double_quotes = !double_quotes;
+					is_empty = false;
+					continue;
 				}
-				if (!std::isspace(static_cast<unsigned char>(*cit)) || single_quotes || double_quotes)
+				if (!std::isspace(static_cast<unsigned char>(*cit)) || tracker.inQuotes())
 					is_empty = false;
 			}
 			if (is_empty)
@@ -124,36 +104,22 @@ namespace {
 	std::vector<std::vector<std::string> > generateTokenisedDirectives(const std::vector<std::string>& lines)
 	{
 		std::vector<std::vector<std::string> > tokenised_lines;
-		bool single_quotes = false;
-		bool double_quotes = false;
 		for (std::vector<std::string>::const_iterator it = lines.begin(); it != lines.end(); ++it)
 		{
+			QuoteTracker tracker;
 			std::vector<std::string> tokenised_line;
 			std::string current_token;
 			// iterate by the character
 			for (std::string::const_iterator cit = it->begin(); cit != it->end(); ++cit)
 			{
 				char c = *cit;
-				if (c == '\'')
-				{
-					if (!double_quotes)
-						single_quotes = !single_quotes;
+				if (!tracker.feed(c))
+					continue;
+
+				if (tracker.inQuotes() || c == '\'' || c == '"')
 					current_token += c;
-				}
-				else if (c == '"')
+				else if (std::isspace(static_cast<unsigned char>(c)))
 				{
-					if (!single_quotes)
-						double_quotes = !double_quotes;
-					current_token += c;
-				}
-				else if (single_quotes || double_quotes) // everything stays together in quotes
-				{
-					current_token += c;
-				}
-				else if (std::isspace(static_cast<unsigned char>(c))) 
-				{
-					// if whitespace, push token and clear current
-					// keep the 2 conditions seperate so that multiple whitespace in a row get caught
 					if (!current_token.empty())
 					{
 						tokenised_line.push_back(current_token);
@@ -167,7 +133,6 @@ namespace {
 						tokenised_line.push_back(current_token);
 						current_token.clear();
 					}
-					// std::string s(1, c); // save it as its own string
 					tokenised_line.push_back(std::string(1, c));
 				}
 				else
@@ -222,13 +187,13 @@ namespace {
 			DirectiveRules::Context current_context = context_stack.top();
 
 			if (!DirectiveRules::canExist(dir))
-				throw std::exception(); // invalid/unhandled directive
+				throw std::runtime_error("unknown directive '" + dir + "'");
 			if (DirectiveRules::isSimpleType(dir) && cit->back() != ";")
-				throw std::exception(); // simple directive mismatch; expecting ;, saw cit->back() (usually curly brace);
+				throw std::runtime_error("'" + dir + "': expected ';' terminator, got '" + cit->back() + "'");
 			if (DirectiveRules::isBlockType(dir) && cit->back() != "{")
-				throw std::exception(); // block directive mismatch; expecting {, saw cit->back() (usually semicolon);
+				throw std::runtime_error("'" + dir + "': expected '{' to open block, got '" + cit->back() + "'");
 			if (!DirectiveRules::isValidInContext(dir, current_context))
-				throw std::exception(); // dir is not in allowed context (current context).
+				throw std::runtime_error("'" + dir + "' is not allowed in this context");
 
 			if (DirectiveRules::isBlockType(dir))
 			{
@@ -249,10 +214,8 @@ Config::Config(char *filename)
 	// load the file
 	std::ifstream infile(filename);
 
-	if (!infile) { 
-		std::cerr << "Error: Could not open the file!" << std::endl;
-		throw std::exception(); // replace this with a better exception
-	}
+	if (!infile)
+		throw std::runtime_error("Config: could not open file '" + std::string(filename) + "'");
 
 	std::vector<std::string> file;
 	{
@@ -269,20 +232,30 @@ Config::Config(char *filename)
 
 	// check contents of file
     if (!checkBracesAndQuotations(file))
-        throw std::exception(); // replace with better defined exception
+        throw std::runtime_error("Config: mismatched braces or quotes in file '" + std::string(filename) + "'");
 
 	// tokenise it
     this->directives_string = generateTokenisedDirectives(file);
 
 	// validate the tokens
 	if (!validateDirectiveStrings(this->directives_string)) // many validation-specific exceptions are here.
-		throw std::exception(); // unexpected error? stack did not end up at CONTEXT_MAIN.
+		throw std::runtime_error("Config: unbalanced blocks in file '" + std::string(filename) + "' (a block was never closed)");
 
 	/*
 		TODO: Ensure parameters in config have:
 			- valid parameters per directive
 			- ensure each context has the minimum, correct number of directives
 			- ensure information from multiple directives do not clash with each other (e.g. listen 0.0.0.0)
+		update: checks are handled on each directive constructor. 
+				block directives check there is at most/at least x directive as a direct child in their block.
+
+		TODO: ensure info from multiple directives do not clash with each other
+		(e.g. listen 0.0.0.0 vs listen 127.0.0.1 on the same port, or two locations sharing a prefix).
+		
+		These span server blocks, so they should be implemented here in Config
+		rather than in a single directive.
+		hasOverlappingBind() in main.cpp is the existing function to reference for this.
+
 	*/
 
 	// create the directives to fill up config

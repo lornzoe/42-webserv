@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/29 12:00:44 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/29 12:22:14 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/01 19:27:35 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,6 +32,8 @@ class LimitExceptDirective : public SimpleDirective
 	public:
 		LimitExceptDirective(TokenisedBlock::const_iterator& cit);
 		void print(int depth) const;
+
+		const std::vector<std::string>& getMethods() const;
 };
 
 #endif

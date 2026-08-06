@@ -1,5 +1,6 @@
 #include "WSApp.hpp"
 #include "FileDescriptor.hpp"
+#include "w_logger.hpp"
 
 #include <string>
 #include <sstream>
@@ -23,12 +24,12 @@ WSApp::~WSApp()
 
 static int	fill_tmp_resp(std::string &resp)
 {
-	FileDescriptor file("index.html");
+	FileDescriptor file("html/index.html");
 	if (file.get() == -1)
 		return 1;
 
 	struct stat st;
-	if (stat("index.html", &st) == -1)
+	if (stat("html/index.html", &st) == -1)
 		return 1;
 
 	std::vector<char> body(st.st_size);
@@ -65,7 +66,10 @@ int		WSApp::run()
 {
 	std::string tmp_resp;
 	if (fill_tmp_resp(tmp_resp) == 1)
+	{
+		std::cerr << "i give up" << std::endl;
 		return 1;
+	}
 
 	regisListeners();
 	while (1)

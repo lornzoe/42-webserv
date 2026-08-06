@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:37:22 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/27 12:44:51 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/06 02:18:14 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,14 +14,39 @@
 #define SERVERDIRECTIVE_HPP
 
 #include "BlockDirective.hpp"
+#include "ListenDirective.hpp"
+#include "ServerNameDirective.hpp"
+#include "RootDirective.hpp"
+#include "IndexDirective.hpp"
+#include "ErrorPageDirective.hpp"
+#include "ClientMaxBodySizeDirective.hpp"
+#include "ReturnDirective.hpp"
+#include "LocationDirective.hpp"
+#include <vector>
+#include <string>
+#include <utility>
 
 class ServerDirective : public BlockDirective
 {
 	public:
+		// first: true if path exists and is a regular file.
+		// second: resolved filesystem path; empty if unresolved.
+		typedef std::pair<bool, std::string> ResourcePath;
+
 		ServerDirective(TokenisedBlock::const_iterator& cit);
 		~ServerDirective();
 
 		void print(int depth) const;
+
+		std::vector<const ListenDirective *> getListens() const;
+		const ServerNameDirective* getServerName() const;
+		const RootDirective* getRoot() const;
+		const IndexDirective* getIndex() const;
+		std::vector<const ErrorPageDirective *> getErrorPages() const;
+		const ClientMaxBodySizeDirective* getClientMaxBodySize() const;
+		std::vector<const LocationDirective *> getLocations() const;
+
+		ResourcePath getResource(const std::string& uri) const;
 };
 
 #endif

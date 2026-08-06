@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/24 08:30:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/27 12:44:56 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/01 19:30:53 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,31 +14,33 @@
 #define LOCATIONDIRECTIVE_HPP
 
 #include "BlockDirective.hpp"
-#include <iostream>
+#include "RootDirective.hpp"
+#include "AliasDirective.hpp"
+#include "IndexDirective.hpp"
+#include "ErrorPageDirective.hpp"
+#include "ClientMaxBodySizeDirective.hpp"
+#include "ReturnDirective.hpp"
+#include "LimitExceptDirective.hpp"
+#include <vector>
 
 class LocationDirective : public BlockDirective
 {
 	private:
 
 	public:
-		LocationDirective(TokenisedBlock::const_iterator& cit) : BlockDirective(cit) {}
+		LocationDirective(TokenisedBlock::const_iterator& cit);
 
-		void print(int depth) const
-		{
-			for (int i = 0; i < depth; i++)
-				std::cout << "  ";
-			std::cout << "location";
-			for (std::size_t i = 1; i < args.size(); i++)
-				std::cout << " " << args[i];
-			std::cout << " {" << std::endl;
+		void print(int depth) const;
 
-			for (std::size_t i = 0; i < directives.size(); i++)
-				directives[i]->print(depth + 1);
-
-			for (int i = 0; i < depth; i++)
-				std::cout << "  ";
-			std::cout << "}" << std::endl;
-		}
+		const std::string& getPath() const;
+		const RootDirective* getRoot() const;
+		const AliasDirective* getAlias() const;
+		const IndexDirective* getIndex() const;
+		const ClientMaxBodySizeDirective* getClientMaxBodySize() const;
+		const ReturnDirective* getReturn() const;
+		const LimitExceptDirective* getLimitExcept() const;
+		std::vector<const ErrorPageDirective *> getErrorPages() const;
+		std::vector<const LocationDirective *> getLocations() const;
 };
 
 #endif

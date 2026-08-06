@@ -6,14 +6,14 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 18:05:35 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/27 12:44:41 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/02 07:17:20 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "BlockDirective.hpp"
 #include "DirectiveRules.hpp"
 #include "DirectiveFactory.hpp"
-#include <exception>
+#include <stdexcept>
 
 BlockDirective::BlockDirective(TokenisedBlock::const_iterator &cit) : Directive(*cit)
 {
@@ -27,7 +27,7 @@ BlockDirective::BlockDirective(TokenisedBlock::const_iterator &cit) : Directive(
 		if (DirectiveRules::isSimpleType(cit->front()) || DirectiveRules::isBlockType(cit->front()))
 			directives.push_back(DirectiveFactory::createDirective(cit));
 		else
-			throw std::exception(); // not a valid directive
+			throw std::runtime_error("unknown directive '" + cit->front() + "'");
 	}
 	cit++; // consume this block's own closing "}"
 }

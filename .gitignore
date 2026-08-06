@@ -2,6 +2,7 @@ en.subject.pdf
 .devcontainer
 .DS_Store
 webserv
+checker
 build/*/*
 .vscode/*
 docs/*
