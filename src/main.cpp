@@ -6,7 +6,7 @@
 /*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 21:19:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/12 18:44:43 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/12 18:59:57 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,6 @@
 #include "HttpRequest.hpp"
 
 #include <sstream>
-#include <sys/stat.h>
 #include <sys/select.h>
 #include <set>
 

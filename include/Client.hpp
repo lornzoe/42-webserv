@@ -1,15 +1,16 @@
 #ifndef CLIENT_H
-# define CLIENT_H
+#define CLIENT_H
 
 # include "ServerDirective.hpp"
 # include "w_eventCtx.hpp"
 
-# include <unistd.h>
-# include <string>
+#include <unistd.h>
+#include <string>
 
 class Server;
 
-enum cli_status {
+enum cli_status
+{
 	SENDING = 1 << 0,
 	CLOSING = 1 << 1
 };
@@ -17,25 +18,25 @@ enum cli_status {
 class Client
 {
 private:
-	Server *		_server;
-	int				_fd;
-	eventCtx		_eCtx;
+	Server *_server;
+	int _fd;
+	eventCtx _eCtx;
 
-	int				_status;
+	int _status;
 
-	std::string		_inbox;
-	std::string		_outBox;
-	int				_outPend;
-	int				_outCursor;
+	std::string _inbox;
+	std::string _outBox;
+	int _outPend;
+	int _outCursor;
 
 public:
 	Client();
 	~Client();
-	//faux copy constructor & assignment equivalent to default
-	Client(Client const & other);
-	Client &	operator=(Client const &other);
+	// faux copy constructor & assignment equivalent to default
+	Client(Client const &other);
+	Client &operator=(Client const &other);
 
-	void			initClient(Server &server, int fd);
+	void initClient(Server &server, int fd);
 
 	ServerDirective const &	servDir() const;
 	Server &		server()	{ return *_server; }
@@ -47,9 +48,11 @@ public:
 	void					addStat(int flag) { _status |= flag; }
 	void					rmStat(int flag) { _status &= ~flag; }
 
-	ssize_t			recv1();
-	void			tmp_req_for_resp(ssize_t req_offset, std::string const &resp);
-	ssize_t			send1();
+	ssize_t recv1();
+	void tmp_req_for_resp(ssize_t req_offset, std::string const &resp);
+	ssize_t send1();
+
+	void build_response();
 };
 
 #endif

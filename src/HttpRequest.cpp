@@ -3,17 +3,25 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/05 20:34:25 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/09 18:03:24 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
+#include <Socket.hpp>
+#include <HttpStatus.hpp>
+#include <MimeTypes.hpp>
+#include <vector>
+#include <ServerDirective.hpp>
+#include <FileDescriptor.hpp>
 
-// HTTP/1.1 requests containing a message-body MUST include a valid Content-Length 
-// header field. If a request contains a message-body and a Content-Length is 
+#include <sys/stat.h>
+
+// HTTP/1.1 requests containing a message-body MUST include a valid Content-Length
+// header field. If a request contains a message-body and a Content-Length is
 // not given,
 // The server SHOULD respond with 400 (bad request) if it cannot
 // determine the length of the message, or with 411 (length required) if
@@ -23,7 +31,6 @@
 // non-identity transfer-coding. If the message does include a non-
 // identity transfer-coding, the Content-Length MUST be ignored.
 
-
 // All responses to the HEAD request method
 // MUST NOT include a message-body, even though the presence of entity-
 // header fields might lead one to believe they do. All 1xx
@@ -31,7 +38,7 @@
 // MUST NOT include a message-body. All other responses do include a
 // message-body, although it MAY be of zero length.
 
-// Request    = Request-Line     
+// Request    = Request-Line
 // 				*(( general-header
 // 		  		 | request-header
 // 			 	 | entity-header ) CRLF)
@@ -98,18 +105,25 @@ HttpRequest::HttpRequest(std::string request)
 	std::istringstream stream(request);
 	std::string line;
 
-	// Ignore any empty line(s) received where a Request-Line is expected 
-
 	// Parse request line
-	if (std::getline(stream, line))
+	while (std::getline(stream, line))
 	{
+		// Ignore any empty line(s) received
+		if (Trim(line).empty())
+			continue;
+
 		std::istringstream iss(line);
 		iss >> method_ >> path_ >> http_version_;
+		break;
 	}
 
 	// Parse headers
 	while (std::getline(stream, line))
 	{
+		// Empty line means end of headers
+		if (Trim(line).empty())
+			break;
+
 		size_t pos = line.find(':');
 		if (pos != std::string::npos)
 		{
@@ -123,6 +137,7 @@ HttpRequest::HttpRequest(std::string request)
 	}
 
 	// Read bodys
+	// TODO: should use Content-Length to determine how many bytes belong to the body
 	body_ = std::string(std::istreambuf_iterator<char>(stream),
 						std::istreambuf_iterator<char>());
 }
@@ -170,4 +185,94 @@ std::string HttpRequest::toLowercase(std::string str)
 	for (size_t j = 0; j < str.length(); j++)
 		str[j] = static_cast<char>(tolower(static_cast<unsigned char>(str[j])));
 	return str;
+}
+
+bool HttpRequest::isValidHttpRequest()
+{
+	if (method_.empty() || path_.empty() || http_version_.empty())
+		return false;
+
+	if (http_version_ != "HTTP/1.1")
+		return false;
+
+	if (method_ != "GET" &&
+		method_ != "POST" && method_ != "DELETE")
+		return false;
+
+	return true;
+}
+
+static std::string buildHeader(int code, const std::string &reason,
+							   const std::string &contentType, std::size_t length)
+{
+	std::stringstream ss;
+	ss << length;
+
+	std::stringstream statusLine;
+	statusLine << "HTTP/1.1 " << code << " " << reason << "\r\n";
+
+	return statusLine.str() +
+		   "Content-Type: " + contentType + "\r\n" +
+		   "Content-Length: " +
+		   ss.str() + HEADER_END;
+}
+
+// static const std::string &contentTypeFor(const std::string &path)
+// {
+// 	std::size_t dot = path.rfind('.');
+// 	if (dot == std::string::npos)
+// 		return MimeTypes::getContentType("");
+
+// 	return MimeTypes::getContentType(path.substr(dot));
+// }
+
+// static bool readFile(const std::string &path, std::vector<char> &body)
+// {
+// 	FileDescriptor file(path);
+// 	if (file.get() == -1)
+// 		return false;
+
+// 	struct stat st;
+// 	if (stat(path.c_str(), &st) == -1)
+// 		return false;
+
+// 	body.resize(st.st_size);
+
+// 	ssize_t total = 0;
+// 	while (total < st.st_size)
+// 	{
+// 		ssize_t bytes = read(file.get(), &body[total], st.st_size - total);
+// 		if (bytes <= 0)
+// 			return false;
+// 		total += bytes;
+// 	}
+// 	return true;
+// }
+
+std::string HttpRequest::build_http_response()
+{
+	if (!isValidHttpRequest())
+	{
+		std::cout << "[webserv] return 400" << std::endl;
+		static const std::string badRequestBody = "<html><body><h1>400 Bad Request</h1></body></html>";
+		return buildHeader(400, "Bad Request", "text/html", badRequestBody.size()) + badRequestBody;
+	}
+
+	std::cout << "[webserv] return 200" << std::endl;
+	static const std::string body = "<html><body><h1>200 OK</h1></body></html>";
+	return buildHeader(200, "OK", "text/html", body.size()) + body;
+
+	// ServerDirective::ResourcePath resourcePath = servers[i]->getResource(path_);
+	// bool found = resourcePath.first;
+	// const std::string &path = resourcePath.second;
+
+	// 	std::vector<char> body;
+	// 	if (found && readFile(path, body))
+	// 		return buildHeader(200, "OK", contentTypeFor(path), body.size());
+	// 	else
+	// 	{
+	// 		static const std::string notFoundBody = "<html><body><h1>404 Not Found</h1></body></html>";
+	// 		return buildHeader(404, "Not Found", HttpStatus::getDefaultResponse(404), notFoundBody.size());
+	// 	}
+	// }
 }

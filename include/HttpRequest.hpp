@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:55 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/05 20:19:21 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/09 17:50:28 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,6 +33,7 @@ public:
 	std::string get_path();
 	std::string get_http_version();
 	void show_all();
+	std::string build_http_response();
 
 private:
 	std::string method_;
@@ -50,6 +51,8 @@ private:
 	// bool is_chunked;
 	// size_t content_length;
 	std::string toLowercase(std::string str);
+
+	bool isValidHttpRequest();
 };
 
 #endif
