@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/13 16:41:56 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 01:38:17 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 02:20:27 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,9 @@ class Config
 
 		const std::vector<Directive *>& getDirectives() const;
 		std::vector<const ServerDirective *> getServerDirectives() const;
+
+		static const ServerDirective* getServerDirective(const std::string& host, const std::string& port);
+		static const ServerDirective* getServerDirective(const std::string& host, int port);
 
 };
 

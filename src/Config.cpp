@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 01:38:41 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 02:20:25 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -331,6 +331,24 @@ std::vector<const ServerDirective *> Config::getServerDirectives() const
 			servers.push_back(server);
 	}
 	return servers;
+}
+
+const ServerDirective* Config::getServerDirective(const std::string& host, const std::string& port)
+{
+	std::vector<const ServerDirective *> servers = getInstance().getServerDirectives();
+	for (std::size_t i = 0; i < servers.size(); i++)
+	{
+		if (servers[i]->isMatch(host, port))
+			return servers[i];
+	}
+	return NULL;
+}
+
+const ServerDirective* Config::getServerDirective(const std::string& host, int port)
+{
+	std::ostringstream port_str;
+	port_str << port;
+	return getServerDirective(host, port_str.str());
 }
 
 void Config::printDirectives() const
