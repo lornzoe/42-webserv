@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/06 02:24:53 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 01:38:41 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -209,13 +209,47 @@ namespace {
 	}
 }
 
-Config::Config(char *filename)
+Config::Config() : initialised(false)
+{
+}
+
+Config& Config::getInstance()
+{
+	static Config instance;
+	return instance;
+}
+
+void Config::init(const std::string& filename)
+{
+	Config& instance = getInstance();
+
+	if (instance.initialised)
+		throw std::runtime_error("Config: already initialised");
+
+	try
+	{
+		instance.load(filename);
+	}
+	catch (...)
+	{
+		instance.clear();
+		throw;
+	}
+	instance.initialised = true;
+}
+
+bool Config::isInitialised() const
+{
+	return initialised;
+}
+
+void Config::load(const std::string& filename)
 {
 	// load the file
-	std::ifstream infile(filename);
+	std::ifstream infile(filename.c_str());
 
 	if (!infile)
-		throw std::runtime_error("Config: could not open file '" + std::string(filename) + "'");
+		throw std::runtime_error("Config: could not open file '" + filename + "'");
 
 	std::vector<std::string> file;
 	{
@@ -232,14 +266,14 @@ Config::Config(char *filename)
 
 	// check contents of file
     if (!checkBracesAndQuotations(file))
-        throw std::runtime_error("Config: mismatched braces or quotes in file '" + std::string(filename) + "'");
+        throw std::runtime_error("Config: mismatched braces or quotes in file '" + filename + "'");
 
 	// tokenise it
     this->directives_string = generateTokenisedDirectives(file);
 
 	// validate the tokens
 	if (!validateDirectiveStrings(this->directives_string)) // many validation-specific exceptions are here.
-		throw std::runtime_error("Config: unbalanced blocks in file '" + std::string(filename) + "' (a block was never closed)");
+		throw std::runtime_error("Config: unbalanced blocks in file '" + filename + "' (a block was never closed)");
 
 	/*
 		TODO: Ensure parameters in config have:
@@ -266,23 +300,52 @@ Config::Config(char *filename)
 
 Config::~Config()
 {
+	clear();
+}
+
+void Config::clear()
+{
 	for (std::size_t i = 0; i < directives.size(); i++)
 		delete directives[i];
+	directives.clear();
+	directives_string.clear();
 }
 
 const std::vector<Directive *>& Config::getDirectives() const
 {
+	if (!initialised)
+		throw std::runtime_error("Config: not initialised (call Config::init() first)");
 	return directives;
+}
+
+std::vector<const ServerDirective *> Config::getServerDirectives() const
+{
+	if (!initialised)
+		throw std::runtime_error("Config: not initialised (call Config::init() first)");
+
+	std::vector<const ServerDirective *> servers;
+	for (std::size_t i = 0; i < directives.size(); i++)
+	{
+		const ServerDirective* server = dynamic_cast<const ServerDirective *>(directives[i]);
+		if (server)
+			servers.push_back(server);
+	}
+	return servers;
 }
 
 void Config::printDirectives() const
 {
+	if (!initialised)
+		throw std::runtime_error("Config: not initialised (call Config::init() first)");
 	for (std::size_t i = 0; i < directives.size(); i++)
 		directives[i]->print(0);
 }
 
-void Config::printConfig()
+void Config::printConfig() const
 {
+	if (!initialised)
+		throw std::runtime_error("Config: not initialised (call Config::init() first)");
+
     int current_indent = 0;
 	for (std::size_t i = 0; i < directives_string.size(); ++i)
 	{

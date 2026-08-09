@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:44:33 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/06 02:20:40 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 01:39:27 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,12 @@
 #include "DirectiveFactory.hpp"
 #include <stdexcept>
 #include <iostream>
+#include <sstream>
 #include <sys/stat.h>
 
 namespace {
+	const char* WILDCARD_HOST = "0.0.0.0";
+
 	const LocationDirective* matchLocation(
 		const std::vector<const LocationDirective *>& locations,
 		const std::string& uri)
@@ -69,6 +72,33 @@ ServerDirective::~ServerDirective()
 std::vector<const ListenDirective *> ServerDirective::getListens() const
 {
 	return getChildren<ListenDirective>();
+}
+
+bool ServerDirective::isMatch(const std::string& host, const std::string& port) const
+{
+	if (host.empty() || port.empty())
+		return false;
+
+	std::vector<const ListenDirective *> listens = getListens();
+	for (std::size_t i = 0; i < listens.size(); i++)
+	{
+		std::ostringstream listen_port;
+		listen_port << listens[i]->getPort();
+		if (listen_port.str() != port)
+			continue;
+
+		const std::string& bind = listens[i]->getHost();
+		if (bind == WILDCARD_HOST || bind == host)
+			return true;
+	}
+	return false;
+}
+
+bool ServerDirective::isMatch(const std::string& host, int port) const
+{
+	std::ostringstream port_str;
+	port_str << port;
+	return isMatch(host, port_str.str());
 }
 
 const ServerNameDirective* ServerDirective::getServerName() const

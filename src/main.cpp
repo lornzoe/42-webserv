@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 21:19:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/06 19:44:58 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 01:37:43 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -259,14 +259,10 @@
 
 static void addAllListens(const Config& config, WSApp& ws)
 {
-	const std::vector<Directive *>& top = config.getDirectives();
-	for (std::size_t i = 0; i < top.size(); i++)
+	std::vector<const ServerDirective *> servers = config.getServerDirectives();
+	for (std::size_t i = 0; i < servers.size(); i++)
 	{
-		const ServerDirective* server = dynamic_cast<const ServerDirective*>(top[i]);
-		if (!server)
-			continue;
-
-		std::vector<const ListenDirective *> listens = server->getListens();
+		std::vector<const ListenDirective *> listens = servers[i]->getListens();
 		for (std::size_t j = 0; j < listens.size(); j++)
 		{
 			ws.addServ(listens[j]->getHost(), listens[j]->getPort());
@@ -284,15 +280,14 @@ int main(int argc, char** argv)
 		return 1;
 	}
 	WSApp	ws;
-	Config *c;
 	// std::string host;
 	// int port = 8080;
 	try
 	{
-		c = new Config(argv[1]);
+		Config::init(argv[1]);
 		std::cout << "[webserv] Config() completed." << std::endl;
-		// c.printConfig();
-		// c.printDirectives();
+		// Config::getInstance().printConfig();
+		// Config::getInstance().printDirectives();
 
 		// if (!findFirstListen(c, host, port))
 		// {
@@ -301,7 +296,7 @@ int main(int argc, char** argv)
 		// 	host = "";
 		// 	port = 8080;
 		// }
-		addAllListens(*c, ws);
+		addAllListens(Config::getInstance(), ws);
 
 	}
 	catch (const std::exception& e)
@@ -312,6 +307,5 @@ int main(int argc, char** argv)
 
 	std::cout << "[webserv] running server now." << std::endl;	
 	ws.run();
-	delete c;
 	return 0;
 }

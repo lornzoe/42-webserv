@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:37:22 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/06 02:18:14 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 01:39:05 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,10 @@ class ServerDirective : public BlockDirective
 		std::vector<const ErrorPageDirective *> getErrorPages() const;
 		const ClientMaxBodySizeDirective* getClientMaxBodySize() const;
 		std::vector<const LocationDirective *> getLocations() const;
+
+		// just gonna overload to account for both...
+		bool isMatch(const std::string& host, const std::string& port) const;
+		bool isMatch(const std::string& host, int port) const;
 
 		ResourcePath getResource(const std::string& uri) const;
 };
