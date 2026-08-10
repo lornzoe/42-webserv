@@ -1,4 +1,6 @@
 #include "WSApp.hpp"
+#include "ServerDirective.hpp"
+#include "ListenDirective.hpp"
 #include "FileDescriptor.hpp"
 #include "w_logger.hpp"
 
@@ -21,6 +23,19 @@ WSApp::~WSApp()
 }
 
 // ----------------------------------------------------------------------------
+
+void	WSApp::ConfigInit(Config const &conf)
+{
+	_conf = &conf;
+	const std::vector<Directive *>& top = conf.getDirectives();
+	for (std::size_t i = 0; i < top.size(); i++)
+	{
+		const ServerDirective* servDir = dynamic_cast<const ServerDirective*>(top[i]);
+		if (!servDir)
+			continue;
+		addServ(*servDir);
+	}
+}
 
 static int	fill_tmp_resp(std::string &resp)
 {
@@ -71,23 +86,23 @@ int		WSApp::run()
 		return 1;
 	}
 
-	regisListeners();
+	ep_regisListeners();
 	while (1)
 	{
-		epoll_res	rdy = wait(10000);
-		if (rdy.n == -1)
+		ep_wait();
+		if (_epRes.n == -1)
 			return 1;
 
-		for (int i = 0; i < rdy.n; ++i)
+		for (int i = 0; i < _epRes.n; ++i)
 		{
-			eventCtx *	ctx = static_cast<eventCtx *>(rdy.ep_ev[i].data.ptr);
+			eventCtx *	ctx = static_cast<eventCtx *>(_epRes.epEv[i].data.ptr);
 			switch (ctx->type)
 			{
 				case SCK_LISTENER:
 					hndl_Lis(ctx);
 					break;
 				case SCK_CLIENT:
-					hndl_Cli(ctx, rdy.ep_ev[i].events);
+					hndl_Cli(ctx, _epRes.epEv[i].events);
 					break;
 				default:
 					break;
@@ -98,7 +113,7 @@ int		WSApp::run()
 		while (it != _servs.end())
 		{
 			Server &	s = **it;
-			client_map_t::iterator i = s.clients().begin();
+			Server::client_map_t::iterator i = s.clients().begin();
 			while (i != s.clients().end())
 			{
 				Client & cli = i->second;
@@ -124,16 +139,19 @@ int		WSApp::run()
 	return 0;
 }
 
-void	WSApp::addServ(std::string const &host, int port)
+// Private --------------------------------------------------------------------
+
+void	WSApp::addServ(ServerDirective const &servDir)
 {
-	Server *	new_serv = new Server(host, port);
+	std::string const &host = servDir.getListens()[0]->getHost();
+	int port = servDir.getListens()[0]->getPort();
+
+	Server *	new_serv = new Server(servDir, host, port);
 	_servs.push_back(new_serv);
 }
 
-// Private --------------------------------------------------------------------
-
 // to check return from epoll add
-void	WSApp::regisListeners()
+void	WSApp::ep_regisListeners()
 {
 	for (std::vector<Server *>::iterator it = _servs.begin();
 		it != _servs.end(); ++it)
@@ -143,13 +161,12 @@ void	WSApp::regisListeners()
 	}
 }
 
-epoll_res	WSApp::wait(int timeout_ms)
+int		WSApp::ep_wait()
 {
-	int rdy_n = _pol.wait(timeout_ms);
-	struct epoll_event const *	rdy_events = _pol.rdy_events();
+	_epRes.n = _pol.wait();
+	_epRes.epEv = _pol.rdy_events();
 
-	epoll_res res = {rdy_n, rdy_events};
-	return res;
+	return _epRes.n;
 }
 
 int		WSApp::hndl_Lis(eventCtx *ctx)

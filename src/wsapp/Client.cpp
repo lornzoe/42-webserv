@@ -1,4 +1,5 @@
 #include "Client.hpp"
+#include "Server.hpp"
 #include "w_eventCtx.hpp"
 #include "w_utils.hpp"
 #include "w_logger.hpp"
@@ -48,6 +49,10 @@ void	Client::initClient(Server &server, int fd) {
 	_eCtx.fd = _fd;
 	_eCtx.type = SCK_CLIENT;
 	_eCtx.owner = this;
+}
+
+ServerDirective const &	Client::servDir() const {
+	return _server->servDir();
 }
 
 ssize_t		Client::recv1()

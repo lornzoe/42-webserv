@@ -1,7 +1,8 @@
 #ifndef CLIENT_H
 # define CLIENT_H
 
-#include "w_eventCtx.hpp"
+# include "ServerDirective.hpp"
+# include "w_eventCtx.hpp"
 
 # include <unistd.h>
 # include <string>
@@ -36,6 +37,7 @@ public:
 
 	void			initClient(Server &server, int fd);
 
+	ServerDirective const &	servDir() const;
 	Server &		server()	{ return *_server; }
 	int				fd() 		{ return _fd; }
 	eventCtx &		ectx()		{ return _eCtx; }

@@ -257,25 +257,6 @@
 // 	return 0;
 // }
 
-static void addAllListens(const Config& config, WSApp& ws)
-{
-	const std::vector<Directive *>& top = config.getDirectives();
-	for (std::size_t i = 0; i < top.size(); i++)
-	{
-		const ServerDirective* server = dynamic_cast<const ServerDirective*>(top[i]);
-		if (!server)
-			continue;
-
-		std::vector<const ListenDirective *> listens = server->getListens();
-		for (std::size_t j = 0; j < listens.size(); j++)
-		{
-			ws.addServ(listens[j]->getHost(), listens[j]->getPort());
-			std::cout << "[webserv] Added server "
- 						<< listens[j]->getHost() << " on port " << listens[j]->getPort() << std::endl;
-		}
-	}
-}
-
 int main(int argc, char** argv)
 {
 	if (argc != 2)
@@ -284,25 +265,12 @@ int main(int argc, char** argv)
 		return 1;
 	}
 	WSApp	ws;
-	Config *c;
-	// std::string host;
-	// int port = 8080;
+	Config	*c;
 	try
 	{
 		c = new Config(argv[1]);
 		std::cout << "[webserv] Config() completed." << std::endl;
-		// c.printConfig();
-		// c.printDirectives();
-
-		// if (!findFirstListen(c, host, port))
-		// {
-		// 	std::cerr << "Warning: no 'listen' directive found in config, "
-		// 				 "defaulting to port 8080" << std::endl;
-		// 	host = "";
-		// 	port = 8080;
-		// }
-		addAllListens(*c, ws);
-
+		ws.ConfigInit(*c);
 	}
 	catch (const std::exception& e)
 	{
