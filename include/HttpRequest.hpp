@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:55 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/09 17:50:28 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/12 20:20:22 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,13 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <sys/stat.h>
+
+#include "FileDescriptor.hpp"
+#include "HttpStatus.hpp"
+#include "MimeTypes.hpp"
+#include "ServerDirective.hpp"
+#include "Socket.hpp"
 
 #ifndef SPACES
 #define SPACES " \f\n\r\t\v"
@@ -33,7 +40,7 @@ public:
 	std::string get_path();
 	std::string get_http_version();
 	void show_all();
-	std::string build_http_response();
+	std::string build_http_response(ServerDirective const *servDir);
 
 private:
 	std::string method_;

@@ -78,7 +78,7 @@ ssize_t Client::recv1()
 
 void Client::build_response()
 {
-	std::string response = HttpRequest(_inbox).build_http_response();
+	std::string response = HttpRequest(_inbox).build_http_response(&(servDir()));
 	tmp_req_for_resp(-1, response);
 }
 

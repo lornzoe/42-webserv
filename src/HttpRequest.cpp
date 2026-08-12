@@ -3,22 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/09 18:03:24 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/12 20:19:45 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
-#include <Socket.hpp>
-#include <HttpStatus.hpp>
-#include <MimeTypes.hpp>
-#include <vector>
-#include <ServerDirective.hpp>
-#include <FileDescriptor.hpp>
-
-#include <sys/stat.h>
 
 // HTTP/1.1 requests containing a message-body MUST include a valid Content-Length
 // header field. If a request contains a message-body and a Content-Length is
@@ -217,62 +209,64 @@ static std::string buildHeader(int code, const std::string &reason,
 		   ss.str() + HEADER_END;
 }
 
-// static const std::string &contentTypeFor(const std::string &path)
-// {
-// 	std::size_t dot = path.rfind('.');
-// 	if (dot == std::string::npos)
-// 		return MimeTypes::getContentType("");
-
-// 	return MimeTypes::getContentType(path.substr(dot));
-// }
-
-// static bool readFile(const std::string &path, std::vector<char> &body)
-// {
-// 	FileDescriptor file(path);
-// 	if (file.get() == -1)
-// 		return false;
-
-// 	struct stat st;
-// 	if (stat(path.c_str(), &st) == -1)
-// 		return false;
-
-// 	body.resize(st.st_size);
-
-// 	ssize_t total = 0;
-// 	while (total < st.st_size)
-// 	{
-// 		ssize_t bytes = read(file.get(), &body[total], st.st_size - total);
-// 		if (bytes <= 0)
-// 			return false;
-// 		total += bytes;
-// 	}
-// 	return true;
-// }
-
-std::string HttpRequest::build_http_response()
+static const std::string &contentTypeFor(const std::string &path)
 {
+	std::size_t dot = path.rfind('.');
+	if (dot == std::string::npos)
+		return MimeTypes::getContentType("");
+
+	return MimeTypes::getContentType(path.substr(dot));
+}
+
+static bool readFile(const std::string &path, std::string &body)
+{
+	FileDescriptor file(path);
+	if (file.get() == -1)
+		return false;
+
+	struct stat st;
+	if (stat(path.c_str(), &st) == -1)
+		return false;
+
+	body.resize(st.st_size);
+
+	ssize_t total = 0;
+	while (total < st.st_size)
+	{
+		ssize_t bytes = read(file.get(), &body[total], st.st_size - total);
+		if (bytes <= 0)
+			return false;
+		total += bytes;
+	}
+	return true;
+}
+
+std::string HttpRequest::build_http_response(ServerDirective const *servDir)
+{
+	std::string body;
+	std::string header;
+
 	if (!isValidHttpRequest())
 	{
-		std::cout << "[webserv] return 400" << std::endl;
-		static const std::string badRequestBody = "<html><body><h1>400 Bad Request</h1></body></html>";
-		return buildHeader(400, "Bad Request", "text/html", badRequestBody.size()) + badRequestBody;
+		body = "<html><body><h1>400 Bad Request</h1></body></html>";
+		header = buildHeader(400, "Bad Request",
+							 HttpStatus::getDefaultResponse(400),
+							 body.size());
+		return header + body;
 	}
 
-	std::cout << "[webserv] return 200" << std::endl;
-	static const std::string body = "<html><body><h1>200 OK</h1></body></html>";
-	return buildHeader(200, "OK", "text/html", body.size()) + body;
+	ServerDirective::ResourcePath resourcePath = servDir->getResource(path_);
+	bool found = resourcePath.first;
+	const std::string &path = resourcePath.second;
 
-	// ServerDirective::ResourcePath resourcePath = servers[i]->getResource(path_);
-	// bool found = resourcePath.first;
-	// const std::string &path = resourcePath.second;
+	if (found && readFile(path, body))
+		header = buildHeader(200, "OK", contentTypeFor(path), body.size());
+	else
+	{
+		body = "<html><body><h1>404 Not Found</h1></body></html>";
+		header = buildHeader(404, "Not Found",
+							 HttpStatus::getDefaultResponse(404), body.size());
+	}
 
-	// 	std::vector<char> body;
-	// 	if (found && readFile(path, body))
-	// 		return buildHeader(200, "OK", contentTypeFor(path), body.size());
-	// 	else
-	// 	{
-	// 		static const std::string notFoundBody = "<html><body><h1>404 Not Found</h1></body></html>";
-	// 		return buildHeader(404, "Not Found", HttpStatus::getDefaultResponse(404), notFoundBody.size());
-	// 	}
-	// }
+	return header + body;
 }
