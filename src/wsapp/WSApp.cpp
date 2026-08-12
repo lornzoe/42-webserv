@@ -77,19 +77,6 @@ static int	fill_tmp_resp(std::string &resp)
 	return 0;
 }
 
-void	WSApp::ConfigInit(Config const &conf)
-{
-	_conf = &conf;
-	const std::vector<Directive *>& top = conf.getDirectives();
-	for (std::size_t i = 0; i < top.size(); i++)
-	{
-		const ServerDirective* servDir = dynamic_cast<const ServerDirective*>(top[i]);
-		if (!servDir)
-			continue;
-		addServ(*servDir);
-	}
-}
-
 int WSApp::run()
 {
 	std::string tmp_resp;
