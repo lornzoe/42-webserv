@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   config_checker.cpp                                 :+:      :+:    :+:   */
+/*   ConfigChecker.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/02 06:33:02 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/02 07:12:48 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/10 01:37:57 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,14 +23,14 @@ int main(int argc, char** argv)
 		return 1;
 	}
 
-	Config *c = NULL;
 	try
 	{
-		c = new Config(argv[1]);
+		Config::init(argv[1]);
+		const Config& c = Config::getInstance();
 		std::cout << "== tokenised config:" << std::endl;
-		c->printConfig();
+		c.printConfig();
 		std::cout << "== directives:" << std::endl;
-		c->printDirectives();
+		c.printDirectives();
 	}
 	catch (const std::exception& e)
 	{
