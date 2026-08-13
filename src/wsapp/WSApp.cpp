@@ -138,11 +138,13 @@ int WSApp::run()
 
 void	WSApp::addServ(ServerDirective const &servDir)
 {
-	std::string const &host = servDir.getListens()[0]->getHost();
-	int port = servDir.getListens()[0]->getPort();
-
-	Server *	new_serv = new Server(servDir, host, port);
-	_servs.push_back(new_serv);
+	std::vector<const ListenDirective*> listenDirs = servDir.getListens();
+	for (std::size_t i = 0; i < listenDirs.size(); ++i)
+	{
+		_servs.push_back(new Server(servDir, 
+								listenDirs[i]->getHost(),
+								listenDirs[i]->getPort()));
+	}
 }
 
 // to check return from epoll add
