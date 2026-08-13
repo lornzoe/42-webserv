@@ -1,6 +1,6 @@
 #include "Listener.hpp"
 #include "Server.hpp"
-#include "w_utils.hpp"
+#include "Utils.hpp"
 #include "w_logger.hpp"
 #include <iostream>
 
@@ -18,14 +18,14 @@
 // OCF ------------------------------------------------------------------------
 
 Listener::~Listener() {
-	wutils::safeClose(_fd);
+	Utils::safeClose(_fd);
 }
 
 // An empty host (empty str "") will bind to the wildcard address aka 0.0.0.0
 Listener::Listener(Server &server, std::string const &host, int port) 
 : _server(server), _fd(-1)
 {
-	std::string			str_port = wutils::ft_itoa(port);
+	std::string			str_port = Utils::ft_itoa(port);
 
 	struct addrinfo		hints = {};
 	hints.ai_family = PF_INET;
@@ -47,12 +47,12 @@ Listener::Listener(Server &server, std::string const &host, int port)
 			|| listen(_fd, 1024) == -1)
 		{
 			if (cur->ai_next != NULL) {
-				wutils::safeClose(_fd);
+				Utils::safeClose(_fd);
 				cur = cur->ai_next;
 			}
 			else {
 				int tmp_errno = errno;
-				wutils::safeClose(_fd);
+				Utils::safeClose(_fd);
 				freeaddrinfo(res);
 				throw std::runtime_error(strerror(tmp_errno));
 			}
@@ -95,7 +95,7 @@ int				Listener::welcome() const
 	if (noBlock(client_fd) == -1)
 	{
 		LOG_WARN(strerror(errno));
-		wutils::safeClose(client_fd);
+		Utils::safeClose(client_fd);
 		return -1;
 	}
 

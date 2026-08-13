@@ -6,31 +6,26 @@
 /*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:55 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/12 20:20:22 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/13 20:20:29 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef HTTPREQUEST_H
 #define HTTPREQUEST_H
 
-#include <cstddef>
-#include <iostream>
 #include <map>
 #include <set>
 #include <sstream>
-#include <stdexcept>
-#include <string>
 #include <sys/stat.h>
 
 #include "FileDescriptor.hpp"
 #include "HttpStatus.hpp"
 #include "MimeTypes.hpp"
 #include "ServerDirective.hpp"
-#include "Socket.hpp"
 
-#ifndef SPACES
-#define SPACES " \f\n\r\t\v"
-#endif
+#include "Utils.hpp"
+
+static const std::string CRLF = "\r\n\r\n";
 
 class HttpRequest
 {

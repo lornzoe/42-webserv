@@ -1,21 +1,21 @@
 #include "Client.hpp"
+#include "HttpRequest.hpp"
 #include "Server.hpp"
+#include "Utils.hpp"
 #include "w_eventCtx.hpp"
-#include "w_utils.hpp"
 #include "w_logger.hpp"
 
 #include <sys/socket.h>
 #include <iostream>
 
-#include "HttpRequest.hpp"
 
 // OCF ------------------------------------------------------------------------
 
 Client::Client()
-	: _server(NULL), _fd(-1), _eCtx(eventCtx()), _status(0), _outPend(0), _outCursor(0) {}
+	: _server(NULL), _fd(-1), _eCtx(eventCtx()), _status(0), _outPend(0), _outCursor(0), _inbox_offset(0) {}
 
 Client::Client(Client const &other)
-	: _server(NULL), _fd(-1), _eCtx(eventCtx()), _status(0), _outPend(0), _outCursor(0)
+	: _server(NULL), _fd(-1), _eCtx(eventCtx()), _status(0), _outPend(0), _outCursor(0), _inbox_offset(0)
 {
 	(void)other;
 }
@@ -30,12 +30,13 @@ Client &Client::operator=(Client const &other)
 	_status = 0;
 	_outPend = 0;
 	_outCursor = 0;
+	_inbox_offset = 0;
 	return *this;
 }
 
 Client::~Client()
 {
-	wutils::safeClose(_fd);
+	Utils::safeClose(_fd);
 }
 
 // Private --------------------------------------------------------------------
@@ -46,7 +47,7 @@ void Client::initClient(Server &server, int fd)
 {
 	if (_fd != -1)
 	{
-		wutils::safeClose(_fd);
+		Utils::safeClose(_fd);
 		// and reset internal state
 	}
 	_server = &server;
@@ -57,7 +58,8 @@ void Client::initClient(Server &server, int fd)
 	_eCtx.owner = this;
 }
 
-ServerDirective const &	Client::servDir() const {
+ServerDirective const &Client::servDir() const
+{
 	return _server->servDir();
 }
 

@@ -29,6 +29,8 @@ private:
 	int _outPend;
 	int _outCursor;
 
+	ssize_t _inbox_offset;
+
 public:
 	Client();
 	~Client();

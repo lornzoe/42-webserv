@@ -9,7 +9,6 @@
 #include <sys/stat.h>
 
 volatile sig_atomic_t WSApp::g_shutdownReq = 0;
-static const std::string HEADER_END = "\r\n\r\n";
 
 // OCF ------------------------------------------------------------------------
 
@@ -32,55 +31,8 @@ void	WSApp::ConfigInit(Config const &conf)
 		addServ(*servers[i]);
 }
 
-static int	fill_tmp_resp(std::string &resp)
-{
-	FileDescriptor file("html/index.html");
-	if (file.get() == -1)
-		return 1;
-
-	struct stat st;
-	if (stat("html/index.html", &st) == -1)
-		return 1;
-
-	std::vector<char> body(st.st_size);
-
-	ssize_t total = 0;
-	while (total < st.st_size)
-	{
-		ssize_t bytes = read(file.get(),
-							 &body[total],
-							 st.st_size - total);
-
-		if (bytes <= 0)
-			return 1;
-
-		total += bytes;
-	}
-
-	std::stringstream ss;
-	ss << total;
-	std::string length = ss.str();
-
-	std::string header =
-		"HTTP/1.1 200 OK\r\n"
-		"Content-Type: text/html\r\n"
-		"Content-Length: " +
-		length + HEADER_END;
-
-	resp = header;
-	resp.append(body.begin(), body.end());
-	return 0;
-}
-
 int WSApp::run()
 {
-	std::string tmp_resp;
-	if (fill_tmp_resp(tmp_resp) == 1)
-	{
-		std::cerr << "i give up" << std::endl;
-		return 1;
-	}
-
 	ep_regisListeners();
 	while (1)
 	{

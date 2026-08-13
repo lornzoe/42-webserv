@@ -6,7 +6,7 @@
 /*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/12 20:19:45 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/13 20:22:08 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -67,31 +67,6 @@
 
 // 3. If the host as determined by rule 1 or 2 is not a valid host on
 //    the server, the response MUST be a 400 (Bad Request) error message.
-void LeftTrim(std::string &s)
-{
-	size_t found = s.find_first_not_of(SPACES);
-	if (found != std::string::npos)
-		s.erase(0, found);
-	else
-		s.clear();
-}
-
-void RightTrim(std::string &s)
-{
-	size_t found = s.find_last_not_of(SPACES);
-	if (found != std::string::npos)
-		s.erase(found + 1);
-	else
-		s.clear();
-}
-
-std::string Trim(std::string s)
-{
-	LeftTrim(s);
-	RightTrim(s);
-	return s;
-}
-
 HttpRequest::HttpRequest(std::string request)
 {
 	std::istringstream stream(request);
@@ -101,7 +76,7 @@ HttpRequest::HttpRequest(std::string request)
 	while (std::getline(stream, line))
 	{
 		// Ignore any empty line(s) received
-		if (Trim(line).empty())
+		if (Utils::Trim(line).empty())
 			continue;
 
 		std::istringstream iss(line);
@@ -113,14 +88,14 @@ HttpRequest::HttpRequest(std::string request)
 	while (std::getline(stream, line))
 	{
 		// Empty line means end of headers
-		if (Trim(line).empty())
+		if (Utils::Trim(line).empty())
 			break;
 
 		size_t pos = line.find(':');
 		if (pos != std::string::npos)
 		{
-			std::string key = Trim(line.substr(0, pos));
-			std::string value = Trim(line.substr(pos + 1));
+			std::string key = Utils::Trim(line.substr(0, pos));
+			std::string value = Utils::Trim(line.substr(pos + 1));
 
 			key = toLowercase(key);
 			header_keys.insert(key);
@@ -206,7 +181,7 @@ static std::string buildHeader(int code, const std::string &reason,
 	return statusLine.str() +
 		   "Content-Type: " + contentType + "\r\n" +
 		   "Content-Length: " +
-		   ss.str() + HEADER_END;
+		   ss.str() + CRLF;
 }
 
 static const std::string &contentTypeFor(const std::string &path)
