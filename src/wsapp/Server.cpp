@@ -7,8 +7,9 @@
 
 // OCF ------------------------------------------------------------------------
 
-Server::Server(std::string const &host, int port)
-: _host(host), _port(port), _name("(" + host + ":" + wutils::ft_itoa(port) + ")"),
+Server::Server(ServerDirective const &servDir, std::string const &host, int port)
+: _servDir(servDir), _host(host), _port(port),
+	_name("(" + host + ":" + wutils::ft_itoa(port) + ")"),
 	_listener(*this, host, port)
 { LOG_INFO("Server " << _name << " created"); }
 

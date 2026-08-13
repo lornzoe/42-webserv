@@ -43,8 +43,8 @@ int		Poller::del(int fd) {
  * ==0	: timeout without any ready events
  * -1	: error, sets errno
  */
-int		Poller::wait(int timeout_ms) {
-	return epoll_wait(_epfd, _rdy_events, _max_events, timeout_ms);
+int		Poller::wait() {
+	return epoll_wait(_epfd, _rdy_events, _max_events, _timeout_ms);
 }
 
 // returns ptr to array of ready epoll_events, rdy_num is returned from call to wait

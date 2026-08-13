@@ -1,17 +1,20 @@
 #ifndef SERVER_H
 # define SERVER_H
 
+#include "ServerDirective.hpp"
 #include "Listener.hpp"
 #include "Client.hpp"
 
 #include <string>
 #include <map>
 
-typedef std::map<int, Client>	client_map_t;
-
 class Server
 {
+public:
+	typedef std::map<int, Client>	client_map_t;
+
 private:
+	ServerDirective const &	_servDir;
 	std::string				_host;
 	int						_port;
 	std::string				_name;
@@ -26,9 +29,10 @@ private:
 	Server &	operator=(Server const & other);
 
 public:
-	Server(std::string const &host, int port);
+	Server(ServerDirective const &servDir, std::string const &host, int port);
 	~Server();
 
+	ServerDirective const &	servDir()	{ return _servDir; }
 	std::string	const &		name()		{ return _name; }
 	Listener &				listener()	{ return _listener; }
 
