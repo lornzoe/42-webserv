@@ -8,7 +8,7 @@
 #include <sstream>
 #include <sys/stat.h>
 
-volatile sig_atomic_t	WSApp::g_shutdownReq = 0;
+volatile sig_atomic_t WSApp::g_shutdownReq = 0;
 static const std::string HEADER_END = "\r\n\r\n";
 
 // OCF ------------------------------------------------------------------------
@@ -18,8 +18,8 @@ WSApp::WSApp() {}
 WSApp::~WSApp()
 {
 	for (std::vector<Server *>::iterator it = _servs.begin();
-		it != _servs.end(); ++it)
-	delete *it;
+		 it != _servs.end(); ++it)
+		delete *it;
 }
 
 // ----------------------------------------------------------------------------
@@ -77,7 +77,7 @@ static int	fill_tmp_resp(std::string &resp)
 	return 0;
 }
 
-int		WSApp::run()
+int WSApp::run()
 {
 	std::string tmp_resp;
 	if (fill_tmp_resp(tmp_resp) == 1)
@@ -116,7 +116,7 @@ int		WSApp::run()
 			Server::client_map_t::iterator i = s.clients().begin();
 			while (i != s.clients().end())
 			{
-				Client & cli = i->second;
+				Client &cli = i->second;
 				if (cli.isStat(CLOSING))
 				{
 					int cls_fd = cli.fd();
@@ -125,10 +125,10 @@ int		WSApp::run()
 					s.rmClient(cls_fd);
 					continue;
 				}
-				std::string const & inbox = cli.readInbox();
+				std::string const &inbox = cli.readInbox();
 				if (inbox.size() > 0 && !cli.isStat(SENDING))
 				{
-					cli.tmp_req_for_resp(-1, tmp_resp);
+					cli.build_response();
 					_pol.mod(cli.fd(), EPOLLOUT | EPOLLIN, &cli.ectx());
 				}
 				++i;
@@ -154,9 +154,9 @@ void	WSApp::addServ(ServerDirective const &servDir)
 void	WSApp::ep_regisListeners()
 {
 	for (std::vector<Server *>::iterator it = _servs.begin();
-		it != _servs.end(); ++it)
+		 it != _servs.end(); ++it)
 	{
-		Listener &	lis = (*it)->listener();
+		Listener &lis = (*it)->listener();
 		_pol.add(lis.fd(), EPOLLIN, &lis.ectx());
 	}
 }
@@ -169,26 +169,26 @@ int		WSApp::ep_wait()
 	return _epRes.n;
 }
 
-int		WSApp::hndl_Lis(eventCtx *ctx)
+int WSApp::hndl_Lis(eventCtx *ctx)
 {
-	Listener &	lis = *(static_cast<Listener *>(ctx->owner));
-	Server &	ser = lis.server();
+	Listener &lis = *(static_cast<Listener *>(ctx->owner));
+	Server &ser = lis.server();
 
 	int client_fd = lis.welcome();
 	if (client_fd == -1)
 		return -1;
 
-	Client * 	cli = ser.addClient(client_fd);
+	Client *cli = ser.addClient(client_fd);
 	if (!cli)
 		return -1;
 
 	return _pol.add(client_fd, EPOLLIN, &cli->ectx());
-	//rm client from server if add fails...
+	// rm client from server if add fails...
 }
 
-int		WSApp::hndl_Cli(eventCtx *ctx, uint32_t events)
+int WSApp::hndl_Cli(eventCtx *ctx, uint32_t events)
 {
-	Client &	cli = *(static_cast<Client *>(ctx->owner));
+	Client &cli = *(static_cast<Client *>(ctx->owner));
 
 	if (events & EPOLLIN)
 	{

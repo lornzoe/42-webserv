@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 21:19:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 01:37:43 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/12 18:59:57 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,8 +22,9 @@
 #include "MimeTypes.hpp"
 #include <vector>
 
+#include "HttpRequest.hpp"
+
 #include <sstream>
-#include <sys/stat.h>
 #include <sys/select.h>
 #include <set>
 
@@ -218,7 +219,7 @@
 
 // 			// Receive request
 // 			std::string request = client.receive_all(0);
-			
+
 // 			// std::cout << "Message from client: " << request << std::endl;
 
 // 			std::string uri = extractRequestUri(request);
@@ -229,7 +230,6 @@
 
 // 			std::vector<char> body;
 // 			std::string header;
-
 
 // 			if (found && readFile(path, body))
 // 			{
@@ -257,7 +257,7 @@
 // 	return 0;
 // }
 
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 	if (argc != 2)
 	{
@@ -271,13 +271,13 @@ int main(int argc, char** argv)
 		std::cout << "[webserv] Config() completed." << std::endl;
 		ws.ConfigInit(Config::getInstance());
 	}
-	catch (const std::exception& e)
+	catch (const std::exception &e)
 	{
 		std::cerr << "Error: " << e.what() << std::endl;
 		return 1;
 	}
 
-	std::cout << "[webserv] running server now." << std::endl;	
+	std::cout << "[webserv] running server now." << std::endl;
 	ws.run();
 	return 0;
 }

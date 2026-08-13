@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
+#    By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/08/06 19:03:59 by lyanga           ###   ########.fr        #
+#    Updated: 2026/08/09 16:05:28 by ypua             ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -42,6 +42,7 @@ SRC_FILES = main.cpp \
 			ReturnDirective.cpp \
 			LimitExceptDirective.cpp \
 			\
+			HttpRequest.cpp \
 			HttpStatus.cpp \
 			MimeTypes.cpp \
 			\
