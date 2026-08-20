@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/12 20:19:45 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/20 18:52:36 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
+#include "HttpResponse.hpp"
 
 // HTTP/1.1 requests containing a message-body MUST include a valid Content-Length
 // header field. If a request contains a message-body and a Content-Length is
@@ -194,21 +195,6 @@ bool HttpRequest::isValidHttpRequest()
 	return true;
 }
 
-static std::string buildHeader(int code, const std::string &reason,
-							   const std::string &contentType, std::size_t length)
-{
-	std::stringstream ss;
-	ss << length;
-
-	std::stringstream statusLine;
-	statusLine << "HTTP/1.1 " << code << " " << reason << "\r\n";
-
-	return statusLine.str() +
-		   "Content-Type: " + contentType + "\r\n" +
-		   "Content-Length: " +
-		   ss.str() + HEADER_END;
-}
-
 static const std::string &contentTypeFor(const std::string &path)
 {
 	std::size_t dot = path.rfind('.');
@@ -249,24 +235,17 @@ std::string HttpRequest::build_http_response(ServerDirective const *servDir)
 	if (!isValidHttpRequest())
 	{
 		body = "<html><body><h1>400 Bad Request</h1></body></html>";
-		header = buildHeader(400, "Bad Request",
-							 HttpStatus::getDefaultResponse(400),
-							 body.size());
-		return header + body;
+		return HttpResponse::build(400, "text/html", body, "Connection: close");
 	}
 
 	ServerDirective::ResourcePath resourcePath = servDir->getResource(path_);
 	bool found = resourcePath.first;
 	const std::string &path = resourcePath.second;
 
-	if (found && readFile(path, body))
-		header = buildHeader(200, "OK", contentTypeFor(path), body.size());
-	else
+	if (!(found && readFile(path, body)))
 	{
 		body = "<html><body><h1>404 Not Found</h1></body></html>";
-		header = buildHeader(404, "Not Found",
-							 HttpStatus::getDefaultResponse(404), body.size());
+		return HttpResponse::build(404, "text/html", body, "Connection: close");
 	}
-
-	return header + body;
+	return HttpResponse::build(200, contentTypeFor(path), body);
 }
