@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 17:50:51 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/20 18:33:45 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/21 04:16:50 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,18 +18,28 @@
 #define CRLF "\r\n"
 #define HEADER_END "\r\n\r\n"
 
-std::string HttpResponse::build(int code, const std::string &contentType, const std::string &body, std::string additionalHeaders)
+std::string HttpResponse::build(int code, const std::string &contentType, const std::string &body, const std::string additionalHeaders)
 {
+	// 1xx and 204 has no body and no Content-Length;
+	// 304 has no body
+	bool noBody = (code >= 100 && code < 200) || code == 204 || code == 304;
+	bool noLength = (code >= 100 && code < 200) || code == 204;
+
 	// build the header first
 	std::stringstream ss;
 	ss << "HTTP/1.1 " << code << " " << HttpStatus::getDefaultResponse(code) << CRLF;
-	ss << "Content-Type: " << contentType << CRLF;
+	if (!contentType.empty())
+		ss << "Content-Type: " << contentType << CRLF;
 	if (!additionalHeaders.empty())
 		ss << additionalHeaders << CRLF;
-	ss << "Content-Length: " << body.size() << HEADER_END;
+	if (!noLength)
+		ss << "Content-Length: " << (noBody ? 0 : body.size()) << HEADER_END;
+	else
+		ss << CRLF; // second CRLF to signify header_end
 
 	// build the body
-	ss << body;
+	if (!noBody)
+		ss << body;
 	
 	return ss.str();
 }
