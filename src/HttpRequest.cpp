@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/20 18:52:36 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/21 04:41:55 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -180,19 +180,19 @@ std::string HttpRequest::toLowercase(std::string str)
 	return str;
 }
 
-bool HttpRequest::isValidHttpRequest()
+
+int HttpRequest::requestError() const
 {
 	if (method_.empty() || path_.empty() || http_version_.empty())
-		return false;
-
+		return 400;
+	if (http_version_.size() < 5 || http_version_.compare(0, 5, "HTTP/") != 0)
+		return 400;
 	if (http_version_ != "HTTP/1.1")
-		return false;
-
-	if (method_ != "GET" &&
-		method_ != "POST" && method_ != "DELETE")
-		return false;
-
-	return true;
+		return 505;
+	if (method_ != "GET" && method_ != "POST" && method_ != "DELETE")
+		return 501;
+ 
+	return 0;
 }
 
 static const std::string &contentTypeFor(const std::string &path)
@@ -232,10 +232,12 @@ std::string HttpRequest::build_http_response(ServerDirective const *servDir)
 	std::string body;
 	std::string header;
 
-	if (!isValidHttpRequest())
+	int errorCode = requestError();
+	if (errorCode)
 	{
-		body = "<html><body><h1>400 Bad Request</h1></body></html>";
-		return HttpResponse::build(400, "text/html", body, "Connection: close");
+		// check first if error directive exists, otherwise fallback to defaultErrorBody
+		body = HttpResponse::defaultErrorBody(errorCode);
+		return HttpResponse::build(errorCode, "text/html", body, "Connection: close");
 	}
 
 	ServerDirective::ResourcePath resourcePath = servDir->getResource(path_);

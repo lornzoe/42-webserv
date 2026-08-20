@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 17:39:57 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/21 03:43:18 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/21 04:29:31 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@ namespace HttpResponse
 {
 	std::string build(int code, const std::string &contentType, const std::string &body,
 		const std::string additionalHeader = "");
+	std::string defaultErrorBody(int code);
 };
 
 #endif

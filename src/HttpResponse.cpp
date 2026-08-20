@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 17:50:51 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/21 04:16:50 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/21 04:26:29 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,5 +41,16 @@ std::string HttpResponse::build(int code, const std::string &contentType, const 
 	if (!noBody)
 		ss << body;
 	
+	return ss.str();
+}
+
+std::string HttpResponse::defaultErrorBody(int code)
+{
+	const std::string &reason = HttpStatus::getDefaultResponse(code);
+
+	std::stringstream ss;
+	ss << "<html><head><title>" << code << " " << reason << "</title></head>\r\n"
+		<< "<body><center><h1>" << code << " " << reason << "</h1></center>\r\n"
+		<< "<hr><center>webserv</center></body></html>\r\n";
 	return ss.str();
 }
