@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/21 04:41:55 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/21 20:03:24 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -236,6 +236,13 @@ std::string HttpRequest::build_http_response(ServerDirective const *servDir)
 	if (errorCode)
 	{
 		// check first if error directive exists, otherwise fallback to defaultErrorBody
+		ServerDirective::ResourcePath errorPath = servDir->getErrorPage(path_, errorCode);
+		if (errorPath.first)
+		{
+			ServerDirective::ResourcePath errorPage = servDir->getResource(errorPath.second);
+			if (errorPage.first && readFile(errorPage.second, body))
+				return HttpResponse::build(errorCode, contentTypeFor(errorPage.second), body, "Connection: close");
+		}
 		body = HttpResponse::defaultErrorBody(errorCode);
 		return HttpResponse::build(errorCode, "text/html", body, "Connection: close");
 	}
