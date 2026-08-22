@@ -1,5 +1,4 @@
 #include "Client.hpp"
-#include "HttpRequest.hpp"
 #include "Server.hpp"
 #include "Utils.hpp"
 #include "w_eventCtx.hpp"
@@ -8,14 +7,13 @@
 #include <sys/socket.h>
 #include <iostream>
 
-
 // OCF ------------------------------------------------------------------------
 
 Client::Client()
-	: _server(NULL), _fd(-1), _eCtx(eventCtx()), _status(0), _outPend(0), _outCursor(0), _inbox_offset(0) {}
+	: _server(NULL), _fd(-1), _eCtx(eventCtx()), _status(0), _outPend(0), _outCursor(0) {}
 
 Client::Client(Client const &other)
-	: _server(NULL), _fd(-1), _eCtx(eventCtx()), _status(0), _outPend(0), _outCursor(0), _inbox_offset(0)
+	: _server(NULL), _fd(-1), _eCtx(eventCtx()), _status(0), _outPend(0), _outCursor(0)
 {
 	(void)other;
 }
@@ -30,7 +28,6 @@ Client &Client::operator=(Client const &other)
 	_status = 0;
 	_outPend = 0;
 	_outCursor = 0;
-	_inbox_offset = 0;
 	return *this;
 }
 
@@ -78,13 +75,17 @@ ssize_t Client::recv1()
 	return bytesRd;
 }
 
-void Client::build_response()
+void Client::process_request(ParseResult const &result)
 {
-	std::string response = HttpRequest(_inbox).build_http_response(&(servDir()));
-	tmp_req_for_resp(-1, response);
+	size_t body_start = _inbox.find(HEADER_TERMINATOR) + 4;
+	std::string body = _inbox.substr(body_start, result.header.content_length);
+
+	std::string response = HttpRequest::build_http_response(result.header, body,
+															&(servDir()));
+	send_response(result.consumed, response);
 }
 
-void Client::tmp_req_for_resp(ssize_t req_offset, std::string const &resp)
+void Client::send_response(ssize_t req_offset, std::string const &resp)
 {
 	if (req_offset == -1 || static_cast<size_t>(req_offset) >= _inbox.size())
 		_inbox.erase();

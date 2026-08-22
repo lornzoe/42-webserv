@@ -23,7 +23,7 @@ WSApp::~WSApp()
 
 // ----------------------------------------------------------------------------
 
-void	WSApp::ConfigInit(Config const &conf)
+void WSApp::ConfigInit(Config const &conf)
 {
 	_conf = &conf;
 	std::vector<const ServerDirective *> servers = conf.getServerDirectives();
@@ -42,24 +42,24 @@ int WSApp::run()
 
 		for (int i = 0; i < _epRes.n; ++i)
 		{
-			eventCtx *	ctx = static_cast<eventCtx *>(_epRes.epEv[i].data.ptr);
+			eventCtx *ctx = static_cast<eventCtx *>(_epRes.epEv[i].data.ptr);
 			switch (ctx->type)
 			{
-				case SCK_LISTENER:
-					hndl_Lis(ctx);
-					break;
-				case SCK_CLIENT:
-					hndl_Cli(ctx, _epRes.epEv[i].events);
-					break;
-				default:
-					break;
+			case SCK_LISTENER:
+				hndl_Lis(ctx);
+				break;
+			case SCK_CLIENT:
+				hndl_Cli(ctx, _epRes.epEv[i].events);
+				break;
+			default:
+				break;
 			}
 		}
 
 		std::vector<Server *>::iterator it = _servs.begin();
 		while (it != _servs.end())
 		{
-			Server &	s = **it;
+			Server &s = **it;
 			Server::client_map_t::iterator i = s.clients().begin();
 			while (i != s.clients().end())
 			{
@@ -75,8 +75,16 @@ int WSApp::run()
 				std::string const &inbox = cli.readInbox();
 				if (inbox.size() > 0 && !cli.isStat(SENDING))
 				{
-					cli.build_response();
-					_pol.mod(cli.fd(), EPOLLOUT | EPOLLIN, &cli.ectx());
+					ParseResult result = HttpRequest::parse_http_request(inbox);
+					if (result.status == INVALID)
+					{
+						// TODO: close connection
+					}
+					if (result.status == COMPLETE)
+					{
+						cli.process_request(result);
+						_pol.mod(cli.fd(), EPOLLOUT | EPOLLIN, &cli.ectx());
+					}
 				}
 				++i;
 			}
@@ -88,19 +96,19 @@ int WSApp::run()
 
 // Private --------------------------------------------------------------------
 
-void	WSApp::addServ(ServerDirective const &servDir)
+void WSApp::addServ(ServerDirective const &servDir)
 {
-	std::vector<const ListenDirective*> listenDirs = servDir.getListens();
+	std::vector<const ListenDirective *> listenDirs = servDir.getListens();
 	for (std::size_t i = 0; i < listenDirs.size(); ++i)
 	{
-		_servs.push_back(new Server(servDir, 
-								listenDirs[i]->getHost(),
-								listenDirs[i]->getPort()));
+		_servs.push_back(new Server(servDir,
+									listenDirs[i]->getHost(),
+									listenDirs[i]->getPort()));
 	}
 }
 
 // to check return from epoll add
-void	WSApp::ep_regisListeners()
+void WSApp::ep_regisListeners()
 {
 	for (std::vector<Server *>::iterator it = _servs.begin();
 		 it != _servs.end(); ++it)
@@ -110,7 +118,7 @@ void	WSApp::ep_regisListeners()
 	}
 }
 
-int		WSApp::ep_wait()
+int WSApp::ep_wait()
 {
 	_epRes.n = _pol.wait();
 	_epRes.epEv = _pol.rdy_events();

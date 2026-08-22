@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 20:18:55 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/13 20:25:52 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/22 15:44:13 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,4 +50,11 @@ std::string Utils::ft_itoa(int num)
 	std::stringstream ss;
 	ss << num;
 	return (ss.str());
+}
+
+std::string Utils::toLowercase(std::string str)
+{
+	for (size_t j = 0; j < str.length(); j++)
+		str[j] = static_cast<char>(tolower(static_cast<unsigned char>(str[j])));
+	return str;
 }

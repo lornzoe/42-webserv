@@ -1,8 +1,9 @@
 #ifndef CLIENT_H
 #define CLIENT_H
 
-# include "ServerDirective.hpp"
-# include "w_eventCtx.hpp"
+#include "ServerDirective.hpp"
+#include "w_eventCtx.hpp"
+#include "HttpRequest.hpp"
 
 #include <unistd.h>
 #include <string>
@@ -29,8 +30,6 @@ private:
 	int _outPend;
 	int _outCursor;
 
-	ssize_t _inbox_offset;
-
 public:
 	Client();
 	~Client();
@@ -40,21 +39,21 @@ public:
 
 	void initClient(Server &server, int fd);
 
-	ServerDirective const &	servDir() const;
-	Server &		server()	{ return *_server; }
-	int				fd() 		{ return _fd; }
-	eventCtx &		ectx()		{ return _eCtx; }
-	
-	std::string const &		readInbox() const { return _inbox; }
-	bool					isStat(int flag) const { return ((_status & flag) == flag); }
-	void					addStat(int flag) { _status |= flag; }
-	void					rmStat(int flag) { _status &= ~flag; }
+	ServerDirective const &servDir() const;
+	Server &server() { return *_server; }
+	int fd() { return _fd; }
+	eventCtx &ectx() { return _eCtx; }
+
+	std::string const &readInbox() const { return _inbox; }
+	bool isStat(int flag) const { return ((_status & flag) == flag); }
+	void addStat(int flag) { _status |= flag; }
+	void rmStat(int flag) { _status &= ~flag; }
 
 	ssize_t recv1();
-	void tmp_req_for_resp(ssize_t req_offset, std::string const &resp);
+	void send_response(ssize_t req_offset, std::string const &resp);
 	ssize_t send1();
 
-	void build_response();
+	void process_request(ParseResult const &result);
 };
 
 #endif
