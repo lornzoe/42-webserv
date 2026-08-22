@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/21 20:03:24 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/22 13:31:42 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -181,7 +181,7 @@ std::string HttpRequest::toLowercase(std::string str)
 }
 
 
-int HttpRequest::requestError() const
+int HttpRequest::checkValidHttpRequest() const
 {
 	if (method_.empty() || path_.empty() || http_version_.empty())
 		return 400;
@@ -227,22 +227,32 @@ static bool readFile(const std::string &path, std::string &body)
 	return true;
 }
 
+static bool getErrorPage(ServerDirective const *servDir, const std::string &uri, int code, std::string &out)
+{
+	ServerDirective::ResourcePath errorPath = servDir->getErrorPage(uri, code);
+	if (!errorPath.first)
+		return false;
+
+	ServerDirective::ResourcePath errorPage = servDir->getResource(errorPath.second);
+	std::string body;
+	if (!(errorPage.first && readFile(errorPage.second, body)))
+		return false;
+
+	out = HttpResponse::build(code, contentTypeFor(errorPage.second), body, "Connection: close");
+	return true;
+}
+
 std::string HttpRequest::build_http_response(ServerDirective const *servDir)
 {
 	std::string body;
 	std::string header;
 
-	int errorCode = requestError();
+	int errorCode = checkValidHttpRequest();
 	if (errorCode)
 	{
-		// check first if error directive exists, otherwise fallback to defaultErrorBody
-		ServerDirective::ResourcePath errorPath = servDir->getErrorPage(path_, errorCode);
-		if (errorPath.first)
-		{
-			ServerDirective::ResourcePath errorPage = servDir->getResource(errorPath.second);
-			if (errorPage.first && readFile(errorPage.second, body))
-				return HttpResponse::build(errorCode, contentTypeFor(errorPage.second), body, "Connection: close");
-		}
+		std::string response;
+		if (getErrorPage(servDir, path_, errorCode, response))
+			return response;
 		body = HttpResponse::defaultErrorBody(errorCode);
 		return HttpResponse::build(errorCode, "text/html", body, "Connection: close");
 	}
@@ -253,7 +263,10 @@ std::string HttpRequest::build_http_response(ServerDirective const *servDir)
 
 	if (!(found && readFile(path, body)))
 	{
-		body = "<html><body><h1>404 Not Found</h1></body></html>";
+		std::string response;
+		if (getErrorPage(servDir, path_, 404, response))
+			return response;
+		body = HttpResponse::defaultErrorBody(404);
 		return HttpResponse::build(404, "text/html", body, "Connection: close");
 	}
 	return HttpResponse::build(200, contentTypeFor(path), body);

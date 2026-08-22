@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:55 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/21 04:41:45 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/22 13:31:19 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,7 +59,7 @@ private:
 	// size_t content_length;
 	std::string toLowercase(std::string str);
 
-	int requestError() const;
+	int checkValidHttpRequest() const;
 };
 
 #endif
