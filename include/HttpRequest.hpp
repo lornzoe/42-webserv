@@ -3,63 +3,70 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:55 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/12 20:20:22 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/22 16:39:49 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #ifndef HTTPREQUEST_H
 #define HTTPREQUEST_H
 
-#include <cstddef>
-#include <iostream>
 #include <map>
 #include <set>
 #include <sstream>
-#include <stdexcept>
-#include <string>
 #include <sys/stat.h>
+#include <stdlib.h>
 
 #include "FileDescriptor.hpp"
 #include "HttpStatus.hpp"
 #include "MimeTypes.hpp"
 #include "ServerDirective.hpp"
-#include "Socket.hpp"
 
-#ifndef SPACES
-#define SPACES " \f\n\r\t\v"
-#endif
+#include "Utils.hpp"
+
+static const std::string HEADER_TERMINATOR = "\r\n\r\n";
+
+enum ParseStatus
+{
+	INCOMPLETE,
+	COMPLETE,
+	INVALID,
+};
+
+struct ParsedHeaders
+{
+	bool valid;
+	std::string method;
+	std::string path;
+	std::string http_version;
+	std::map<std::string, std::string> headers;
+	std::set<std::string> header_keys;
+	size_t content_length;
+
+	ParsedHeaders() : valid(false), content_length(0) {}
+};
+
+struct ParseResult
+{
+	ParseStatus status;
+	size_t consumed;
+	ParsedHeaders header;
+
+	ParseResult(ParseStatus s, size_t c, ParsedHeaders h = ParsedHeaders())
+		: status(s), consumed(c), header(h)
+	{
+	}
+};
 
 class HttpRequest
 {
 public:
-	HttpRequest(std::string);
-	std::string get_method();
-	std::string get_path();
-	std::string get_http_version();
-	void show_all();
-	std::string build_http_response(ServerDirective const *servDir);
-
-private:
-	std::string method_;
-	std::string path_;
-	std::string http_version_;
-	// std::string query_string;
-
-	std::set<std::string> header_keys;
-	std::map<std::string, std::string> headers_;
-
-	// Body (ignored for GET, populated for POST)
-	std::string body_;
-
-	// bool is_complete;
-	// bool is_chunked;
-	// size_t content_length;
-	std::string toLowercase(std::string str);
-
-	bool isValidHttpRequest();
+	static std::string build_http_response(ParsedHeaders const &req,
+										   std::string const &body,
+										   ServerDirective const *servDir);
+	static ParseResult parse_http_request(const std::string &inbox);
 };
 
 #endif
