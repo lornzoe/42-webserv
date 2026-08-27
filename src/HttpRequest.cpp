@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/22 16:50:54 by ypua             ###   ########.fr       */
+/*   Updated: 2026/08/27 20:23:40 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -158,7 +158,7 @@ ParsedHeaders parseHeaderBlock(const std::string &headerBlock)
 	std::istringstream stream(headerBlock);
 	std::string line;
 
-	// 1. Parse the request line
+	// Parse the request line
 	if (!std::getline(stream, line))
 		return result;
 
@@ -189,6 +189,9 @@ ParsedHeaders parseHeaderBlock(const std::string &headerBlock)
 			return result;
 
 		key = Utils::toLowercase(key);
+		// Reject duplicate headers for simplification
+		if (result.header_keys.count(key))
+			return result;
 		result.header_keys.insert(key);
 		result.headers[key] = value;
 
@@ -228,8 +231,9 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 	if (!parsed.valid)
 		return ParseResult(INVALID, 0);
 
+	// TODO: Remove this once we support chunked
 	if (parsed.headers.count("transfer-encoding"))
-		return ParseResult(INVALID, 0); // chunked not handled yet
+		return ParseResult(INVALID, 0);
 
 	// 3. Determine body length
 	size_t body_start = header_end + 4;
