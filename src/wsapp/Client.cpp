@@ -77,10 +77,8 @@ ssize_t Client::recv1()
 
 void Client::process_request(ParseResult const &result)
 {
-	size_t body_start = _inbox.find(HEADER_TERMINATOR) + 4;
-	std::string body = _inbox.substr(body_start, result.header.content_length);
-
-	std::string response = HttpRequest::build_http_response(result.header, body,
+	std::string response = HttpRequest::build_http_response(result.request,
+															result.request.body,
 															&(servDir()));
 	send_response(result.consumed, response);
 }

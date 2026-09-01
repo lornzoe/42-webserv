@@ -6,22 +6,11 @@
 /*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/27 20:23:40 by ypua             ###   ########.fr       */
+/*   Updated: 2026/09/01 20:39:14 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
-
-// HTTP/1.1 requests containing a message-body MUST include a valid Content-Length
-// header field. If a request contains a message-body and a Content-Length is
-// not given,
-// The server SHOULD respond with 400 (bad request) if it cannot
-// determine the length of the message, or with 411 (length required) if
-// it wishes to insist on receiving a valid Content-Length.
-
-// Messages MUST NOT include both a Content-Length header field and a
-// non-identity transfer-coding. If the message does include a non-
-// identity transfer-coding, the Content-Length MUST be ignored.
 
 // All responses to the HEAD request method
 // MUST NOT include a message-body, even though the presence of entity-
@@ -46,7 +35,7 @@
 // 3. If the host as determined by rule 1 or 2 is not a valid host on
 //    the server, the response MUST be a 400 (Bad Request) error message.
 
-bool isValidHttpRequest(ParsedHeaders const &req)
+bool isValidHttpRequest(ParsedRequest const &req)
 {
 	if (req.method.empty() || req.path.empty() || req.http_version.empty())
 		return false;
@@ -56,6 +45,14 @@ bool isValidHttpRequest(ParsedHeaders const &req)
 
 	if (req.method != "GET" && req.method != "POST" && req.method != "DELETE")
 		return false;
+
+	bool hasContentLength = req.header_keys.count("content-length");
+	bool hasTransferEncoding = req.header_keys.count("transfer-encoding");
+	if (!hasTransferEncoding)
+	{
+		if (!req.body.empty() && !hasContentLength)
+			return false;
+	}
 
 	return true;
 }
@@ -107,7 +104,7 @@ static bool readFile(const std::string &path, std::string &body)
 	return true;
 }
 
-std::string HttpRequest::build_http_response(ParsedHeaders const &req,
+std::string HttpRequest::build_http_response(ParsedRequest const &req,
 											 std::string const &body_in,
 											 ServerDirective const *servDir)
 {
@@ -123,6 +120,7 @@ std::string HttpRequest::build_http_response(ParsedHeaders const &req,
 		return header + body;
 	}
 
+	// TODO: Should only run when it is looking for html?
 	ServerDirective::ResourcePath resourcePath = servDir->getResource(req.path);
 	bool found = resourcePath.first;
 	const std::string &path = resourcePath.second;
@@ -130,7 +128,7 @@ std::string HttpRequest::build_http_response(ParsedHeaders const &req,
 	if (req.method == "POST")
 	{
 		// handle body_in
-		std::cout << body_in << std::endl;
+		std::cout << "Body: " << body_in << std::endl;
 	}
 
 	if (found && readFile(path, body))
@@ -151,9 +149,9 @@ void removeTrailingCarriageReturn(std::string &line)
 		line.erase(line.size() - 1);
 }
 
-ParsedHeaders parseHeaderBlock(const std::string &headerBlock)
+ParsedRequest parseHeaderBlock(const std::string &headerBlock)
 {
-	ParsedHeaders result;
+	ParsedRequest result;
 
 	std::istringstream stream(headerBlock);
 	std::string line;
@@ -212,6 +210,69 @@ ParsedHeaders parseHeaderBlock(const std::string &headerBlock)
 	return result;
 }
 
+ParseResult parseChunkedRequest(const std::string &inbox,
+								size_t header_length,
+								ParsedRequest &parsed)
+{
+	size_t pos = header_length;
+	std::string body;
+
+	while (true)
+	{
+		// Find the end of the chunk-size line
+		size_t line_end = inbox.find(CRLF, pos);
+
+		if (line_end == std::string::npos)
+			return ParseResult(INCOMPLETE, 0);
+
+		// Extract chunk size
+		std::string size_str = inbox.substr(pos, line_end - pos);
+
+		// Convert hexadecimal size
+		char *end = NULL;
+		unsigned long chunk_size =
+			std::strtoul(size_str.c_str(), &end, 16);
+
+		if (end == size_str.c_str() || *end != '\0')
+			return ParseResult(INVALID, 0);
+
+		// Move past "size\r\n"
+		pos = line_end + 2;
+
+		// Last chunk
+		if (chunk_size == 0)
+		{
+			// Need final CRLF
+			if (inbox.size() < pos + 2)
+				return ParseResult(INCOMPLETE, 0);
+
+			if (inbox.substr(pos, 2) != CRLF)
+				return ParseResult(INVALID, 0);
+
+			pos += 2;
+
+			parsed.body = body;
+
+			return ParseResult(COMPLETE, pos, parsed);
+		}
+
+		// Check if entire chunk presents
+		if (inbox.size() < pos + chunk_size + 2)
+			return ParseResult(INCOMPLETE, 0);
+
+		// Extract chunk data
+		body.append(inbox, pos, chunk_size);
+
+		pos += chunk_size;
+
+		// Chunk data must be followed by CRLF
+		if (inbox.substr(pos, 2) != CRLF)
+			return ParseResult(INVALID, 0);
+
+		pos += 2;
+	}
+}
+
 ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 {
 	static const size_t MAX_HEADER_SIZE = 8192;
@@ -227,23 +288,34 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 
 	// 2. Parse request line and headers
 	std::string headers = inbox.substr(0, header_end);
-	ParsedHeaders parsed = parseHeaderBlock(headers);
+	ParsedRequest parsed = parseHeaderBlock(headers);
 	if (!parsed.valid)
 		return ParseResult(INVALID, 0);
 
-	// TODO: Remove this once we support chunked
-	if (parsed.headers.count("transfer-encoding"))
+	size_t header_length = header_end + 4;
+
+	std::map<std::string, std::string>::const_iterator it = parsed.headers.find("transfer-encoding");
+	if (it != parsed.headers.end())
+	{
+		std::string value = Utils::toLowercase(it->second);
+		if (value == "chunked")
+		{
+			return parseChunkedRequest(inbox, header_length, parsed);
+		}
+
 		return ParseResult(INVALID, 0);
+	}
 
 	// 3. Determine body length
-	size_t body_start = header_end + 4;
 	size_t content_length = parsed.content_length;
 
 	// 4. Check whether entire body has arrived
-	if (inbox.size() < body_start + content_length)
+	if (inbox.size() < header_length + content_length)
 		return ParseResult(INCOMPLETE, 0);
 
+	parsed.body = inbox.substr(header_length, content_length);
+
 	// 5. Entire request exists
-	size_t request_size = body_start + content_length;
+	size_t request_size = header_length + content_length;
 	return ParseResult(COMPLETE, request_size, parsed);
 }
