@@ -6,7 +6,7 @@
 /*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/09/01 20:39:14 by ypua             ###   ########.fr       */
+/*   Updated: 2026/09/02 19:33:44 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,7 +38,7 @@
 bool isValidHttpRequest(ParsedRequest const &req)
 {
 	if (req.method.empty() || req.path.empty() || req.http_version.empty())
-		return false;
+	return false;
 
 	if (req.http_version != "HTTP/1.1")
 		return false;
@@ -131,6 +131,7 @@ std::string HttpRequest::build_http_response(ParsedRequest const &req,
 		std::cout << "Body: " << body_in << std::endl;
 	}
 
+	// TODO: Should only run for GET
 	if (found && readFile(path, body))
 		header = buildHeader(200, "OK", contentTypeFor(path), body.size());
 	else
@@ -294,6 +295,7 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 
 	size_t header_length = header_end + 4;
 
+	// TODO: Build body for Multipart/form-data
 	std::map<std::string, std::string>::const_iterator it = parsed.headers.find("transfer-encoding");
 	if (it != parsed.headers.end())
 	{
