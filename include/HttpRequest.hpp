@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:55 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/22 16:39:49 by ypua             ###   ########.fr       */
+/*   Updated: 2026/09/01 20:25:49 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@
 #include "Utils.hpp"
 
 static const std::string HEADER_TERMINATOR = "\r\n\r\n";
+static const std::string CRLF = "\r\n";
 
 enum ParseStatus
 {
@@ -35,9 +36,10 @@ enum ParseStatus
 	INVALID,
 };
 
-struct ParsedHeaders
+struct ParsedRequest
 {
 	bool valid;
+	
 	std::string method;
 	std::string path;
 	std::string http_version;
@@ -45,17 +47,19 @@ struct ParsedHeaders
 	std::set<std::string> header_keys;
 	size_t content_length;
 
-	ParsedHeaders() : valid(false), content_length(0) {}
+	std::string body;
+
+	ParsedRequest() : valid(false), content_length(0) {}
 };
 
 struct ParseResult
 {
 	ParseStatus status;
 	size_t consumed;
-	ParsedHeaders header;
+	ParsedRequest request;
 
-	ParseResult(ParseStatus s, size_t c, ParsedHeaders h = ParsedHeaders())
-		: status(s), consumed(c), header(h)
+	ParseResult(ParseStatus s, size_t c, ParsedRequest h = ParsedRequest())
+		: status(s), consumed(c), request(h)
 	{
 	}
 };
@@ -63,7 +67,7 @@ struct ParseResult
 class HttpRequest
 {
 public:
-	static std::string build_http_response(ParsedHeaders const &req,
+	static std::string build_http_response(ParsedRequest const &req,
 										   std::string const &body,
 										   ServerDirective const *servDir);
 	static ParseResult parse_http_request(const std::string &inbox);

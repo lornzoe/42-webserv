@@ -76,6 +76,10 @@ int WSApp::run()
 				if (inbox.size() > 0 && !cli.isStat(SENDING))
 				{
 					ParseResult result = HttpRequest::parse_http_request(inbox);
+					if (result.status == INCOMPLETE)
+					{
+						// TODO: Handle timeout
+					}
 					if (result.status == INVALID)
 					{
 						// TODO: close connection
