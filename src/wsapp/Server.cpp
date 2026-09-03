@@ -1,5 +1,5 @@
 #include "Server.hpp"
-#include "w_utils.hpp"
+#include "Utils.hpp"
 #include "w_logger.hpp"
 #include <iostream>
 
@@ -9,7 +9,7 @@
 
 Server::Server(ServerDirective const &servDir, std::string const &host, int port)
 : _servDir(servDir), _host(host), _port(port),
-	_name("(" + host + ":" + wutils::ft_itoa(port) + ")"),
+	_name("(" + host + ":" + Utils::ft_itoa(port) + ")"),
 	_listener(*this, host, port)
 { LOG_INFO("Server " << _name << " created"); }
 

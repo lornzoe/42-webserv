@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
+#    By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/08/20 18:46:14 by lyanga           ###   ########.fr        #
+#    Updated: 2026/08/13 20:31:07 by ypua             ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -48,11 +48,10 @@ SRC_FILES = main.cpp \
 			MimeTypes.cpp \
 			\
 			FileDescriptor.cpp \
-			Socket.cpp
+			Utils.cpp
 
 WSAPP_SRC_DIR = $(SRC_DIR)/wsapp
-WSAPP_SRC_BASE = 	WSApp Poller Server Listener Client \
-					w_utils
+WSAPP_SRC_BASE = 	WSApp Poller Server Listener Client 
 WSAPP_SRC_FILES =  $(addsuffix .cpp, $(WSAPP_SRC_BASE))
 
 # Map files to their respective folders

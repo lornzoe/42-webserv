@@ -3,26 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/22 13:31:42 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/02 19:33:44 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
 #include "HttpResponse.hpp"
-
-// HTTP/1.1 requests containing a message-body MUST include a valid Content-Length
-// header field. If a request contains a message-body and a Content-Length is
-// not given,
-// The server SHOULD respond with 400 (bad request) if it cannot
-// determine the length of the message, or with 411 (length required) if
-// it wishes to insist on receiving a valid Content-Length.
-
-// Messages MUST NOT include both a Content-Length header field and a
-// non-identity transfer-coding. If the message does include a non-
-// identity transfer-coding, the Content-Length MUST be ignored.
 
 // All responses to the HEAD request method
 // MUST NOT include a message-body, even though the presence of entity-
@@ -30,28 +19,6 @@
 // (informational), 204 (no content), and 304 (not modified) responses
 // MUST NOT include a message-body. All other responses do include a
 // message-body, although it MAY be of zero length.
-
-// Request    = Request-Line
-// 				*(( general-header
-// 		  		 | request-header
-// 			 	 | entity-header ) CRLF)
-// 				CRLF
-// 				[ message-body ]
-
-// Example
-// GET / HTTP/1.1
-// Accept-Encoding: gzip, deflate, br, zstd
-// Accept-Language: en-US,en;q=0.5
-// Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
-// Connection: keep-alive
-// Host: localhost:8080
-// Priority: u=0, i
-// Sec-Fetch-Dest: document
-// Sec-Fetch-Mode: navigate
-// Sec-Fetch-Site: none
-// Sec-Fetch-User: ?1
-// Upgrade-Insecure-Requests: 1
-// User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:142.0) Gecko/20100101 Firefox/142.0
 
 // An origin server SHOULD return the status code 405 (Method Not Allowed)
 // if the method is known by the origin server but not allowed for the
@@ -68,130 +35,31 @@
 
 // 3. If the host as determined by rule 1 or 2 is not a valid host on
 //    the server, the response MUST be a 400 (Bad Request) error message.
-void LeftTrim(std::string &s)
+
+// Returns 0 when the request is valid, otherwise the HTTP status code that
+// should be sent back to the client.
+int checkValidHttpRequest(ParsedRequest const &req)
 {
-	size_t found = s.find_first_not_of(SPACES);
-	if (found != std::string::npos)
-		s.erase(0, found);
-	else
-		s.clear();
-}
-
-void RightTrim(std::string &s)
-{
-	size_t found = s.find_last_not_of(SPACES);
-	if (found != std::string::npos)
-		s.erase(found + 1);
-	else
-		s.clear();
-}
-
-std::string Trim(std::string s)
-{
-	LeftTrim(s);
-	RightTrim(s);
-	return s;
-}
-
-HttpRequest::HttpRequest(std::string request)
-{
-	std::istringstream stream(request);
-	std::string line;
-
-	// Parse request line
-	while (std::getline(stream, line))
-	{
-		// Ignore any empty line(s) received
-		if (Trim(line).empty())
-			continue;
-
-		std::istringstream iss(line);
-		iss >> method_ >> path_ >> http_version_;
-		break;
-	}
-
-	// Parse headers
-	while (std::getline(stream, line))
-	{
-		// Empty line means end of headers
-		if (Trim(line).empty())
-			break;
-
-		size_t pos = line.find(':');
-		if (pos != std::string::npos)
-		{
-			std::string key = Trim(line.substr(0, pos));
-			std::string value = Trim(line.substr(pos + 1));
-
-			key = toLowercase(key);
-			header_keys.insert(key);
-			headers_[key] = value;
-		}
-	}
-
-	// Read bodys
-	// TODO: should use Content-Length to determine how many bytes belong to the body
-	body_ = std::string(std::istreambuf_iterator<char>(stream),
-						std::istreambuf_iterator<char>());
-}
-
-std::string HttpRequest::get_method()
-{
-	if (method_.empty())
-		throw std::runtime_error("HTTP method not set");
-
-	return method_;
-}
-
-std::string HttpRequest::get_path()
-{
-	if (path_.empty())
-		throw std::runtime_error("HTTP path not set");
-
-	return path_;
-}
-
-std::string HttpRequest::get_http_version()
-{
-	if (http_version_.empty())
-		throw std::runtime_error("HTTP version not set");
-
-	return http_version_;
-}
-
-void HttpRequest::show_all()
-{
-	std::cout << get_method() << " "
-			  << get_path() << " "
-			  << get_http_version() << std::endl;
-
-	for (std::set<std::string>::iterator itr = header_keys.begin();
-		 itr != header_keys.end();
-		 ++itr)
-		std::cout << *itr << ": " << headers_.at(*itr) << std::endl;
-
-	std::cout << body_ << std::endl;
-}
-
-std::string HttpRequest::toLowercase(std::string str)
-{
-	for (size_t j = 0; j < str.length(); j++)
-		str[j] = static_cast<char>(tolower(static_cast<unsigned char>(str[j])));
-	return str;
-}
-
-
-int HttpRequest::checkValidHttpRequest() const
-{
-	if (method_.empty() || path_.empty() || http_version_.empty())
+	if (req.method.empty() || req.path.empty() || req.http_version.empty())
 		return 400;
-	if (http_version_.size() < 5 || http_version_.compare(0, 5, "HTTP/") != 0)
+
+	if (req.http_version.size() < 5 || req.http_version.compare(0, 5, "HTTP/") != 0)
 		return 400;
-	if (http_version_ != "HTTP/1.1")
+
+	if (req.http_version != "HTTP/1.1")
 		return 505;
-	if (method_ != "GET" && method_ != "POST" && method_ != "DELETE")
+
+	if (req.method != "GET" && req.method != "POST" && req.method != "DELETE")
 		return 501;
- 
+
+	bool hasContentLength = req.header_keys.count("content-length");
+	bool hasTransferEncoding = req.header_keys.count("transfer-encoding");
+	if (!hasTransferEncoding)
+	{
+		if (!req.body.empty() && !hasContentLength)
+			return 400;
+	}
+
 	return 0;
 }
 
@@ -227,7 +95,10 @@ static bool readFile(const std::string &path, std::string &body)
 	return true;
 }
 
-static bool getErrorPage(ServerDirective const *servDir, const std::string &uri, int code, std::string &out)
+// Looks up a configured custom error page for the given uri/code and, when one
+// exists and can be read, fills `out` with a ready-to-send response.
+static bool getErrorPage(ServerDirective const *servDir, const std::string &uri,
+						 int code, std::string &out)
 {
 	ServerDirective::ResourcePath errorPath = servDir->getErrorPage(uri, code);
 	if (!errorPath.first)
@@ -242,32 +113,221 @@ static bool getErrorPage(ServerDirective const *servDir, const std::string &uri,
 	return true;
 }
 
-std::string HttpRequest::build_http_response(ServerDirective const *servDir)
+// Builds a response for `code` using a custom error page when configured,
+// otherwise a generated default error body.
+static std::string buildErrorResponse(ServerDirective const *servDir,
+									  const std::string &uri, int code)
+{
+	std::string response;
+	if (getErrorPage(servDir, uri, code, response))
+		return response;
+
+	std::string body = HttpResponse::defaultErrorBody(code);
+	return HttpResponse::build(code, "text/html", body, "Connection: close");
+}
+
+std::string HttpRequest::build_http_response(ParsedRequest const &req,
+											 std::string const &body_in,
+											 ServerDirective const *servDir)
 {
 	std::string body;
-	std::string header;
 
-	int errorCode = checkValidHttpRequest();
+	int errorCode = checkValidHttpRequest(req);
 	if (errorCode)
-	{
-		std::string response;
-		if (getErrorPage(servDir, path_, errorCode, response))
-			return response;
-		body = HttpResponse::defaultErrorBody(errorCode);
-		return HttpResponse::build(errorCode, "text/html", body, "Connection: close");
-	}
+		return buildErrorResponse(servDir, req.path, errorCode);
 
-	ServerDirective::ResourcePath resourcePath = servDir->getResource(path_);
+	// TODO: Should only run when it is looking for html?
+	ServerDirective::ResourcePath resourcePath = servDir->getResource(req.path);
 	bool found = resourcePath.first;
 	const std::string &path = resourcePath.second;
 
-	if (!(found && readFile(path, body)))
+	if (req.method == "POST")
 	{
-		std::string response;
-		if (getErrorPage(servDir, path_, 404, response))
-			return response;
-		body = HttpResponse::defaultErrorBody(404);
-		return HttpResponse::build(404, "text/html", body, "Connection: close");
+		// handle body_in
+		std::cout << "Body: " << body_in << std::endl;
 	}
+
+	// TODO: Should only run for GET
+	if (!(found && readFile(path, body)))
+		return buildErrorResponse(servDir, req.path, 404);
+
 	return HttpResponse::build(200, contentTypeFor(path), body);
+}
+
+void removeTrailingCarriageReturn(std::string &line)
+{
+	if (!line.empty() && line[line.size() - 1] == '\r')
+		line.erase(line.size() - 1);
+}
+
+ParsedRequest parseHeaderBlock(const std::string &headerBlock)
+{
+	ParsedRequest result;
+
+	std::istringstream stream(headerBlock);
+	std::string line;
+
+	// Parse the request line
+	if (!std::getline(stream, line))
+		return result;
+
+	removeTrailingCarriageReturn(line);
+
+	std::istringstream reqLine(line);
+	if (!(reqLine >> result.method >> result.path >> result.http_version))
+		return result;
+
+	std::string extra;
+	if (reqLine >> extra)
+		return result;
+
+	while (std::getline(stream, line))
+	{
+		removeTrailingCarriageReturn(line);
+
+		if (line.empty())
+			break;
+
+		size_t pos = line.find(':');
+		if (pos == std::string::npos)
+			return result;
+
+		std::string key = Utils::Trim(line.substr(0, pos));
+		std::string value = Utils::Trim(line.substr(pos + 1));
+		if (key.empty())
+			return result;
+
+		key = Utils::toLowercase(key);
+		// Reject duplicate headers for simplification
+		if (result.header_keys.count(key))
+			return result;
+		result.header_keys.insert(key);
+		result.headers[key] = value;
+
+		if (key == "content-length")
+		{
+			char *end = NULL;
+			long len = std::strtol(value.c_str(), &end, 10);
+			if (end == value.c_str() || *end != '\0' || len < 0)
+				return result;
+			result.content_length = static_cast<size_t>(len);
+		}
+	}
+
+	if (result.http_version == "HTTP/1.1" && !result.header_keys.count("host"))
+		return result;
+
+	result.valid = true;
+	return result;
+}
+
+ParseResult parseChunkedRequest(const std::string &inbox,
+								size_t header_length,
+								ParsedRequest &parsed)
+{
+	size_t pos = header_length;
+	std::string body;
+
+	while (true)
+	{
+		// Find the end of the chunk-size line
+		size_t line_end = inbox.find(CRLF, pos);
+
+		if (line_end == std::string::npos)
+			return ParseResult(INCOMPLETE, 0);
+
+		// Extract chunk size
+		std::string size_str = inbox.substr(pos, line_end - pos);
+
+		// Convert hexadecimal size
+		char *end = NULL;
+		unsigned long chunk_size =
+			std::strtoul(size_str.c_str(), &end, 16);
+
+		if (end == size_str.c_str() || *end != '\0')
+			return ParseResult(INVALID, 0);
+
+		// Move past "size\r\n"
+		pos = line_end + 2;
+
+		// Last chunk
+		if (chunk_size == 0)
+		{
+			// Need final CRLF
+			if (inbox.size() < pos + 2)
+				return ParseResult(INCOMPLETE, 0);
+
+			if (inbox.substr(pos, 2) != CRLF)
+				return ParseResult(INVALID, 0);
+
+			pos += 2;
+
+			parsed.body = body;
+
+			return ParseResult(COMPLETE, pos, parsed);
+		}
+
+		// Check if entire chunk presents
+		if (inbox.size() < pos + chunk_size + 2)
+			return ParseResult(INCOMPLETE, 0);
+
+		// Extract chunk data
+		body.append(inbox, pos, chunk_size);
+
+		pos += chunk_size;
+
+		// Chunk data must be followed by CRLF
+		if (inbox.substr(pos, 2) != CRLF)
+			return ParseResult(INVALID, 0);
+
+		pos += 2;
+	}
+}
+
+ParseResult HttpRequest::parse_http_request(const std::string &inbox)
+{
+	static const size_t MAX_HEADER_SIZE = 8192;
+
+	// 1. Look for end of headers
+	size_t header_end = inbox.find(HEADER_TERMINATOR);
+	if (header_end == std::string::npos)
+	{
+		if (inbox.size() > MAX_HEADER_SIZE)
+			return ParseResult(INVALID, 0);
+		return ParseResult(INCOMPLETE, 0);
+	}
+
+	// 2. Parse request line and headers
+	std::string headers = inbox.substr(0, header_end);
+	ParsedRequest parsed = parseHeaderBlock(headers);
+	if (!parsed.valid)
+		return ParseResult(INVALID, 0);
+
+	size_t header_length = header_end + 4;
+
+	// TODO: Build body for Multipart/form-data
+	std::map<std::string, std::string>::const_iterator it = parsed.headers.find("transfer-encoding");
+	if (it != parsed.headers.end())
+	{
+		std::string value = Utils::toLowercase(it->second);
+		if (value == "chunked")
+		{
+			return parseChunkedRequest(inbox, header_length, parsed);
+		}
+
+		return ParseResult(INVALID, 0);
+	}
+
+	// 3. Determine body length
+	size_t content_length = parsed.content_length;
+
+	// 4. Check whether entire body has arrived
+	if (inbox.size() < header_length + content_length)
+		return ParseResult(INCOMPLETE, 0);
+
+	parsed.body = inbox.substr(header_length, content_length);
+
+	// 5. Entire request exists
+	size_t request_size = header_length + content_length;
+	return ParseResult(COMPLETE, request_size, parsed);
 }

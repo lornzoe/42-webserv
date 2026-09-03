@@ -1,13 +1,11 @@
 #include "Client.hpp"
 #include "Server.hpp"
+#include "Utils.hpp"
 #include "w_eventCtx.hpp"
-#include "w_utils.hpp"
 #include "w_logger.hpp"
 
 #include <sys/socket.h>
 #include <iostream>
-
-#include "HttpRequest.hpp"
 
 // OCF ------------------------------------------------------------------------
 
@@ -35,7 +33,7 @@ Client &Client::operator=(Client const &other)
 
 Client::~Client()
 {
-	wutils::safeClose(_fd);
+	Utils::safeClose(_fd);
 }
 
 // Private --------------------------------------------------------------------
@@ -46,7 +44,7 @@ void Client::initClient(Server &server, int fd)
 {
 	if (_fd != -1)
 	{
-		wutils::safeClose(_fd);
+		Utils::safeClose(_fd);
 		// and reset internal state
 	}
 	_server = &server;
@@ -57,7 +55,8 @@ void Client::initClient(Server &server, int fd)
 	_eCtx.owner = this;
 }
 
-ServerDirective const &	Client::servDir() const {
+ServerDirective const &Client::servDir() const
+{
 	return _server->servDir();
 }
 
@@ -76,13 +75,15 @@ ssize_t Client::recv1()
 	return bytesRd;
 }
 
-void Client::build_response()
+void Client::process_request(ParseResult const &result)
 {
-	std::string response = HttpRequest(_inbox).build_http_response(&(servDir()));
-	tmp_req_for_resp(-1, response);
+	std::string response = HttpRequest::build_http_response(result.request,
+															result.request.body,
+															&(servDir()));
+	send_response(result.consumed, response);
 }
 
-void Client::tmp_req_for_resp(ssize_t req_offset, std::string const &resp)
+void Client::send_response(ssize_t req_offset, std::string const &resp)
 {
 	if (req_offset == -1 || static_cast<size_t>(req_offset) >= _inbox.size())
 		_inbox.erase();
