@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:37:22 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 01:39:05 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/21 19:52:59 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,6 +51,7 @@ class ServerDirective : public BlockDirective
 		bool isMatch(const std::string& host, int port) const;
 
 		ResourcePath getResource(const std::string& uri) const;
+		ResourcePath getErrorPage(const std::string& uri, int code) const;
 };
 
 #endif

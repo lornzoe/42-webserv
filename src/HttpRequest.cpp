@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
+#include "HttpResponse.hpp"
 
 // All responses to the HEAD request method
 // MUST NOT include a message-body, even though the presence of entity-
@@ -35,41 +36,31 @@
 // 3. If the host as determined by rule 1 or 2 is not a valid host on
 //    the server, the response MUST be a 400 (Bad Request) error message.
 
-bool isValidHttpRequest(ParsedRequest const &req)
+// Returns 0 when the request is valid, otherwise the HTTP status code that
+// should be sent back to the client.
+int checkValidHttpRequest(ParsedRequest const &req)
 {
 	if (req.method.empty() || req.path.empty() || req.http_version.empty())
-	return false;
+		return 400;
+
+	if (req.http_version.size() < 5 || req.http_version.compare(0, 5, "HTTP/") != 0)
+		return 400;
 
 	if (req.http_version != "HTTP/1.1")
-		return false;
+		return 505;
 
 	if (req.method != "GET" && req.method != "POST" && req.method != "DELETE")
-		return false;
+		return 501;
 
 	bool hasContentLength = req.header_keys.count("content-length");
 	bool hasTransferEncoding = req.header_keys.count("transfer-encoding");
 	if (!hasTransferEncoding)
 	{
 		if (!req.body.empty() && !hasContentLength)
-			return false;
+			return 400;
 	}
 
-	return true;
-}
-
-static std::string buildHeader(int code, const std::string &reason,
-							   const std::string &contentType, std::size_t length)
-{
-	std::stringstream ss;
-	ss << length;
-
-	std::stringstream statusLine;
-	statusLine << "HTTP/1.1 " << code << " " << reason << "\r\n";
-
-	return statusLine.str() +
-		   "Content-Type: " + contentType + "\r\n" +
-		   "Content-Length: " +
-		   ss.str() + HEADER_TERMINATOR;
+	return 0;
 }
 
 static const std::string &contentTypeFor(const std::string &path)
@@ -104,21 +95,46 @@ static bool readFile(const std::string &path, std::string &body)
 	return true;
 }
 
+// Looks up a configured custom error page for the given uri/code and, when one
+// exists and can be read, fills `out` with a ready-to-send response.
+static bool getErrorPage(ServerDirective const *servDir, const std::string &uri,
+						 int code, std::string &out)
+{
+	ServerDirective::ResourcePath errorPath = servDir->getErrorPage(uri, code);
+	if (!errorPath.first)
+		return false;
+
+	ServerDirective::ResourcePath errorPage = servDir->getResource(errorPath.second);
+	std::string body;
+	if (!(errorPage.first && readFile(errorPage.second, body)))
+		return false;
+
+	out = HttpResponse::build(code, contentTypeFor(errorPage.second), body, "Connection: close");
+	return true;
+}
+
+// Builds a response for `code` using a custom error page when configured,
+// otherwise a generated default error body.
+static std::string buildErrorResponse(ServerDirective const *servDir,
+									  const std::string &uri, int code)
+{
+	std::string response;
+	if (getErrorPage(servDir, uri, code, response))
+		return response;
+
+	std::string body = HttpResponse::defaultErrorBody(code);
+	return HttpResponse::build(code, "text/html", body, "Connection: close");
+}
+
 std::string HttpRequest::build_http_response(ParsedRequest const &req,
 											 std::string const &body_in,
 											 ServerDirective const *servDir)
 {
 	std::string body;
-	std::string header;
 
-	if (!isValidHttpRequest(req))
-	{
-		body = "<html><body><h1>400 Bad Request</h1></body></html>";
-		header = buildHeader(400, "Bad Request",
-							 HttpStatus::getDefaultResponse(400),
-							 body.size());
-		return header + body;
-	}
+	int errorCode = checkValidHttpRequest(req);
+	if (errorCode)
+		return buildErrorResponse(servDir, req.path, errorCode);
 
 	// TODO: Should only run when it is looking for html?
 	ServerDirective::ResourcePath resourcePath = servDir->getResource(req.path);
@@ -132,16 +148,10 @@ std::string HttpRequest::build_http_response(ParsedRequest const &req,
 	}
 
 	// TODO: Should only run for GET
-	if (found && readFile(path, body))
-		header = buildHeader(200, "OK", contentTypeFor(path), body.size());
-	else
-	{
-		body = "<html><body><h1>404 Not Found</h1></body></html>";
-		header = buildHeader(404, "Not Found",
-							 HttpStatus::getDefaultResponse(404), body.size());
-	}
+	if (!(found && readFile(path, body)))
+		return buildErrorResponse(servDir, req.path, 404);
 
-	return header + body;
+	return HttpResponse::build(200, contentTypeFor(path), body);
 }
 
 void removeTrailingCarriageReturn(std::string &line)

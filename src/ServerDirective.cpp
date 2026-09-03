@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:44:33 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 01:39:27 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/08/21 19:53:30 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 #include <iostream>
 #include <sstream>
 #include <sys/stat.h>
+#include <algorithm>
 
 namespace {
 	const char* WILDCARD_HOST = "0.0.0.0";
@@ -48,6 +49,17 @@ namespace {
 		return stat(path.c_str(), &st) != -1 && S_ISREG(st.st_mode);
 	}
 
+	const std::string* findCode(const std::vector<const ErrorPageDirective *>& pages, int code)
+    {
+        const std::string* match = NULL;
+        for (std::size_t i = 0; i < pages.size(); i++)
+        {
+            const std::vector<int>& codes = pages[i]->getCodes();
+            if (std::find(codes.begin(), codes.end(), code) != codes.end())
+                match = &pages[i]->getPath();
+        }
+        return match;
+    }
 }
 
 ServerDirective::ServerDirective(TokenisedBlock::const_iterator& cit) : BlockDirective(cit)
@@ -181,6 +193,24 @@ ServerDirective::ResourcePath ServerDirective::getResource(const std::string& ur
 	}
 
 	return none;
+}
+
+ServerDirective::ResourcePath ServerDirective::getErrorPage(const std::string &uri, int code) const
+{
+    const LocationDirective* loc = matchLocation(getLocations(), uri);
+
+    // location wins if it defines this code
+    if (loc)
+    {
+        const std::string* p = findCode(loc->getErrorPages(), code);
+        if (p)
+            return std::make_pair(true, *p);
+    }
+    // fall back to server-level
+    const std::string* p = findCode(getErrorPages(), code);
+    if (p)
+        return std::make_pair(true, *p);
+    return std::make_pair(false, std::string());
 }
 
 void ServerDirective::print(int depth) const

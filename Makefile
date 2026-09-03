@@ -43,6 +43,7 @@ SRC_FILES = main.cpp \
 			LimitExceptDirective.cpp \
 			\
 			HttpRequest.cpp \
+			HttpResponse.cpp \
 			HttpStatus.cpp \
 			MimeTypes.cpp \
 			\

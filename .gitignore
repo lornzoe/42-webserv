@@ -4,5 +4,7 @@ en.subject.pdf
 webserv
 checker
 build/*/*
-.vscode/*
+.vscode/
 docs/*
+compile_commands.json
+.cache/
