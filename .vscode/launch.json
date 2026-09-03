@@ -2,28 +2,16 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "LLDB DAP: Debug Webserv",
-      "type": "lldb",
-      "request": "launch",
-      "program": "${workspaceFolder}/webserv",
-      "args": [
-        "configs/commenthell.conf"
-      ],
-      "cwd": "${workspaceFolder}",
-      "preLaunchTask": "Make Build",
-      "stopOnEntry": true
-    },
-    {
-      "name": "C/C++ Runner: Debug Session",
+      "name": "GDB: Debug Webserv (devcontainer)",
       "type": "cppdbg",
       "request": "launch",
-      "args": [],
+      "program": "${workspaceFolder}/webserv",
+      "args": ["configs/basic.conf"],
+      "cwd": "${workspaceFolder}",
       "stopAtEntry": false,
-      "externalConsole": true,
-      "cwd": "c:/Users/enzo/Desktop/_active/42-webserv/src",
-      "program": "c:/Users/enzo/Desktop/_active/42-webserv/src/build/Debug/outDebug",
       "MIMode": "gdb",
       "miDebuggerPath": "gdb",
+      "preLaunchTask": "make",
       "setupCommands": [
         {
           "description": "Enable pretty-printing for gdb",

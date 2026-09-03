@@ -1,43 +1,38 @@
 {
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "type": "shell",
-            "label": "Make Build",
-            "command": "make",
-            "args": [
-                "re",
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}",
-                "shell": {
-                    "executable": "/bin/bash",
-                    "args": ["-c"]
-                }
-            },
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "type": "shell",
-            "label": "Make Clean",
-            "command": "make",
-            "args": [
-                "clean"
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}",
-                "shell": {
-                    "executable": "/bin/bash",
-                    "args": ["-c"]
-                }
-            },
-            "problemMatcher": []
-        }
-    ]
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "make",
+      "type": "shell",
+      "command": "make",
+      "args": ["-j4"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$gcc"],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "label": "make re",
+      "type": "shell",
+      "command": "make",
+      "args": ["re", "-j4"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "bear: rebuild + index",
+      "type": "shell",
+      "command": "bear -- make re -j4",
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": ["$gcc"],
+      "detail": "Regenerates compile_commands.json for clangd"
+    },
+    {
+      "label": "make clean",
+      "type": "shell",
+      "command": "make",
+      "args": ["clean"],
+      "options": { "cwd": "${workspaceFolder}" },
+      "problemMatcher": []
+    }
+  ]
 }
