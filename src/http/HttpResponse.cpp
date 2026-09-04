@@ -11,13 +11,18 @@
 /* ************************************************************************** */
 
 #include "HttpResponse.hpp"
-#include "HttpStatus.hpp"
+#include "HttpStat.hpp"
+#include "ServerDirective.hpp"
+#include "MimeTypes.hpp"
+#include "Utils.hpp"
 
 #include <sstream>
 
-#define CRLF "\r\n"
-#define HEADER_END "\r\n\r\n"
-
+/** Full NON-ERROR http response, provided the relevant parts
+ * contentType -- use getContentType(resource_path) to pass appropriate MIME type
+ * additionalHeaders -- formatted in bulk, separated by CRLF if >1
+ * body -- usually the resource (html, image, text file etc), unless to be generated e.g. defaultErrorBody
+ */
 std::string HttpResponse::build(int code, const std::string &contentType, const std::string &body, const std::string additionalHeaders)
 {
 	// 1xx and 204 has no body and no Content-Length;
@@ -27,7 +32,7 @@ std::string HttpResponse::build(int code, const std::string &contentType, const 
 
 	// build the header first
 	std::stringstream ss;
-	ss << "HTTP/1.1 " << code << " " << HttpStatus::getDefaultResponse(code) << CRLF;
+	ss << "HTTP/1.1 " << code << " " << HttpStat::getReason(code) << CRLF;
 	if (!contentType.empty())
 		ss << "Content-Type: " << contentType << CRLF;
 	if (!additionalHeaders.empty())
@@ -44,9 +49,41 @@ std::string HttpResponse::build(int code, const std::string &contentType, const 
 	return ss.str();
 }
 
+// Looks up a configured custom error page for the given uri/code and, when one
+// exists and can be read, fills `out` with a ready-to-send response.
+static bool		getErrorPage(ServerDirective const *servDir, const std::string &uri,
+						 int code, std::string &out)
+{
+	ServerDirective::ResourcePath errorPath = servDir->getErrorPage(uri, code);
+	if (!errorPath.first)
+		return false;
+
+	ServerDirective::ResourcePath errorPage = servDir->getResource(errorPath.second);
+	std::string body;
+	if (!(errorPage.first && Utils::readFile(errorPage.second, body)))
+		return false;
+
+	out = HttpResponse::build(code, MimeTypes::forPath(errorPage.second), body, "Connection: close");
+	return true;
+}
+
+// Builds a response for `code` using a custom error page when configured,
+// otherwise a generated default error body.
+std::string		HttpResponse::buildError(int code, const std::string &uri,
+											ServerDirective const *servDir)
+{
+	std::string response;
+	if (getErrorPage(servDir, uri, code, response))
+		return response;
+
+	std::string body = HttpResponse::defaultErrorBody(code);
+	return HttpResponse::build(code, "text/html", body, "Connection: close");
+}
+
+// Generates error body if no error html resource to serve
 std::string HttpResponse::defaultErrorBody(int code)
 {
-	const std::string &reason = HttpStatus::getDefaultResponse(code);
+	const std::string &reason = HttpStat::getReason(code);
 
 	std::stringstream ss;
 	ss << "<html><head><title>" << code << " " << reason << "</title></head>\r\n"

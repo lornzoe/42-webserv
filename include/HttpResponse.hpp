@@ -15,11 +15,14 @@
 
 #include <string>
 
+class ServerDirective;
+
 namespace HttpResponse 
 {
-	std::string build(int code, const std::string &contentType, const std::string &body,
-		const std::string additionalHeader = "");
-	std::string defaultErrorBody(int code);
+	std::string		build(int code, const std::string &contentType, const std::string &body,
+		const std::string additionalHeaders = "");
+	std::string		buildError(int code, const std::string &uri, ServerDirective const *servDir);
+	std::string 	defaultErrorBody(int code);
 };
 
 #endif

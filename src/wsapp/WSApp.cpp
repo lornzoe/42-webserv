@@ -2,6 +2,8 @@
 #include "ServerDirective.hpp"
 #include "ListenDirective.hpp"
 #include "FileDescriptor.hpp"
+#include "HttpRequest.hpp"
+#include "HttpResponse.hpp"
 #include "w_logger.hpp"
 
 #include <string>
@@ -75,18 +77,21 @@ int WSApp::run()
 				std::string const &inbox = cli.readInbox();
 				if (inbox.size() > 0 && !cli.isStat(SENDING))
 				{
-					ParseResult result = HttpRequest::parse_http_request(inbox);
-					if (result.status == INCOMPLETE)
+					ParseResult res = HttpRequest::parse_http_request(inbox);
+					if (res.status == INCOMPLETE)
 					{
 						// TODO: Handle timeout
 					}
-					if (result.status == INVALID)
+					else if (res.status == INVALID)
 					{
+						cli.send_response(-1,
+							HttpResponse::buildError(res.errorCode, res.request.path, &cli.servDir()));
+						_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
 						// TODO: close connection
 					}
-					if (result.status == COMPLETE)
+					else
 					{
-						cli.process_request(result);
+						cli.process_request(res);
 						_pol.mod(cli.fd(), EPOLLOUT | EPOLLIN, &cli.ectx());
 					}
 				}

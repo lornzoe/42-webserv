@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: julhong <julhong@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:55 by ypua              #+#    #+#             */
-/*   Updated: 2026/09/01 20:25:49 by ypua             ###   ########.fr       */
+/*   Updated: 2026/09/03 16:11:29 by julhong          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,14 +20,9 @@
 #include <stdlib.h>
 
 #include "FileDescriptor.hpp"
-#include "HttpStatus.hpp"
-#include "MimeTypes.hpp"
-#include "ServerDirective.hpp"
+#include "HttpStat.hpp"
 
 #include "Utils.hpp"
-
-static const std::string HEADER_TERMINATOR = "\r\n\r\n";
-static const std::string CRLF = "\r\n";
 
 enum ParseStatus
 {
@@ -42,6 +37,7 @@ struct ParsedRequest
 	
 	std::string method;
 	std::string path;
+	std::string query;
 	std::string http_version;
 	std::map<std::string, std::string> headers;
 	std::set<std::string> header_keys;
@@ -54,22 +50,18 @@ struct ParsedRequest
 
 struct ParseResult
 {
-	ParseStatus status;
-	size_t consumed;
-	ParsedRequest request;
+	ParseStatus 	status;
+	int				errorCode;	//http error status code in case of INVALID
+	size_t			consumed;
+	ParsedRequest	request;
 
-	ParseResult(ParseStatus s, size_t c, ParsedRequest h = ParsedRequest())
-		: status(s), consumed(c), request(h)
-	{
-	}
+	ParseResult(ParseStatus s, int ec = 400, size_t c = 0, ParsedRequest h = ParsedRequest())
+		: status(s), errorCode(ec), consumed(c), request(h) {}
 };
 
 class HttpRequest
 {
 public:
-	static std::string build_http_response(ParsedRequest const &req,
-										   std::string const &body,
-										   ServerDirective const *servDir);
 	static ParseResult parse_http_request(const std::string &inbox);
 };
 

@@ -1,5 +1,6 @@
 #include "Client.hpp"
 #include "Server.hpp"
+#include "ReqProc.hpp"
 #include "Utils.hpp"
 #include "w_eventCtx.hpp"
 #include "w_logger.hpp"
@@ -77,10 +78,11 @@ ssize_t Client::recv1()
 
 void Client::process_request(ParseResult const &result)
 {
-	std::string response = HttpRequest::build_http_response(result.request,
-															result.request.body,
-															&(servDir()));
-	send_response(result.consumed, response);
+	ReqProc::result resp_res = ReqProc::process(result.request, servDir());
+	// std::string response = HttpRequest::build_http_response(result.request,
+	// 														result.request.body,
+	// 														&(servDir()));
+	send_response(result.consumed, resp_res.resp);
 }
 
 void Client::send_response(ssize_t req_offset, std::string const &resp)

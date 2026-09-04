@@ -11,7 +11,7 @@
 /* ************************************************************************** */
 
 #include "ErrorPageDirective.hpp"
-#include "HttpStatus.hpp"
+#include "HttpStat.hpp"
 #include <stdexcept>
 #include <cctype>
 #include <cstdlib>
@@ -41,7 +41,7 @@ ErrorPageDirective::ErrorPageDirective(TokenisedBlock::const_iterator& cit) : Si
 		// range, or a code we have no reason phrase for.
 		if (code < 300 || code > 599)
 			throw std::runtime_error("error_page: status code must be between 300 and 599 (got '" + code_str + "')");
-		if (!HttpStatus::isKnown(code))
+		if (!HttpStat::isKnown(code))
 			throw std::runtime_error("error_page: unknown HTTP status code '" + code_str + "'");
 
 		codes.push_back(code);

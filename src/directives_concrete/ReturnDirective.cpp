@@ -11,7 +11,7 @@
 /* ************************************************************************** */
 
 #include "ReturnDirective.hpp"
-#include "HttpStatus.hpp"
+#include "HttpStat.hpp"
 #include <stdexcept>
 #include <cctype>
 #include <cstdlib>
@@ -35,7 +35,7 @@ ReturnDirective::ReturnDirective(TokenisedBlock::const_iterator& cit) : SimpleDi
 
 	code = std::atoi(code_str.c_str());
 
-	if (!HttpStatus::isKnown(code))
+	if (!HttpStat::isKnown(code))
 		throw std::runtime_error("return: unknown HTTP status code '" + code_str + "'");
 
 	if (args.size() == 3)

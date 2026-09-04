@@ -17,7 +17,8 @@
 
 namespace MimeTypes {
 
-    const std::string& getContentType(const std::string& extension);
+    const std::string &     forExtn(const std::string &extension);
+    const std::string &     forPath(const std::string &resource_path);
 
 }
 

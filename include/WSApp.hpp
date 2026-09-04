@@ -4,7 +4,6 @@
 #include "Config.hpp"
 #include "Poller.hpp"
 #include "Server.hpp"
-#include "HttpRequest.hpp"
 
 #include <csignal>
 #include <vector>

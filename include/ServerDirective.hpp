@@ -50,6 +50,14 @@ class ServerDirective : public BlockDirective
 		bool isMatch(const std::string& host, const std::string& port) const;
 		bool isMatch(const std::string& host, int port) const;
 
+		static const LocationDirective* matchLocation(
+					const std::vector<const LocationDirective *>& locations,
+					const std::string& uri);
+		static bool	resolveFsPath(
+					const ServerDirective& servDir,
+					const std::string& uri,
+					const LocationDirective* loc,
+					std::string &fsPath);
 		ResourcePath getResource(const std::string& uri) const;
 		ResourcePath getErrorPage(const std::string& uri, int code) const;
 };

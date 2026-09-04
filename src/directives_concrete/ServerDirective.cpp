@@ -21,29 +21,6 @@
 namespace {
 	const char* WILDCARD_HOST = "0.0.0.0";
 
-	const LocationDirective* matchLocation(
-		const std::vector<const LocationDirective *>& locations,
-		const std::string& uri)
-	{
-		const LocationDirective* best = NULL;
-		std::size_t bestLen = 0;
-
-		for (std::size_t i = 0; i < locations.size(); i++)
-		{
-			const std::string& prefix = locations[i]->getPath();
-			if (prefix.empty() || prefix.size() > uri.size())
-				continue;
-			if (uri.compare(0, prefix.size(), prefix) != 0)
-				continue;
-			if (prefix.size() > bestLen)
-			{
-				best = locations[i];
-				bestLen = prefix.size();
-			}
-		}
-		return best;
-	}
-
 	bool statRegularFile(const std::string& path, struct stat& st)
 	{
 		return stat(path.c_str(), &st) != -1 && S_ISREG(st.st_mode);
@@ -143,13 +120,32 @@ std::vector<const LocationDirective *> ServerDirective::getLocations() const
 	return getChildren<LocationDirective>();
 }
 
-ServerDirective::ResourcePath ServerDirective::getResource(const std::string& uri) const
+const LocationDirective*	ServerDirective::matchLocation(
+		const std::vector<const LocationDirective *>& locations,
+		const std::string& uri)
 {
-	ResourcePath none = std::make_pair(false, std::string());
+	const LocationDirective* best = NULL;
+	std::size_t bestLen = 0;
 
-	std::vector<const LocationDirective *> locations = getLocations();
-	const LocationDirective* loc = matchLocation(locations, uri);
+	for (std::size_t i = 0; i < locations.size(); i++)
+	{
+		const std::string& prefix = locations[i]->getPath();
+		if (prefix.empty() || prefix.size() > uri.size())
+			continue;
+		if (uri.compare(0, prefix.size(), prefix) != 0)
+			continue;
+		if (prefix.size() > bestLen)
+		{
+			best = locations[i];
+			bestLen = prefix.size();
+		}
+	}
+	return best;
+}
 
+bool	ServerDirective::resolveFsPath(const ServerDirective& servDir, 
+	const std::string& uri, const LocationDirective* loc, std::string& fsPath)
+{
 	std::string subpath = loc ? uri.substr(loc->getPath().size()) : uri;
 
 	std::string base;
@@ -157,12 +153,28 @@ ServerDirective::ResourcePath ServerDirective::getResource(const std::string& ur
 		base = loc->getAlias()->getPath();
 	else if (loc && loc->getRoot())
 		base = loc->getRoot()->getPath();
-	else if (getRoot())
-		base = getRoot()->getPath();
+	else if (servDir.getRoot())
+		base = servDir.getRoot()->getPath();
 	else
-		return none;
+		return false;
 
-	std::string fsPath = base + subpath;
+	fsPath = base;
+	if (!base.empty() && base[base.size() - 1] != '/' && !subpath.empty() && subpath[0] != '/')
+		fsPath += '/';
+	fsPath += subpath;
+	return true;
+}
+
+ServerDirective::ResourcePath ServerDirective::getResource(const std::string& uri) const
+{
+	ResourcePath none = std::make_pair(false, std::string());
+
+	std::vector<const LocationDirective *> locations = getLocations();
+	const LocationDirective* loc = matchLocation(locations, uri);
+
+	std::string fsPath;
+	if (!resolveFsPath(*this, uri, loc, fsPath))
+		return none;
 
 	struct stat st;
 	if (stat(fsPath.c_str(), &st) == -1)

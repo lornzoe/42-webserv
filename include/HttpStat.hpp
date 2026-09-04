@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   HttpStatus.hpp                                     :+:      :+:    :+:   */
+/*   HttpStat.hpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,16 +10,19 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#ifndef HTTPSTATUS_HPP
-#define HTTPSTATUS_HPP
+#ifndef HTTPSTAT_HPP
+#define HTTPSTAT_HPP
 
 #include <string>
 
-namespace HttpStatus {
+static const std::string HEADER_END = "\r\n\r\n";
+static const std::string CRLF = "\r\n";
 
-    const std::string& getDefaultResponse(int code);
+namespace HttpStat {
+
+    const std::string& getReason(int code);
     bool isKnown(int code);
 
-} // namespace HttpStatus
+} // namespace HttpStat
 
 #endif

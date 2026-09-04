@@ -1,7 +1,7 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   HttpStatus.cpp                                     :+:      :+:    :+:   */
+/*   HttpStat.cpp                                     :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "HttpStatus.hpp"
+#include "HttpStat.hpp"
 #include <map>
 
 namespace {
@@ -71,9 +71,9 @@ namespace {
     }
 }
 
-namespace HttpStatus {
+namespace HttpStat {
 
-    const std::string& getDefaultResponse(int code)
+    const std::string& getReason(int code)
     {
         static const std::string unknown = "Unknown";
         const std::map<int, std::string>& m = getStatusMap();

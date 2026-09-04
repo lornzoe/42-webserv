@@ -55,7 +55,7 @@ namespace {
 
 namespace MimeTypes {
 
-    const std::string& getContentType(const std::string& extension)
+    const std::string& forExtn(const std::string& extension)
     {
         static const std::string fallback = "application/octet-stream";
         const std::map<std::string, std::string>& m = getMimeMap();
@@ -67,4 +67,12 @@ namespace MimeTypes {
         return it->second;
     }
 
+    const std::string &forPath(const std::string &resource_path)
+	{
+		std::size_t dot = resource_path.rfind('.');
+		if (dot == std::string::npos)
+			return forExtn("");
+
+		return forExtn(resource_path.substr(dot));
+	}
 }
