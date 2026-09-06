@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 21:19:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/13 20:12:29 by ypua             ###   ########.fr       */
+/*   Updated: 2026/09/06 23:14:13 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,15 +15,25 @@
 
 int main(int argc, char **argv)
 {
+	const char *DEFAULT_CONFIG_PATH = "configs/basic.conf";
+	const char *config_file_path;
+
 	if (argc != 2)
 	{
-		std::cerr << "Usage: ./webserv <config_file>" << std::endl;
-		return 1;
+		std::cout << "No configuration file specified." << std::endl;
+		std::cout << "Usage: ./webserv [config_file]" << std::endl;
+		std::cout << "Using default configuration: "
+				  << DEFAULT_CONFIG_PATH << std::endl;
+		config_file_path = DEFAULT_CONFIG_PATH;
 	}
-	WSApp	ws;
+	else
+	{
+		config_file_path = argv[1];
+	}
+	WSApp ws;
 	try
 	{
-		Config::init(argv[1]);
+		Config::init(config_file_path);
 		std::cout << "[webserv] Config() completed." << std::endl;
 		ws.ConfigInit(Config::getInstance());
 	}
