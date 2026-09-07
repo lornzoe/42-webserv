@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+         #
+#    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/08/13 20:31:07 by ypua             ###   ########.fr        #
+#    Updated: 2026/09/07 10:50:12 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -82,6 +82,9 @@ x: $(NAME)
 	./$(CHECKER_NAME) configs/basic.conf
 	./$(NAME) configs/basic.conf
 
+debug: CXXFLAGS += -DDEBUG
+debug: re
+
 clean:
 	rm -rf $(BUILD_DIR)
 
@@ -92,4 +95,4 @@ re: fclean all
 
 -include $(DEPS) $(CHECKER_DEPS)
 
-.PHONY: all clean fclean re x checker
+.PHONY: all clean fclean re x checker debug

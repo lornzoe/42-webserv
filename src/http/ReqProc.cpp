@@ -1,11 +1,18 @@
 #include "ReqProc.hpp"
+#include "w_logger.hpp"
 
 #include <sys/stat.h>
 #include <algorithm>
+#include <string>
 
 ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective const &servDir)
 {
 	LocationDirective const &	locDir = *ServerDirective::matchLocation(servDir.getLocations(), req.path);
+	
+	std::string	body;
+	result		result;
+	std::string	fsPath;
+	ServerDirective::resolveFsPath(servDir, req.path, &locDir, fsPath);
 
 	if (locDir.getLimitExcept() && !isMtdAllowed(req, locDir))
 	{
@@ -15,16 +22,34 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 	}
 	if (locDir.getReturn())
 	{
+
 		//redirect
 			// resp avail immediately
 			// resp code: rdir.getCode()
 			// resp location: rdir.getBody()
+		int code = locDir.getReturn()->getCode();
+		if (code >= 300 && code < 400)
+		{
+			std::string url = locDir.getReturn()->getBody();
+			switch(code)
+			{
+				case 301:
+				case 302:
+					LOG_DEBUG("Redirecting request to: " << url << " with status code: " << code);
+					result.resp = HttpResponse::build(code, "", "", "Location: " + url + "\r\n");
+					return result;
+				case 303:
+				case 304:
+				case 307:
+				case 308:
+					break;
+				default:
+					LOG_WARN("Return directive with code " << code << " is not a valid redirection code. Returning error 500 instead.");
+					result.resp = HttpResponse::buildError(500, "", &servDir);
+					return result;
+			}
+		}
 	}
-
-	std::string	body;
-	result		result;
-	std::string	fsPath;
-	ServerDirective::resolveFsPath(servDir, req.path, &locDir, fsPath);
 
 	// For CGI
 		// if fsPath ends in recognized CGI extension

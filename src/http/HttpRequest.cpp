@@ -3,14 +3,16 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julhong <julhong@student.42.fr>            +#+  +:+       +#+        */
+/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/09/03 16:14:26 by julhong          ###   ########.fr       */
+/*   Updated: 2026/09/07 10:57:31 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
+#include "w_logger.hpp"
+#include <sstream>
 
 // All responses to the HEAD request method
 // MUST NOT include a message-body, even though the presence of entity-
@@ -145,7 +147,7 @@ namespace {
 	{
 		size_t pos = header_length;
 		std::string body;
-
+		LOG_DEBUG("Parsing chunked request starting at position: " << pos);
 		while (true)
 		{
 			// Find the end of the chunk-size line
@@ -210,7 +212,8 @@ namespace {
 ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 {
 	static const size_t MAX_HEADER_SIZE = 8192;
-
+	LOG_DEBUG("Parsing HTTP request of size: " << inbox.size() << " bytes");
+	
 	// 1. Look for end of headers
 	size_t header_end = inbox.find(HEADER_END);
 	if (header_end == std::string::npos)
@@ -258,6 +261,7 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 	if ((errCode = validateReqst(parsed)) != 0)
 		return ParseResult(INVALID, errCode);
 
+	LOG_DEBUG("Parsed HTTP request successfully: " + parsed.method + " " + parsed.path + " " + parsed.http_version);
 	//request is syntactically valid and complete to handover to ReqProc
 	return ParseResult(COMPLETE, 0, request_size, parsed);
 }

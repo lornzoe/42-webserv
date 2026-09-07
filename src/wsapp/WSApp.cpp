@@ -78,12 +78,15 @@ int WSApp::run()
 				if (inbox.size() > 0 && !cli.isStat(SENDING))
 				{
 					ParseResult res = HttpRequest::parse_http_request(inbox);
+					LOG_DEBUG("Parsed HTTP request with status: " << res.status);
 					if (res.status == INCOMPLETE)
 					{
+						LOG_DEBUG("HTTP request is incomplete, waiting for more data.");
 						// TODO: Handle timeout
 					}
 					else if (res.status == INVALID)
 					{
+						LOG_DEBUG("HTTP request is invalid, sending error response with code: " << res.errorCode);
 						cli.send_response(-1,
 							HttpResponse::buildError(res.errorCode, res.request.path, &cli.servDir()));
 						_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
@@ -91,8 +94,11 @@ int WSApp::run()
 					}
 					else
 					{
+						LOG_DEBUG("HTTP request is complete, processing request.");
 						cli.process_request(res);
+						LOG_DEBUG("HTTP response prepared, switching to EPOLLOUT for sending.");
 						_pol.mod(cli.fd(), EPOLLOUT | EPOLLIN, &cli.ectx());
+						LOG_DEBUG("Finished handling client request.");
 					}
 				}
 				++i;
