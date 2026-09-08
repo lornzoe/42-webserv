@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 18:05:35 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/02 07:17:20 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/08 08:52:39 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,7 +32,15 @@ BlockDirective::BlockDirective(TokenisedBlock::const_iterator &cit) : Directive(
 	cit++; // consume this block's own closing "}"
 }
 
-const std::vector<Directive *>& BlockDirective::getChildren() const
+bool BlockDirective::addDirective(Directive *directive)
+{
+	if (!directive)
+		return false;
+	directives.push_back(directive);
+	return true;
+}
+
+const std::vector<Directive *> &BlockDirective::getChildren() const
 {
 	return directives;
 }
