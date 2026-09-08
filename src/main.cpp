@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   main.cpp                                           :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 21:19:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/09/06 23:14:13 by ypua             ###   ########.fr       */
+/*   Updated: 2026/09/08 20:10:51 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,7 +21,6 @@ int main(int argc, char **argv)
 	if (argc != 2)
 	{
 		std::cout << "No configuration file specified." << std::endl;
-		std::cout << "Usage: ./webserv [config_file]" << std::endl;
 		std::cout << "Using default configuration: "
 				  << DEFAULT_CONFIG_PATH << std::endl;
 		config_file_path = DEFAULT_CONFIG_PATH;
