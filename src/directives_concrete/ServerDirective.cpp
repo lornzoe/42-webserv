@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:44:33 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/21 19:53:30 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/08 07:27:43 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,7 @@ ServerDirective::ServerDirective(TokenisedBlock::const_iterator& cit) : BlockDir
 	requireAtMostOne<ClientMaxBodySizeDirective>("server", "client_max_body_size");
 	requireAtMostOne<ReturnDirective>("server", "return");
 	requireAtMostOne<ServerNameDirective>("server", "server_name");
+	requireAtMostOne<AutoindexDirective>("server", "autoindex");
 }
 
 ServerDirective::~ServerDirective()
@@ -118,6 +119,11 @@ const ClientMaxBodySizeDirective* ServerDirective::getClientMaxBodySize() const
 std::vector<const LocationDirective *> ServerDirective::getLocations() const
 {
 	return getChildren<LocationDirective>();
+}
+
+const AutoindexDirective *ServerDirective::getAutoindex() const
+{
+    return getChild<AutoindexDirective>();
 }
 
 const LocationDirective*	ServerDirective::matchLocation(

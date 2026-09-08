@@ -5,6 +5,17 @@
 #include <algorithm>
 #include <string>
 
+namespace {
+	bool isAutoindexEnabled(const LocationDirective& locDir, const ServerDirective& servDir)
+	{
+		if (locDir.getAutoindex())
+			return locDir.getAutoindex()->isEnabled();
+		if (servDir.getAutoindex())
+			return servDir.getAutoindex()->isEnabled();
+		return false;
+	}
+}
+
 ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective const &servDir)
 {
 	LocationDirective const &	locDir = *ServerDirective::matchLocation(servDir.getLocations(), req.path);
@@ -74,7 +85,13 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 			if (stat(fsPath.c_str(), &st) == 0 && S_ISDIR(st.st_mode))
 			{
 				//if autoindex is enabled
+				if (isAutoindexEnabled(locDir, servDir))
+				{
 					// generate autoindex
+					// test with custom error page
+					LOG_DEBUG("Autoindex enabled for directory: " << fsPath);
+					result.resp = HttpResponse::buildError(200, rsrc_path.second, &servDir);
+				}
 				//else directory listing has been disabled: no autoindex / resource (incld index)
 					// appropriate error
 			}
