@@ -5,11 +5,33 @@
 
 // ----------------------------------------------------------------------------
 
-MultipartBody::MultipartBody(std::string const &body, std::string const &bound)
-: _http_body(body), _bound(bound)
+// MultipartBody::MultipartBody(std::string const &body, std::string const &bound)
+// : _http_body(body), _bound(bound)
+// {
+// 	t_bound	ret;
+// 	size_t	cur = 0;
+// 	while ((ret = consmBound(cur)) == B_CONT)
+// 	{
+// 		part p;
+// 		if (!consmHeads(cur, p) || !consmBody(cur, p))
+// 		{ ret = B_ERR; break; }
+// 		_parts.push_back(p);
+// 		if (p.is_file)
+// 			_file_idx.push_back(_parts.size() - 1);
+// 	}
+// 	if (ret == B_ERR)
+// 		throw	std::runtime_error("Bad multipart body\n");
+// }
+
+bool	MultipartBody::parse(std::string const &body, std::string const &content_type)
 {
 	t_bound	ret;
 	size_t	cur = 0;
+
+	if (!getBound(content_type))
+		return false;
+
+	_http_body = body;
 	while ((ret = consmBound(cur)) == B_CONT)
 	{
 		part p;
@@ -20,10 +42,31 @@ MultipartBody::MultipartBody(std::string const &body, std::string const &bound)
 			_file_idx.push_back(_parts.size() - 1);
 	}
 	if (ret == B_ERR)
-		throw	std::runtime_error("Bad multipart body\n");
+		return false;
+	return true;
 }
 
 // ----------------------------------------------------------------------------
+
+bool	MultipartBody::getBound(std::string const &content_type)
+{
+	std::string	marker = "boundary=";
+	size_t		marker_pos, start_pos, end_pos;
+	std::string	bound;
+
+	if ((marker_pos = content_type.find(marker)) == std::string::npos)
+		return false;
+	start_pos = marker_pos + marker.size();
+	bound = content_type.substr(start_pos);
+	end_pos = bound.find_first_of(" \t;");
+	if (end_pos != std::string::npos)
+		bound = bound.substr(0, end_pos);
+
+	if (bound.size() == 0)
+		return false;
+	_bound = bound;
+	return true;
+}
 
 MultipartBody::t_bound		MultipartBody::consmBound(size_t &cur)
 {

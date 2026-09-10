@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
+#    By: julhong <julhong@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/09/07 10:50:12 by lyanga           ###   ########.fr        #
+#    Updated: 2026/09/10 18:04:02 by julhong          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -42,7 +42,7 @@ WSAPP_SRC_FILES =	$(addsuffix .cpp, $(WSAPP_SRC_BASE))
 
 HTTP_SRC_DIR =		$(SRC_DIR)/http
 HTTP_SRC_BASE =		HttpStat  HttpRequest  HttpResponse			\
-					MimeTypes  ReqProc  MultipartBody  uncat
+					MimeTypes  ReqProc  MultipartBody
 HTTP_SRC_FILES =	$(addsuffix .cpp, $(HTTP_SRC_BASE))
 
 UTILS_SRC_DIR =		$(SRC_DIR)/utils

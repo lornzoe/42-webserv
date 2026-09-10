@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
+/*   By: julhong <julhong@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 17:50:51 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/21 04:26:29 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/10 17:28:19 by julhong          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 #include <sstream>
 
 /** Full NON-ERROR http response, provided the relevant parts
- * contentType -- use getContentType(resource_path) to pass appropriate MIME type
+ * contentType -- use MimeTypes::forPath(resource_path) to pass appropriate MIME type
  * additionalHeaders -- formatted in bulk, separated by CRLF if >1
  * body -- usually the resource (html, image, text file etc), unless to be generated e.g. defaultErrorBody
  */
@@ -69,6 +69,7 @@ static bool		getErrorPage(ServerDirective const *servDir, const std::string &uri
 
 // Builds a response for `code` using a custom error page when configured,
 // otherwise a generated default error body.
+// uri is not resource_path
 std::string		HttpResponse::buildError(int code, const std::string &uri,
 											ServerDirective const *servDir)
 {

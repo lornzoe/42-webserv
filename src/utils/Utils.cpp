@@ -3,15 +3,17 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
+/*   By: julhong <julhong@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 20:18:55 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/22 15:44:13 by ypua             ###   ########.fr       */
+/*   Updated: 2026/09/10 17:57:07 by julhong          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Utils.hpp"
 #include "FileDescriptor.hpp"
+
+#include <fstream>
 #include <sys/stat.h>
 
 static void		LeftTrim(std::string &s)
@@ -123,4 +125,47 @@ bool	Utils::readFile(const std::string &path, std::string &body)
 		total += bytes;
 	}
 	return true;
+}
+
+bool	Utils::saveFile(std::string const &dirPath, std::string const &fname, std::string const &content)
+{
+	std::string		filename;
+	std::string		fullPath;
+
+	if (fname.find("/") != std::string::npos || fname == "." || fname == "..")
+		return false;
+	if (fname.empty())
+		filename = "upload";
+	else
+		filename = fname;
+
+	struct stat		stmp;
+	int				serial = 1;
+	bool			dot = false, dot_check = false;
+	size_t			dot_pos;
+	fullPath = dirPath + '/' + filename;
+	while (!stat(fullPath.c_str(), &stmp))
+	{
+		if (!dot_check)
+		{
+			dot_check = true;
+			if (filename.find('.') != std::string::npos)
+			{
+				dot = true;
+				dot_pos = filename.find_last_of('.');
+			}
+		}
+
+		std::string		tmp_fname = filename;
+		std::string		suffix = "(" + Utils::ft_itoa(serial++) + ")";
+		if (dot && dot_pos != 0)
+			tmp_fname.insert(dot_pos, suffix);
+		else
+			tmp_fname += suffix;
+		fullPath = dirPath + '/' + tmp_fname;
+	}
+
+	std::ofstream	ofs(fullPath.c_str(), std::ios::trunc | std::ios::binary);
+	ofs.write(content.data(), content.size());
+	return (!ofs.fail());
 }

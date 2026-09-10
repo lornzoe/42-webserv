@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Webserv Upload Test</title>
+</head>
+<body>
+    <h1>Webserv Multi-Upload Test</h1>
+
+    <p>Select one or more files, then optionally rename them.</p>
+
+    <input id="files" type="file" multiple>
+
+    <div id="file-list"></div>
+
+    <br>
+    <button id="upload-btn">Upload Files</button>
+
+    <p id="result"></p>
+
+    <script>
+        const input = document.getElementById("files");
+        const list = document.getElementById("file-list");
+        const result = document.getElementById("result");
+
+        input.addEventListener("change", function () {
+            list.innerHTML = "";
+
+            for (let i = 0; i < input.files.length; ++i) {
+                const file = input.files[i];
+
+                const row = document.createElement("div");
+
+                const original = document.createElement("span");
+                original.textContent = file.name + " → ";
+
+                const name = document.createElement("input");
+                name.type = "text";
+                name.className = "new-name";
+
+                const dot = file.name.lastIndexOf(".");
+                if (dot > 0)
+                    name.value = file.name.substring(0, dot);
+                else
+                    name.value = file.name;
+
+                const ext = document.createElement("select");
+                ext.className = "extension";
+
+                const extensions = [
+                    "",
+                    ".txt",
+                    ".jpg",
+                    ".jpeg",
+                    ".png",
+                    ".gif",
+                    ".pdf"
+                ];
+
+                for (let j = 0; j < extensions.length; ++j) {
+                    const option = document.createElement("option");
+                    option.value = extensions[j];
+                    option.textContent =
+                        extensions[j] === "" ? "(no extension)" : extensions[j];
+
+                    if (dot > 0 &&
+                        extensions[j] === file.name.substring(dot).toLowerCase())
+                        option.selected = true;
+
+                    ext.appendChild(option);
+                }
+
+                row.appendChild(original);
+                row.appendChild(name);
+                row.appendChild(ext);
+                list.appendChild(row);
+                list.appendChild(document.createElement("br"));
+            }
+        });
+
+        document.getElementById("upload-btn")
+            .addEventListener("click", function () {
+
+                if (input.files.length === 0) {
+                    result.textContent = "Choose at least one file.";
+                    return;
+                }
+
+                const form = new FormData();
+
+                const names = document.getElementsByClassName("new-name");
+                const extensions =
+                    document.getElementsByClassName("extension");
+
+                for (let i = 0; i < input.files.length; ++i) {
+                    const finalName =
+                        names[i].value + extensions[i].value;
+
+                    form.append("file", input.files[i], finalName);
+                }
+
+                fetch("/uploads", {
+                    method: "POST",
+                    body: form
+                })
+                .then(function (response) {
+                    result.textContent =
+                        "Server returned HTTP " + response.status;
+                })
+                .catch(function () {
+                    result.textContent = "Upload failed.";
+                });
+            });
+    </script>
+</body>
+</html>
