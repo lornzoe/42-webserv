@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <algorithm>
 #include <string>
+#include <dirent.h>
 
 namespace {
 	bool isAutoindexEnabled(const LocationDirective& locDir, const ServerDirective& servDir)
@@ -14,6 +15,16 @@ namespace {
 			return servDir.getAutoindex()->isEnabled();
 		return false;
 	}
+}
+
+static const char* dirent_type_str(unsigned char t) {
+    switch (t) {
+        case DT_REG:     return "file";
+        case DT_DIR:     return "dir";
+        case DT_LNK:     return "symlink";
+        case DT_UNKNOWN: return "unknown";
+        default:         return "other";
+    }
 }
 
 ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective const &servDir)
@@ -33,7 +44,6 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 	}
 	if (locDir.getReturn())
 	{
-
 		//redirect
 			// resp avail immediately
 			// resp code: rdir.getCode()
@@ -82,6 +92,14 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 		else
 		{
 			struct stat st;
+			LOG_DEBUG("Assuming autoindex route");
+			LOG_DEBUG("fsPath.c_str(): " << fsPath.c_str());
+
+			// see if this is needed, remove comment if unnecessary:
+			// 		if uri does not end with /, force 302 (301, but no lol) to <path> with / appeneded to end 
+
+			// stat might cause a problem with alias directives
+			// remove this comment if it doesnt and is ok as-is
 			if (stat(fsPath.c_str(), &st) == 0 && S_ISDIR(st.st_mode))
 			{
 				//if autoindex is enabled
@@ -89,7 +107,40 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 				{
 					// generate autoindex
 					// test with custom error page
-					LOG_DEBUG("Autoindex enabled for directory: " << fsPath);
+					// LOG_DEBUG("Autoindex enabled for directory: " << fsPath);
+
+					DIR *d = opendir(fsPath.c_str());
+					if (!d)
+					{
+						// server error opening directory here. throw error.
+						result.resp = HttpResponse::buildError(403, fsPath, &servDir);
+						return result;
+					}
+					struct dirent *entry;
+					LOG_DEBUG("entry: d_ino, d_name, d_off, d_reclen, d_type");
+
+					/*
+					struct dirent {
+						ino_t          d_ino;       // inode number 
+						off_t          d_off;       // offset to the next dirent
+						unsigned short d_reclen;    // length of this record
+						unsigned char  d_type;      // type of file; not supported by all file system types
+						char           d_name[256]; // filename
+					};
+					*/
+					
+					// need: name, size, date_modified
+					// name -- dirent.d_name
+					// size -- 
+					//
+					// how to get the other 2?
+					while ((entry = readdir(d)) != NULL) {   // read one entry at a time
+					LOG_DEBUG("entry: " << entry->d_ino << ", " << entry->d_name << ", "
+										<< entry->d_off << ", " << entry->d_reclen << ", "
+										<< dirent_type_str(entry->d_type));
+					}
+					closedir(d);
+
 					result.resp = HttpResponse::buildError(200, rsrc_path.second, &servDir);
 				}
 				//else directory listing has been disabled: no autoindex / resource (incld index)

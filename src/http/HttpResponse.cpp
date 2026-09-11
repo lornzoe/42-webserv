@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 17:50:51 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/21 04:26:29 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/10 10:19:56 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,8 @@
 #include "Utils.hpp"
 
 #include <sstream>
+#include <string>
+#include <dirent.h>
 
 /** Full NON-ERROR http response, provided the relevant parts
  * contentType -- use getContentType(resource_path) to pass appropriate MIME type
@@ -78,6 +80,38 @@ std::string		HttpResponse::buildError(int code, const std::string &uri,
 
 	std::string body = HttpResponse::defaultErrorBody(code);
 	return HttpResponse::build(code, "text/html", body, "Connection: close");
+}
+
+namespace {
+
+	std::string buildAutoindexBody(std::vector<std::pair<std::string, std::string> > entries, std::string currLoc)
+	{
+		// top 
+		std::stringstream ss;
+		ss << "<html><head><title>" << currLoc << "</title></head>\r\n"
+		<< "<body><center><h1>" << currLoc << "</h1></center>\r\n";
+		// middle entries
+		for (std::size_t i = 0;  i < entries.size(); ++i)
+		{
+			
+		}
+		//bottom
+		ss << "<hr><center>webserv</center></body></html>\r\n";
+
+		return std::string();
+	}
+}
+
+std::string HttpResponse::buildAutoindex(const std::string &fsDir, const std::string &uriPath, const ServerDirective *servDir)
+{
+	(void)fsDir;
+	(void)uriPath;
+	(void)servDir;
+
+	// get directory entries into strings
+
+	buildAutoindexBody(std::vector<std::pair<std::string, std::string> >(), std::string());
+    return std::string();
 }
 
 // Generates error body if no error html resource to serve
