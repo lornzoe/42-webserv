@@ -94,8 +94,8 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 				//if autoindex is enabled
 				if (isAutoindexEnabled(locDir, servDir))
 					result.resp = HttpResponse::buildAutoindex(fsPath, req.path, &servDir);
-				//else directory listing has been disabled: no autoindex / resource (incld index)
-					// appropriate error
+				else //directory listing disabled and no index resolved
+					result.resp = HttpResponse::buildError(403, req.path, &servDir);
 			}
 			else //will end up as 404 not found
 				result.resp = HttpResponse::buildError(404, rsrc_path.second, &servDir);
