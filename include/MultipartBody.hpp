@@ -8,7 +8,8 @@
 class MultipartBody
 {
 public:
-	MultipartBody(std::string const &body, std::string const &bound);
+	// MultipartBody();
+	// MultipartBody(std::string const &body, std::string const &bound);
 
 	typedef	std::map<std::string, std::string>		map_strstr;
 	struct part {
@@ -20,6 +21,8 @@ public:
 		part() : is_file() {}
 	};
 
+	// one time use for object only
+	bool			parse(std::string const &body, std::string const &content_type);
 	// Returns size of file parts in the multipart body
 	size_t			fileCount() const { return _file_idx.size(); }
 
@@ -39,11 +42,12 @@ private:
 		B_ERR
 	};
 
-	std::string const &	_http_body;
+	std::string			_http_body;
 	std::string			_bound;
 	std::vector<part>	_parts;
 	std::vector<size_t>	_file_idx;
 
+	bool		getBound(std::string const &content_type);
 	t_bound		consmBound(size_t &cur);
 	bool		consmHeads(size_t &cur, part &p);
 	bool		fill_contDisp(std::string const &content, part &p);

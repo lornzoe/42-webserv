@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
+/*   By: julhong <julhong@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 20:20:12 by ypua              #+#    #+#             */
-/*   Updated: 2026/08/22 15:44:10 by ypua             ###   ########.fr       */
+/*   Updated: 2026/09/10 17:40:11 by julhong          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,7 +29,6 @@ namespace Utils
 	std::string Trim(std::string s);
 	std::string toLowercase(std::string str);
 
-	std::string &	lTrim_ch(std::string &str, std::string const &chset);
 	bool	canFind(char c, std::string const &str);
 
 	typedef	std::pair<std::string, std::string>		kvpair;
@@ -41,6 +40,7 @@ namespace Utils
 									bool ignoreEmpty = true);
 
 	bool	readFile(const std::string &path, std::string &body);
+	bool	saveFile(std::string const &dirPath, std::string const &fname, std::string const &content);
 }
 
 #endif

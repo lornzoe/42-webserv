@@ -1,4 +1,5 @@
 #include "ReqProc.hpp"
+#include "MultipartBody.hpp"
 #include "w_logger.hpp"
 
 #include <sys/stat.h>
@@ -46,6 +47,7 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 				case 301:
 				case 302:
 					LOG_DEBUG("Redirecting request to: " << url << " with status code: " << code);
+					//does single additional header require \r\n?
 					result.resp = HttpResponse::build(code, "", "", "Location: " + url + "\r\n");
 					return result;
 				case 303:
@@ -76,7 +78,7 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 			if (Utils::readFile(rsrc_path.second, body))
 				result.resp = HttpResponse::build(200, MimeTypes::forPath(rsrc_path.second), body);
 			else
-				result.resp = HttpResponse::buildError(404, rsrc_path.second, &servDir);
+				result.resp = HttpResponse::buildError(404, req.path, &servDir);
 		}
 		else
 		{
@@ -98,15 +100,50 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 					// appropriate error
 			}
 			else //will end up as 404 not found
-				result.resp = HttpResponse::buildError(404, rsrc_path.second, &servDir);
+				result.resp = HttpResponse::buildError(404, req.path, &servDir);
 		}
 	}
 	if (req.method == "POST")
 	{
-		//handle POSTs
-			//uploads
-		
+		// uploads are allowed e.g. locDir.getUpload() != NULL
+			// {} 403 forbidden (for upload)
+		// upload_store provided e.g. UploadDir.getPath()
+			// {}
+		std::string		upload_store = "html/uploads";
+
+		// try to parse multipart/form-data body
+		if (req.body.size() == 0)
+		{
+			result.resp = HttpResponse::buildError(400, req.path, &servDir);
+			return result;
+		}
+		std::map<std::string, std::string>::const_iterator	cit;
+		cit = req.headers.find("content-type");
+		if (cit->second.find("multipart/form-data") != 0)
+		{
+			result.resp = HttpResponse::buildError(415, req.path, &servDir);
+			return result;
+		}
+
+		MultipartBody	mpb;
+		if (!mpb.parse(req.body, cit->second) || mpb.fileCount() == 0)
+		{
+			result.resp = HttpResponse::buildError(400, req.path, &servDir);
+			return result;
+		}
+		for (size_t i = 0; i < mpb.fileCount(); i++)
+		{
+			MultipartBody::part		p = mpb.filePart(i);
+			if (!Utils::saveFile(upload_store, p.fdata.find("filename")->second, p.body))
+			{
+				result.resp = HttpResponse::buildError(500, req.path, &servDir);
+				return result;
+			}
+		}
+		result.resp = HttpResponse::build(201, MimeTypes::forExtn(".txt"), "Upload success!");
+		return result;
 	}
+
 	if (req.method == "DELETE")
 	{
 		//handle DELETEs
