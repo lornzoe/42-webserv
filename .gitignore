@@ -8,3 +8,5 @@ build/*/*
 docs/*
 compile_commands.json
 .cache/
+__references/nginx/logs/
+__references/nginx/tmp/

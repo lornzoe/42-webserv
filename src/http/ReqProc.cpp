@@ -6,6 +6,17 @@
 #include <algorithm>
 #include <string>
 
+namespace {
+	bool isAutoindexEnabled(const LocationDirective& locDir, const ServerDirective& servDir)
+	{
+		if (locDir.getAutoindex())
+			return locDir.getAutoindex()->isEnabled();
+		if (servDir.getAutoindex())
+			return servDir.getAutoindex()->isEnabled();
+		return false;
+	}
+}
+
 ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective const &servDir)
 {
 	LocationDirective const &	locDir = *ServerDirective::matchLocation(servDir.getLocations(), req.path);
@@ -23,7 +34,6 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 	}
 	if (locDir.getReturn())
 	{
-
 		//redirect
 			// resp avail immediately
 			// resp code: rdir.getCode()
@@ -73,12 +83,21 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 		else
 		{
 			struct stat st;
+			LOG_DEBUG("Assuming autoindex route");
+			LOG_DEBUG("fsPath.c_str(): " << fsPath.c_str());
+
+			// see if this is needed, remove comment if unnecessary:
+			// 		if uri does not end with /, force 302 (301, but no lol) to <path> with / appeneded to end 
+			
+			// stat might cause a problem with alias directives
+			// remove this comment if it doesnt and is ok as-is
 			if (stat(fsPath.c_str(), &st) == 0 && S_ISDIR(st.st_mode))
 			{
 				//if autoindex is enabled
-					// generate autoindex
-				//else directory listing has been disabled: no autoindex / resource (incld index)
-					// appropriate error
+				if (isAutoindexEnabled(locDir, servDir))
+					result.resp = HttpResponse::buildAutoindex(fsPath, req.path, &servDir);
+				else //directory listing disabled and no index resolved
+					result.resp = HttpResponse::buildError(403, req.path, &servDir);
 			}
 			else //will end up as 404 not found
 				result.resp = HttpResponse::buildError(404, req.path, &servDir);

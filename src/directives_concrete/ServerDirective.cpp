@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:44:33 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/21 19:53:30 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/11 18:49:48 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,7 @@ ServerDirective::ServerDirective(TokenisedBlock::const_iterator& cit) : BlockDir
 	requireAtMostOne<ClientMaxBodySizeDirective>("server", "client_max_body_size");
 	requireAtMostOne<ReturnDirective>("server", "return");
 	requireAtMostOne<ServerNameDirective>("server", "server_name");
+	requireAtMostOne<AutoindexDirective>("server", "autoindex");
 }
 
 ServerDirective::~ServerDirective()
@@ -120,6 +121,11 @@ std::vector<const LocationDirective *> ServerDirective::getLocations() const
 	return getChildren<LocationDirective>();
 }
 
+const AutoindexDirective *ServerDirective::getAutoindex() const
+{
+    return getChild<AutoindexDirective>();
+}
+
 const LocationDirective*	ServerDirective::matchLocation(
 		const std::vector<const LocationDirective *>& locations,
 		const std::string& uri)
@@ -186,24 +192,23 @@ ServerDirective::ResourcePath ServerDirective::getResource(const std::string& ur
 	if (S_ISDIR(st.st_mode))
 	{
 		const IndexDirective* index = (loc && loc->getIndex()) ? loc->getIndex() : getIndex();
-		if (index)
-		{
-			const std::vector<std::string>& files = index->getFiles();
-			for (std::size_t i = 0; i < files.size(); i++)
-			{
-				std::string path = fsPath;
-				if (!path.empty() && path[path.size() - 1] != '/')
-					path += "/";
-				path += files[i];
+	    const std::vector<std::string> defaultIndex(1, "index.html");
+		// if index is null, then  use defaultindex
+		const std::vector<std::string>& files = index ? index->getFiles() : defaultIndex;
 
-				struct stat cst;
-				if (statRegularFile(path, cst))
-					return std::make_pair(true, path);
-			}
+		for (std::size_t i = 0; i < files.size(); i++)
+		{
+			std::string path = fsPath;
+			if (!path.empty() && path[path.size() - 1] != '/')
+				path += "/";
+			path += files[i];
+
+			struct stat cst;
+			if (statRegularFile(path, cst))
+				return std::make_pair(true, path);
 		}
 		return none;
 	}
-
 	return none;
 }
 

@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/11 23:12:29 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/06 02:18:04 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/08 08:53:33 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,8 +25,9 @@ class BlockDirective : public Directive
 		std::vector<Directive *> directives; // list of directives in block
 	public:
 		BlockDirective(TokenisedBlock::const_iterator& cit);
-		virtual ~BlockDirective();	
+		virtual ~BlockDirective();
 		virtual void print(int depth) const = 0;
+		bool addDirective(Directive *directive);
 		const std::vector<Directive *>& getChildren() const;
 
 	protected:
