@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julhong <julhong@student.42.fr>            +#+  +:+       +#+        */
+/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 20:20:12 by ypua              #+#    #+#             */
-/*   Updated: 2026/09/10 17:40:11 by julhong          ###   ########.fr       */
+/*   Updated: 2026/09/12 19:58:27 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,6 +41,8 @@ namespace Utils
 
 	bool	readFile(const std::string &path, std::string &body);
 	bool	saveFile(std::string const &dirPath, std::string const &fname, std::string const &content);
+
+	bool	normaliseUri(const std::string &uri, std::string &out);
 }
 
 #endif

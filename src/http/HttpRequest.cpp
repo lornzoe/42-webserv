@@ -6,11 +6,12 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/09/07 10:57:31 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/13 03:50:44 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
+#include "Utils.hpp"
 #include "w_logger.hpp"
 #include <sstream>
 
@@ -94,12 +95,17 @@ namespace {
 		if (reqLine >> extra)
 			return result;
 
-		size_t	queryPos = result.path.find('?');
+		// put the raw path into raw_path
+		// path stores the processed path after normalisation
+		result.raw_path = result.path;
+		size_t	queryPos = result.raw_path.find('?');
 		if (queryPos != std::string::npos)
 		{
-			result.query = result.path.substr(queryPos + 1);
-			result.path = result.path.substr(0, queryPos);
+			result.query = result.raw_path.substr(queryPos + 1);
+			result.raw_path.erase(queryPos);
 		}
+		if (!Utils::normaliseUri(result.raw_path, result.path))
+			return result;
 
 		while (std::getline(stream, line))
 		{
