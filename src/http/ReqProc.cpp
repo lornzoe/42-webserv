@@ -8,30 +8,30 @@
 
 ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective const &servDir)
 {
-	LocationDirective const &	locDir = *ServerDirective::matchLocation(servDir.getLocations(), req.path);
+	const LocationDirective*	locDir = ServerDirective::matchLocation(servDir.getLocations(), req.path);
 	
 	std::string	body;
 	result		result;
 	std::string	fsPath;
-	ServerDirective::resolveFsPath(servDir, req.path, &locDir, fsPath);
+	ServerDirective::resolveFsPath(servDir, req.path, locDir, fsPath);
 
-	if (locDir.getLimitExcept() && !isMtdAllowed(req, locDir))
+	if (locDir && locDir->getLimitExcept() && !isMtdAllowed(req, *locDir))
 	{
 		//method not allowed
 			// resp avail immediately
 			// statusMap[405] = "Method Not Allowed"
 	}
-	if (locDir.getReturn())
+	if (locDir && locDir->getReturn())
 	{
 
 		//redirect
-			// resp avail immediately
+			// resp avail imme diately
 			// resp code: rdir.getCode()
 			// resp location: rdir.getBody()
-		int code = locDir.getReturn()->getCode();
+		int code = locDir->getReturn()->getCode();
 		if (code >= 300 && code < 400)
 		{
-			std::string url = locDir.getReturn()->getBody();
+			std::string url = locDir->getReturn()->getBody();
 			switch(code)
 			{
 				case 301:
