@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:44:33 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/21 19:53:30 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/13 11:09:13 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -146,22 +146,25 @@ const LocationDirective*	ServerDirective::matchLocation(
 bool	ServerDirective::resolveFsPath(const ServerDirective& servDir, 
 	const std::string& uri, const LocationDirective* loc, std::string& fsPath)
 {
-	std::string subpath = loc ? uri.substr(loc->getPath().size()) : uri;
-
-	std::string base;
 	if (loc && loc->getAlias())
-		base = loc->getAlias()->getPath();
-	else if (loc && loc->getRoot())
-		base = loc->getRoot()->getPath();
-	else if (servDir.getRoot())
-		base = servDir.getRoot()->getPath();
-	else
-		return false;
+	{
+		std::string subpath = uri.substr(loc->getPath().size());
+		if (subpath == ".." || subpath.compare(0, 3, "../") == 0)
+			return false;
+		fsPath = loc->getAlias()->getPath() + subpath;
+		return true;
+	}
 
-	fsPath = base;
-	if (!base.empty() && base[base.size() - 1] != '/' && !subpath.empty() && subpath[0] != '/')
-		fsPath += '/';
-	fsPath += subpath;
+	const RootDirective* root = (loc && loc->getRoot()) ? loc->getRoot() : servDir.getRoot();
+	if (!root)
+		return false;
+	std::string rootPath = root->getPath();
+	while (!rootPath.empty() && rootPath[rootPath.size() - 1] == '/')
+		rootPath.erase(rootPath.size() - 1);
+	if (uri.empty() || uri[0] != '/')
+		fsPath = rootPath + "/" + uri;
+	else
+		fsPath = rootPath + uri;
 	return true;
 }
 
