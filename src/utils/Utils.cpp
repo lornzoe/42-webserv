@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: julhong <julhong@student.42.fr>            +#+  +:+       +#+        */
+/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 20:18:55 by ypua              #+#    #+#             */
-/*   Updated: 2026/09/10 17:57:07 by julhong          ###   ########.fr       */
+/*   Updated: 2026/09/13 03:26:55 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -168,4 +168,108 @@ bool	Utils::saveFile(std::string const &dirPath, std::string const &fname, std::
 	std::ofstream	ofs(fullPath.c_str(), std::ios::trunc | std::ios::binary);
 	ofs.write(content.data(), content.size());
 	return (!ofs.fail());
+}
+
+namespace {
+	int	hexVal(char c)
+	{
+		if (c >= '0' && c <= '9')
+			return c - '0';
+		if (c >= 'a' && c <= 'f')
+			return c - 'a' + 10;
+		if (c >= 'A' && c <= 'F')
+			return c - 'A' + 10;
+		return -1;
+	}
+
+	// decdes %-encoded chars in str (e.g. %20 -> ' ')
+	bool	percentDecode(std::string const &in, std::string &out)
+	{
+		out.clear();
+		out.reserve(in.size());
+
+		for (size_t i = 0; i < in.size(); i++)
+		{
+			if (in[i] != '%')
+			{
+				out += in[i];
+				continue;
+			}
+
+			if (i + 2 >= in.size())
+				return false;
+
+			int	hi = hexVal(in[i + 1]);
+			int	lo = hexVal(in[i + 2]);
+			if (hi < 0 || lo < 0)
+				return false;
+
+			char	c = static_cast<char>(hi * 16 + lo);
+			if (c == '\0')
+				return false;
+
+			out += c;
+			i += 2;
+		}
+		return true;
+	}
+}
+
+// guarantee output is a valid path
+// returns false if the input is malformed or escapes document root
+bool	Utils::normaliseUri(const std::string &uri, std::string &out)
+{
+	out.clear();
+	if (uri.empty() || uri[0] != '/') // absolute path check
+		return false;
+
+	// convert uri to decoded cform
+	std::string	decoded;
+	if (!percentDecode(uri, decoded)) 
+		return false;
+
+	// check if decoded is still valid
+	if (decoded.empty() || decoded[0] != '/')
+		return false;
+	for (size_t i = 0; i < decoded.size(); i++)
+	{
+		unsigned char	c = static_cast<unsigned char>(decoded[i]);
+		if (c < 0x20 || c == 0x7F) // control chars check
+			return false;
+	}
+
+	// split uri into segments and resolve . and .. segments
+	std::vector<std::string> segments = Utils::ft_split(decoded, "/"); 
+	bool	trailingSlash = (decoded[decoded.size() - 1] == '/');
+	if (!segments.empty()
+		&& (segments[segments.size() - 1] == "." || segments[segments.size() - 1] == ".."))
+		trailingSlash = true;
+
+	// using vector instead of stack to help with debugging
+	std::vector<std::string> stack;
+	for (size_t i = 0; i < segments.size(); i++)
+	{
+		if (segments[i] == ".")
+			continue;
+		if (segments[i] == "..")
+		{
+			if (stack.empty())
+				return false; // escapes the document root
+			stack.pop_back();
+			continue;
+		}
+		stack.push_back(segments[i]);
+	}
+
+	if (stack.empty())
+		return (out = "/", true);
+
+	for (size_t i = 0; i < stack.size(); i++)
+	{
+		out += '/';
+		out += stack[i];
+	}
+	if (trailingSlash)
+		out += '/';
+	return true;
 }
