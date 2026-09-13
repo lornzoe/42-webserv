@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/24 08:30:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/01 19:30:53 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/08 06:14:43 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,6 +21,7 @@
 #include "ClientMaxBodySizeDirective.hpp"
 #include "ReturnDirective.hpp"
 #include "LimitExceptDirective.hpp"
+#include "AutoindexDirective.hpp"
 #include <vector>
 
 class LocationDirective : public BlockDirective
@@ -41,6 +42,7 @@ class LocationDirective : public BlockDirective
 		const LimitExceptDirective* getLimitExcept() const;
 		std::vector<const ErrorPageDirective *> getErrorPages() const;
 		std::vector<const LocationDirective *> getLocations() const;
+		const AutoindexDirective* getAutoindex() const;
 };
 
 #endif

@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/14 07:09:40 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/10 02:20:25 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/08 09:17:34 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 #include "DirectiveRules.hpp"
 #include "DirectiveFactory.hpp"
 #include "QuoteTracker.hpp"
+#include "w_logger.hpp"
 
 #include <iostream>
 #include <sstream>
@@ -169,6 +170,29 @@ namespace {
 		return directives;
 	}
 
+	void addImplicitLocations(std::vector<Directive *>& directives)
+	{
+		for (std::size_t i = 0; i < directives.size(); i++)
+		{
+			ServerDirective* server = dynamic_cast<ServerDirective *>(directives[i]);
+			if (!server || !server->getLocations().empty())
+				continue;
+
+			// make a fake location block
+			std::vector<std::vector<std::string> > block;
+			std::vector<std::string> header;
+			header.push_back("location");
+			header.push_back("/");
+			header.push_back("{");
+			block.push_back(header);
+			block.push_back(std::vector<std::string>(1, "}"));
+
+			Directive::TokenisedBlock::const_iterator cit = block.begin();
+			server->addDirective(new LocationDirective(cit));
+			LOG_DEBUG("Config: added implicit 'location /' to a server block");
+		}
+	}
+
 	bool validateDirectiveStrings(const std::vector<std::vector<std::string> >& lines)
 	{
 		// validate if the directives are in the right context.
@@ -296,6 +320,9 @@ void Config::load(const std::string& filename)
 	Directive::TokenisedBlock::const_iterator cit = this->directives_string.begin();
 	while (cit != this->directives_string.end())
 		directives.push_back(DirectiveFactory::createDirective(cit));
+
+	// sanity check: guarantee every server has a matchable location
+	addImplicitLocations(this->directives);
 }
 
 Config::~Config()

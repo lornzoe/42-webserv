@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/01 19:11:46 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/06 02:20:32 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/08 06:41:51 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ LocationDirective::LocationDirective(TokenisedBlock::const_iterator& cit) : Bloc
 	requireAtMostOne<ClientMaxBodySizeDirective>("location", "client_max_body_size");
 	requireAtMostOne<ReturnDirective>("location", "return");
 	requireAtMostOne<LimitExceptDirective>("location", "limit_except");
+	requireAtMostOne<AutoindexDirective>("location", "autoindex");
 
 	// even though getResource() prefers alias,
 	// throw an error so that we won't have to deal with this ambiguity.
@@ -96,4 +97,9 @@ std::vector<const ErrorPageDirective *> LocationDirective::getErrorPages() const
 std::vector<const LocationDirective *> LocationDirective::getLocations() const
 {
 	return getChildren<LocationDirective>();
+}
+
+const AutoindexDirective *LocationDirective::getAutoindex() const
+{
+    return getChild<AutoindexDirective>();
 }

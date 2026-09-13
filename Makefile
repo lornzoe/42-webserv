@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: julhong <julhong@student.42.fr>            +#+  +:+       +#+         #
+#    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/09/10 18:04:02 by julhong          ###   ########.fr        #
+#    Updated: 2026/09/12 18:26:38 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -33,7 +33,7 @@ DIRECTIVES_CONC_SRC_DIR =	$(SRC_DIR)/directives_concrete
 DIRECTIVES_CONC_SRC_BASE =	ServerDirective  ServerNameDirective  ListenDirective	\
 	LocationDirective  AliasDirective  RootDirective  IndexDirective				\
 	LimitExceptDirective  ReturnDirective  ErrorPageDirective						\
-	ClientMaxBodySizeDirective
+	ClientMaxBodySizeDirective  AutoindexDirective
 DIRECTIVES_CONC_SRC_FILES =	$(addsuffix .cpp, $(DIRECTIVES_CONC_SRC_BASE))
 
 WSAPP_SRC_DIR =		$(SRC_DIR)/wsapp

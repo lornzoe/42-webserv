@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/24 08:04:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/07/29 12:38:37 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/08 05:12:26 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,7 @@
 #include "ErrorPageDirective.hpp"
 #include "ReturnDirective.hpp"
 #include "LimitExceptDirective.hpp"
+#include "AutoindexDirective.hpp"
 
 #include <map>
 
@@ -63,14 +64,15 @@ namespace {
             allowedMap["listen"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER, &createDirective<ListenDirective>);
             allowedMap["server_name"]           = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER, &createDirective<ServerNameDirective>);
             allowedMap["alias"]                 = DirectiveInfo(TYPE_SIMPLE, CONTEXT_LOCATION, &createDirective<AliasDirective>);
+            allowedMap["limit_except"]          = DirectiveInfo(TYPE_SIMPLE, CONTEXT_LOCATION, &createDirective<LimitExceptDirective>);
 
             allowedMap["root"]                  = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<RootDirective>);
             allowedMap["index"]                 = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<IndexDirective>);
             allowedMap["client_max_body_size"]  = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ClientMaxBodySizeDirective>);
             allowedMap["error_page"]            = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ErrorPageDirective>);
+            allowedMap["autoindex"]             = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<AutoindexDirective>);
 
             allowedMap["return"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION | CONTEXT_IF, &createDirective<ReturnDirective>);
-            allowedMap["limit_except"]          = DirectiveInfo(TYPE_SIMPLE, CONTEXT_LOCATION, &createDirective<LimitExceptDirective>);
         }
         return allowedMap;
     }
