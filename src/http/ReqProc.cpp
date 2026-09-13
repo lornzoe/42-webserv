@@ -7,10 +7,10 @@
 #include <string>
 
 namespace {
-	bool isAutoindexEnabled(const LocationDirective& locDir, const ServerDirective& servDir)
+	bool isAutoindexEnabled(const LocationDirective* locDir, const ServerDirective& servDir)
 	{
-		if (locDir.getAutoindex())
-			return locDir.getAutoindex()->isEnabled();
+		if (locDir && locDir->getAutoindex())
+			return locDir->getAutoindex()->isEnabled();
 		if (servDir.getAutoindex())
 			return servDir.getAutoindex()->isEnabled();
 		return false;
