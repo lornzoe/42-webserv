@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/24 08:30:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/09/08 06:14:43 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/14 16:48:16 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,6 +22,8 @@
 #include "ReturnDirective.hpp"
 #include "LimitExceptDirective.hpp"
 #include "AutoindexDirective.hpp"
+#include "UploadStoreDirective.hpp"
+
 #include <vector>
 
 class LocationDirective : public BlockDirective
@@ -43,6 +45,7 @@ class LocationDirective : public BlockDirective
 		std::vector<const ErrorPageDirective *> getErrorPages() const;
 		std::vector<const LocationDirective *> getLocations() const;
 		const AutoindexDirective* getAutoindex() const;
+		const UploadStoreDirective* getUploadStore() const;
 };
 
 #endif

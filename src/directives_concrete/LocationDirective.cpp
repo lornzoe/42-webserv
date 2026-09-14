@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/01 19:11:46 by lyanga            #+#    #+#             */
-/*   Updated: 2026/09/08 06:41:51 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/14 16:48:45 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,6 +29,7 @@ LocationDirective::LocationDirective(TokenisedBlock::const_iterator& cit) : Bloc
 	requireAtMostOne<ReturnDirective>("location", "return");
 	requireAtMostOne<LimitExceptDirective>("location", "limit_except");
 	requireAtMostOne<AutoindexDirective>("location", "autoindex");
+	requireAtMostOne<UploadStoreDirective>("location", "upload_store");
 
 	// even though getResource() prefers alias,
 	// throw an error so that we won't have to deal with this ambiguity.
@@ -102,4 +103,9 @@ std::vector<const LocationDirective *> LocationDirective::getLocations() const
 const AutoindexDirective *LocationDirective::getAutoindex() const
 {
     return getChild<AutoindexDirective>();
+}
+
+const UploadStoreDirective *LocationDirective::getUploadStore() const
+{
+    return getChild<UploadStoreDirective>();
 }

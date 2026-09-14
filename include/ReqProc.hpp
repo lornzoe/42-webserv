@@ -9,9 +9,6 @@
 
 class ReqProc
 {
-private:
-	static bool			isMtdAllowed(ParsedRequest const &req, LocationDirective const &locDir);
-
 public:
 
 	enum status {
