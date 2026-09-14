@@ -15,6 +15,30 @@ namespace {
 			return servDir.getAutoindex()->isEnabled();
 		return false;
 	}
+
+	bool	isMtdAllowed(ParsedRequest const &req, LocationDirective const &locDir)
+	{
+		const std::vector<std::string> &	methods = locDir.getLimitExcept()->getMethods();
+		std::vector<std::string>::const_iterator cit = std::find(methods.begin(), methods.end(), req.method);
+		if (cit != methods.end())
+			return false;
+		return true;
+	}
+
+	bool getUploadStorePath(const LocationDirective* locDir, const ServerDirective& servDir, std::string& uploadStorePath)
+	{
+		if (locDir && locDir->getUploadStore())
+		{
+			uploadStorePath = locDir->getUploadStore()->getPath();
+			return true;
+		}
+		if (servDir.getUploadStore())
+		{
+			uploadStorePath = servDir.getUploadStore()->getPath();
+			return true;
+		}
+		return false;
+	}
 }
 
 ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective const &servDir)
@@ -105,11 +129,15 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 	}
 	if (req.method == "POST")
 	{
-		// uploads are allowed e.g. locDir.getUpload() != NULL
-			// {} 403 forbidden (for upload)
-		// upload_store provided e.g. UploadDir.getPath()
-			// {}
-		std::string		upload_store = "html/uploads";
+		// uploads are allowed e.g. locDir.getUpload() != NULL -- 403
+		// upload_store provided e.g. UploadDir.getPath() -- proceed as normal
+		// no upload_store in location or server means uploads are not allowed
+		std::string		upload_store;
+		if (!getUploadStorePath(locDir, servDir, upload_store))
+		{
+			result.resp = HttpResponse::buildError(403, req.path, &servDir);
+			return result;
+		}
 
 		// try to parse multipart/form-data body
 		if (req.body.size() == 0)
@@ -150,13 +178,4 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 	}
 
 	return result;
-}
-
-bool	ReqProc::isMtdAllowed(ParsedRequest const &req, LocationDirective const &locDir)
-{
-	const std::vector<std::string> &	methods = locDir.getLimitExcept()->getMethods();
-	std::vector<std::string>::const_iterator cit = std::find(methods.begin(), methods.end(), req.method);
-	if (cit != methods.end())
-		return false;
-	return true;
 }

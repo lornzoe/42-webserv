@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/24 08:04:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/09/08 05:12:26 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/14 16:23:35 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@
 #include "ReturnDirective.hpp"
 #include "LimitExceptDirective.hpp"
 #include "AutoindexDirective.hpp"
-
+#include "UploadStoreDirective.hpp"
 #include <map>
 
 namespace {
@@ -71,6 +71,7 @@ namespace {
             allowedMap["client_max_body_size"]  = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ClientMaxBodySizeDirective>);
             allowedMap["error_page"]            = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ErrorPageDirective>);
             allowedMap["autoindex"]             = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<AutoindexDirective>);
+            allowedMap["upload_store"]          = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<UploadStoreDirective>);
 
             allowedMap["return"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION | CONTEXT_IF, &createDirective<ReturnDirective>);
         }

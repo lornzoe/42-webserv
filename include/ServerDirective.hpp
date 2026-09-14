@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:37:22 by lyanga            #+#    #+#             */
-/*   Updated: 2026/09/08 07:27:29 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/14 16:49:22 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 #include "ReturnDirective.hpp"
 #include "LocationDirective.hpp"
 #include "AutoindexDirective.hpp"
+#include "UploadStoreDirective.hpp"
 
 #include <vector>
 #include <string>
@@ -48,6 +49,7 @@ class ServerDirective : public BlockDirective
 		const ClientMaxBodySizeDirective* getClientMaxBodySize() const;
 		std::vector<const LocationDirective *> getLocations() const;
 		const AutoindexDirective* getAutoindex() const;
+		const UploadStoreDirective* getUploadStore() const;
 
 		// just gonna overload to account for both...
 		bool isMatch(const std::string& host, const std::string& port) const;

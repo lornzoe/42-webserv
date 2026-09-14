@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:44:33 by lyanga            #+#    #+#             */
-/*   Updated: 2026/09/13 13:34:45 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/09/14 16:48:22 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,6 +53,7 @@ ServerDirective::ServerDirective(TokenisedBlock::const_iterator& cit) : BlockDir
 	requireAtMostOne<ReturnDirective>("server", "return");
 	requireAtMostOne<ServerNameDirective>("server", "server_name");
 	requireAtMostOne<AutoindexDirective>("server", "autoindex");
+	requireAtMostOne<UploadStoreDirective>("server", "upload_store");
 }
 
 ServerDirective::~ServerDirective()
@@ -124,6 +125,11 @@ std::vector<const LocationDirective *> ServerDirective::getLocations() const
 const AutoindexDirective *ServerDirective::getAutoindex() const
 {
     return getChild<AutoindexDirective>();
+}
+
+const UploadStoreDirective *ServerDirective::getUploadStore() const
+{
+    return getChild<UploadStoreDirective>();
 }
 
 const LocationDirective*	ServerDirective::matchLocation(
