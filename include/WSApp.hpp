@@ -15,7 +15,6 @@ private:
 	Config const *_conf;
 	Poller _pol;
 	std::vector<Server *> _servs;
-	static volatile sig_atomic_t g_shutdownReq;
 
 	struct epoll_res
 	{

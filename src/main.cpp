@@ -43,6 +43,5 @@ int main(int argc, char **argv)
 	}
 
 	std::cout << "[webserv] running server now." << std::endl;
-	ws.run();
-	return 0;
+	return ws.run();
 }

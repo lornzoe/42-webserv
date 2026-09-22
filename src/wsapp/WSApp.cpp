@@ -9,8 +9,19 @@
 #include <string>
 #include <sstream>
 #include <sys/stat.h>
+#include <csignal>
 
-volatile sig_atomic_t WSApp::g_shutdownReq = 0;
+namespace {
+
+	volatile sig_atomic_t g_shutdownRequest = false;
+
+	void	sigint_handler(int sig)
+	{
+		(void)sig;
+		g_shutdownRequest = true;
+	}
+
+}
 
 // OCF ------------------------------------------------------------------------
 
@@ -35,12 +46,18 @@ void WSApp::ConfigInit(Config const &conf)
 
 int WSApp::run()
 {
+	signal(SIGINT, sigint_handler);
+	signal(SIGPIPE, SIG_IGN);
 	ep_regisListeners();
-	while (1)
+	while (!g_shutdownRequest)
 	{
 		ep_wait();
 		if (_epRes.n == -1)
-			return 1;
+		{
+			if (!g_shutdownRequest)
+				return 1;
+			break;
+		}
 
 		for (int i = 0; i < _epRes.n; ++i)
 		{
@@ -66,7 +83,7 @@ int WSApp::run()
 			while (i != s.clients().end())
 			{
 				Client &cli = i->second;
-				if (cli.isStat(CLOSING))
+				if (cli.isStat(CLOSING) && !cli.isStat(SENDING))
 				{
 					int cls_fd = cli.fd();
 					++i;
@@ -90,7 +107,7 @@ int WSApp::run()
 						cli.send_response(-1,
 							HttpResponse::buildError(res.errorCode, res.request.path, &cli.servDir()));
 						_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
-						// TODO: close connection
+						cli.addStat(CLOSING);
 					}
 					else
 					{
@@ -162,22 +179,22 @@ int WSApp::hndl_Cli(eventCtx *ctx, uint32_t events)
 {
 	Client &cli = *(static_cast<Client *>(ctx->owner));
 
-	if (events & EPOLLIN)
+	if (events & EPOLLIN && !cli.isStat(CLOSING))
 	{
-		if (cli.isStat(CLOSING))
-			return 0;
 		int ret = cli.recv1();
 		if (ret <= 0)
 			cli.addStat(CLOSING);
 	}
 
-	if (events & EPOLLOUT)
+	if (events & EPOLLOUT && cli.isStat(SENDING))
 	{
-		if (cli.isStat(CLOSING))
-			return 0;
 		int ret = cli.send1();
-		(void)ret;
-		if (!cli.isStat(SENDING))
+		if (ret < 0)
+		{
+			cli.rmStat(SENDING);
+			cli.addStat(CLOSING);
+		}
+		if (!cli.isStat(SENDING) && !cli.isStat(CLOSING))
 			_pol.mod(cli.fd(), EPOLLIN, &cli.ectx());
 	}
 

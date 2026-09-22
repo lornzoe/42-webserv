@@ -79,9 +79,7 @@ ssize_t Client::recv1()
 void Client::process_request(ParseResult const &result)
 {
 	ReqProc::result resp_res = ReqProc::process(result.request, servDir());
-	// std::string response = HttpRequest::build_http_response(result.request,
-	// 														result.request.body,
-	// 														&(servDir()));
+	//CGI will not have immediate send
 	send_response(result.consumed, resp_res.resp);
 }
 
