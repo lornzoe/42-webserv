@@ -10,10 +10,24 @@
 // OCF ------------------------------------------------------------------------
 
 Client::Client()
-	: _server(NULL), _fd(-1), _eCtx(eventCtx()), _status(0), _outPend(0), _outCursor(0) {}
+	: _server(NULL),
+	  _fd(-1),
+	  _eCtx(eventCtx()),
+	  _status(0),
+	  _outPend(0),
+	  _outCursor(0),
+	  _last_activity_time(time(NULL))
+{
+}
 
 Client::Client(Client const &other)
-	: _server(NULL), _fd(-1), _eCtx(eventCtx()), _status(0), _outPend(0), _outCursor(0)
+	: _server(NULL),
+	  _fd(-1),
+	  _eCtx(eventCtx()),
+	  _status(0),
+	  _outPend(0),
+	  _outCursor(0),
+	  _last_activity_time(time(NULL))
 {
 	(void)other;
 }
@@ -28,6 +42,7 @@ Client &Client::operator=(Client const &other)
 	_status = 0;
 	_outPend = 0;
 	_outCursor = 0;
+	_last_activity_time = time(NULL);
 	return *this;
 }
 
@@ -75,9 +90,9 @@ ssize_t Client::recv1()
 	return bytesRd;
 }
 
-ReqProc::status		Client::process_request(ParseResult const &pars_res)
+ReqProc::status Client::process_request(ParseResult const &pars_res)
 {
-	std::map<std::string, std::string>::const_iterator	cit;
+	std::map<std::string, std::string>::const_iterator cit;
 	cit = pars_res.request.headers.find("connection");
 	if (cit != pars_res.request.headers.end() && cit->second == "close")
 		addStat(CLOSING);
@@ -93,13 +108,13 @@ ReqProc::status		Client::process_request(ParseResult const &pars_res)
 	else
 	{
 		// Some embedded CGI object?
-			// save pars_res body, set up child with meta vars & pipes
-			// have api to
-				// write body to cgi_write
-				// read cgi_out into cgi_res buf
-				// check progress
-				// etc.
-		//add stat WAIT_CGI
+		// save pars_res body, set up child with meta vars & pipes
+		// have api to
+		// write body to cgi_write
+		// read cgi_out into cgi_res buf
+		// check progress
+		// etc.
+		// add stat WAIT_CGI
 	}
 	return resp_res.stat;
 }
@@ -137,4 +152,14 @@ ssize_t Client::send1()
 		_status &= ~SENDING;
 	}
 	return bytesSent;
+}
+
+time_t Client::get_last_activity_time()
+{
+	return _last_activity_time;
+}
+
+void Client::refresh_last_activity_time()
+{
+	_last_activity_time = time(NULL);
 }

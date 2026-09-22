@@ -32,6 +32,8 @@ private:
 	WSApp(WSApp const &other);
 	WSApp &operator=(WSApp const &other);
 
+	static const int TIMEOUT_SECOND;
+
 public:
 	WSApp();
 	~WSApp();

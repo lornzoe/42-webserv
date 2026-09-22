@@ -12,17 +12,20 @@
 #include <sys/stat.h>
 #include <csignal>
 
-namespace {
+namespace
+{
 
 	volatile sig_atomic_t g_shutdownRequest = false;
 
-	void	sigint_handler(int sig)
+	void sigint_handler(int sig)
 	{
 		(void)sig;
 		g_shutdownRequest = true;
 	}
 
 }
+
+const int WSApp::TIMEOUT_SECOND = 30;
 
 // OCF ------------------------------------------------------------------------
 
@@ -100,7 +103,12 @@ int WSApp::run()
 					if (res.status == INCOMPLETE)
 					{
 						LOG_DEBUG("HTTP request is incomplete, waiting for more data.");
+						time_t current_time = time(NULL);
 						// TODO: Handle timeout
+						if (current_time - cli.get_last_activity_time() > TIMEOUT_SECOND)
+						{
+							std::cout << "TIMEOUT FOR CLIENT " << cli.fd() << std::endl;
+						}
 					}
 					else if (res.status == INVALID)
 					{
@@ -127,9 +135,9 @@ int WSApp::run()
 					}
 				}
 				// if is WAIT_CGI
-					//if complete
-						// package response and send on cli outbox
-						// update EPOLL and client status
+				// if complete
+				// package response and send on cli outbox
+				// update EPOLL and client status
 				++i;
 			}
 			++it;

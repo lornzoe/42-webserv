@@ -8,6 +8,7 @@
 
 #include <unistd.h>
 #include <string>
+#include <ctime>
 
 class Server;
 
@@ -30,6 +31,8 @@ private:
 	std::string _outBox;
 	int _outPend;
 	int _outCursor;
+
+	time_t _last_activity_time;
 
 public:
 	Client();
@@ -56,6 +59,9 @@ public:
 	void comsume_inbox(ssize_t req_offset);
 	void send_response(std::string const &resp);
 	ssize_t send1();
+
+	time_t get_last_activity_time();
+	void refresh_last_activity_time();
 
 };
 
