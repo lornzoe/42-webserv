@@ -3,6 +3,7 @@
 #include "ListenDirective.hpp"
 #include "FileDescriptor.hpp"
 #include "HttpRequest.hpp"
+#include "ReqProc.hpp"
 #include "HttpResponse.hpp"
 #include "w_logger.hpp"
 
@@ -104,20 +105,31 @@ int WSApp::run()
 					else if (res.status == INVALID)
 					{
 						LOG_DEBUG("HTTP request is invalid, sending error response with code: " << res.errorCode);
-						cli.send_response(-1,
-							HttpResponse::buildError(res.errorCode, res.request.path, &cli.servDir()));
+						cli.send_response(HttpResponse::buildError(res.errorCode, res.request.path, &cli.servDir()));
 						_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
 						cli.addStat(CLOSING);
 					}
 					else
 					{
 						LOG_DEBUG("HTTP request is complete, processing request.");
-						cli.process_request(res);
-						LOG_DEBUG("HTTP response prepared, switching to EPOLLOUT for sending.");
-						_pol.mod(cli.fd(), EPOLLOUT | EPOLLIN, &cli.ectx());
-						LOG_DEBUG("Finished handling client request.");
+						if (cli.process_request(res) == ReqProc::RESP_RDY)
+						{
+							LOG_DEBUG("HTTP response prepared, switching to EPOLLOUT for sending.");
+							_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
+							LOG_DEBUG("Finished handling client request.");
+						}
+						else
+						{
+							// _pol.add cgi_write on EPOLLOUT
+							// _pol.add cgi_read on EPOLLIN
+							_pol.del(cli.fd());
+						}
 					}
 				}
+				// if is WAIT_CGI
+					//if complete
+						// package response and send on cli outbox
+						// update EPOLL and client status
 				++i;
 			}
 			++it;

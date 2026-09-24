@@ -4,6 +4,7 @@
 #include "ServerDirective.hpp"
 #include "w_eventCtx.hpp"
 #include "HttpRequest.hpp"
+#include "ReqProc.hpp"
 
 #include <unistd.h>
 #include <string>
@@ -50,9 +51,10 @@ public:
 	void rmStat(int flag) { _status &= ~flag; }
 
 	ssize_t recv1();
-	void process_request(ParseResult const &result);
-	//send_resp fills _outbox and erases corresponding req in inbox
-	void send_response(ssize_t req_offset, std::string const &resp);
+	ReqProc::status	process_request(ParseResult const &result);
+
+	void comsume_inbox(ssize_t req_offset);
+	void send_response(std::string const &resp);
 	ssize_t send1();
 
 };
