@@ -1,6 +1,5 @@
 #include "Client.hpp"
 #include "Server.hpp"
-#include "ReqProc.hpp"
 #include "Utils.hpp"
 #include "w_eventCtx.hpp"
 #include "w_logger.hpp"
@@ -76,19 +75,45 @@ ssize_t Client::recv1()
 	return bytesRd;
 }
 
-void Client::process_request(ParseResult const &result)
+ReqProc::status		Client::process_request(ParseResult const &pars_res)
 {
-	ReqProc::result resp_res = ReqProc::process(result.request, servDir());
-	//CGI will not have immediate send
-	send_response(result.consumed, resp_res.resp);
+	std::map<std::string, std::string>::const_iterator	cit;
+	cit = pars_res.request.headers.find("connection");
+	if (cit != pars_res.request.headers.end() && cit->second == "close")
+		addStat(CLOSING);
+
+	ReqProc::result resp_res = ReqProc::process(pars_res.request, servDir());
+	comsume_inbox(pars_res.consumed);
+	if (resp_res.stat == ReqProc::RESP_RDY)
+	{
+		if (isStat(CLOSING))
+			resp_res.resp.insert(resp_res.resp.find(HEADER_END), "\r\nConnection: close");
+		send_response(resp_res.resp);
+	}
+	else
+	{
+		// Some embedded CGI object?
+			// save pars_res body, set up child with meta vars & pipes
+			// have api to
+				// write body to cgi_write
+				// read cgi_out into cgi_res buf
+				// check progress
+				// etc.
+		//add stat WAIT_CGI
+	}
+	return resp_res.stat;
 }
 
-void Client::send_response(ssize_t req_offset, std::string const &resp)
+void Client::comsume_inbox(ssize_t req_offset)
 {
 	if (req_offset == -1 || static_cast<size_t>(req_offset) >= _inbox.size())
 		_inbox.erase();
 	else
 		_inbox = _inbox.substr(req_offset);
+}
+
+void Client::send_response(std::string const &resp)
+{
 	_outBox.append(resp);
 	_outPend = _outBox.size();
 	_status |= SENDING;

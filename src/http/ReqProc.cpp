@@ -90,9 +90,8 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 	// For CGI
 		// if fsPath ends in recognized CGI extension
 		// and locDir has CGI enabled
-			// defer resp to CGI
-			// GET CGI: args in query
-			// POST CGI: args in body
+			// note execution context info: script path and interpreter etc.
+			// defer resp to CGI: result.stat = CGI_REQ
 
 	if (req.method == "GET")
 	{
