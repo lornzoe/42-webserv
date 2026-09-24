@@ -173,6 +173,10 @@ namespace {
 			if (end == size_str.c_str() || *end != '\0')
 				return ParseResult(INVALID);
 
+			size_t	tmp_clientMaxBodySize = 52428800;
+			if (chunk_size > tmp_clientMaxBodySize - body.size())
+				return ParseResult(INVALID, 413);
+
 			// Move past "size\r\n"
 			pos = line_end + 2;
 
@@ -212,7 +216,6 @@ namespace {
 			pos += 2;
 		}
 	}
-
 }
 
 ParseResult HttpRequest::parse_http_request(const std::string &inbox)
@@ -225,9 +228,11 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 	if (header_end == std::string::npos)
 	{
 		if (inbox.size() > MAX_HEADER_SIZE)
-			return ParseResult(INVALID);
+			return ParseResult(INVALID, 431);
 		return ParseResult(INCOMPLETE, 0);
 	}
+	else if (header_end > MAX_HEADER_SIZE)
+		return ParseResult(INVALID, 431);
 
 	// 2. Parse request line and headers
 	std::string headers = inbox.substr(0, header_end);
@@ -237,7 +242,6 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 
 	size_t header_length = header_end + 4;
 
-	// TODO: Build body for Multipart/form-data
 	std::map<std::string, std::string>::const_iterator it = parsed.headers.find("transfer-encoding");
 	if (it != parsed.headers.end())
 	{
@@ -252,6 +256,9 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 
 	// 3. Determine body length
 	size_t content_length = parsed.content_length;
+	size_t tmp_clientMaxBodySize = 52428800;
+	if (content_length > tmp_clientMaxBodySize)
+		return ParseResult(INVALID, 413);
 
 	// 4. Check whether entire body has arrived
 	if (inbox.size() < header_length + content_length)
