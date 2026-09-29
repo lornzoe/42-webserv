@@ -21,7 +21,7 @@ namespace {
 	{
 		const std::vector<std::string> &	methods = locDir.getLimitExcept()->getMethods();
 		std::vector<std::string>::const_iterator cit = std::find(methods.begin(), methods.end(), req.method);
-		if (cit != methods.end())
+		if (cit == methods.end())
 			return false;
 		return true;
 	}
@@ -51,11 +51,8 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 	std::string	fsPath;
 
 	if (locDir && locDir->getLimitExcept() && !isMtdAllowed(req, *locDir))
-	{
-		//method not allowed
-			// resp avail immediately
-			// statusMap[405] = "Method Not Allowed"
-	}
+		return result.resp = HttpResponse::buildError(405, req.path, &servDir), result;
+
 	if (locDir && locDir->getReturn())
 	{
 		//redirect
@@ -182,12 +179,7 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 		if (stat(fsPath.c_str(), &st) == -1)
 			code = 204;
 		else if (S_ISREG(st.st_mode))
-		{
-			if (std::remove(fsPath.c_str()) == 0)
-				code = 200;
-			else
-				code = 403;
-		}
+			code = std::remove(fsPath.c_str()) == 0 ? 200 : 403;
 		else
 			code = 403;
 
