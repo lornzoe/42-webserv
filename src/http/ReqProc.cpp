@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <algorithm>
 #include <string>
+#include <cstdio>
 
 namespace {
 	bool isAutoindexEnabled(const LocationDirective* locDir, const ServerDirective& servDir)
@@ -48,7 +49,6 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 	std::string	body;
 	result		result;
 	std::string	fsPath;
-	ServerDirective::resolveFsPath(servDir, req.path, locDir, fsPath);
 
 	if (locDir && locDir->getLimitExcept() && !isMtdAllowed(req, *locDir))
 	{
@@ -86,6 +86,9 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 			}
 		}
 	}
+
+	if (!ServerDirective::resolveFsPath(servDir, req.path, locDir, fsPath))
+		return result.resp = HttpResponse::buildError(403, req.path, &servDir), result;
 
 	// For CGI
 		// if fsPath ends in recognized CGI extension
@@ -173,7 +176,25 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 
 	if (req.method == "DELETE")
 	{
-		//handle DELETEs
+		struct stat st;
+		int			code;
+
+		if (stat(fsPath.c_str(), &st) == -1)
+			code = 204;
+		else if (S_ISREG(st.st_mode))
+		{
+			if (std::remove(fsPath.c_str()) == 0)
+				code = 200;
+			else
+				code = 403;
+		}
+		else
+			code = 403;
+
+		if (code >= 200 && code <= 299)
+			result.resp = HttpResponse::build(code, MimeTypes::forExtn(".txt"), "");
+		else
+			result.resp = HttpResponse::buildError(code, req.path, &servDir);
 	}
 
 	return result;
