@@ -158,6 +158,12 @@ const LocationDirective*	ServerDirective::matchLocation(
 bool	ServerDirective::resolveFsPath(const ServerDirective& servDir, 
 	const std::string& uri, const LocationDirective* loc, std::string& fsPath)
 {
+	if (uri == ".." 
+		|| uri.compare(0, 3, "../") == 0
+		|| uri.find("/../") != std::string::npos
+		|| (uri.size() >= 3 && uri.compare(uri.size() - 3, 3, "/..") == 0))
+			return false;
+
 	if (loc && loc->getAlias())
 	{
 		std::string subpath = uri.substr(loc->getPath().size());

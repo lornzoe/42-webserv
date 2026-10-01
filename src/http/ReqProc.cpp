@@ -5,6 +5,7 @@
 #include <sys/stat.h>
 #include <algorithm>
 #include <string>
+#include <cstdio>
 
 namespace {
 	bool isAutoindexEnabled(const LocationDirective* locDir, const ServerDirective& servDir)
@@ -20,7 +21,7 @@ namespace {
 	{
 		const std::vector<std::string> &	methods = locDir.getLimitExcept()->getMethods();
 		std::vector<std::string>::const_iterator cit = std::find(methods.begin(), methods.end(), req.method);
-		if (cit != methods.end())
+		if (cit == methods.end())
 			return false;
 		return true;
 	}
@@ -48,14 +49,10 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 	std::string	body;
 	result		result;
 	std::string	fsPath;
-	ServerDirective::resolveFsPath(servDir, req.path, locDir, fsPath);
 
 	if (locDir && locDir->getLimitExcept() && !isMtdAllowed(req, *locDir))
-	{
-		//method not allowed
-			// resp avail immediately
-			// statusMap[405] = "Method Not Allowed"
-	}
+		return result.resp = HttpResponse::buildError(405, req.path, &servDir), result;
+
 	if (locDir && locDir->getReturn())
 	{
 		//redirect
@@ -86,6 +83,9 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 			}
 		}
 	}
+
+	if (!ServerDirective::resolveFsPath(servDir, req.path, locDir, fsPath))
+		return result.resp = HttpResponse::buildError(403, req.path, &servDir), result;
 
 	// For CGI
 		// if fsPath ends in recognized CGI extension
@@ -173,7 +173,20 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 
 	if (req.method == "DELETE")
 	{
-		//handle DELETEs
+		struct stat st;
+		int			code;
+
+		if (stat(fsPath.c_str(), &st) == -1)
+			code = 204;
+		else if (S_ISREG(st.st_mode))
+			code = std::remove(fsPath.c_str()) == 0 ? 200 : 403;
+		else
+			code = 403;
+
+		if (code >= 200 && code <= 299)
+			result.resp = HttpResponse::build(code, MimeTypes::forExtn(".txt"), "");
+		else
+			result.resp = HttpResponse::buildError(code, req.path, &servDir);
 	}
 
 	return result;

@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Webserv Upload Test</title>
+</head>
+<body>
+    <h1>Webserv Multi-Upload Test</h1>
+
+    <p>Select one or more files, then optionally rename them.</p>
+
+    <input id="files" type="file" multiple>
+
+    <div id="file-list"></div>
+
+    <br>
+    <button id="upload-btn">Upload Files</button>
+
+    <p id="upload-result"></p>
+
+    <hr>
+
+    <h2>Uploaded Files</h2>
+
+    <button id="refresh-btn">Refresh Files</button>
+
+    <div id="server-files">
+        Loading...
+    </div>
+
+    <br>
+
+    <button id="delete-btn">Delete Selected</button>
+
+    <p id="delete-result"></p>
+
+    <script>
+        const input = document.getElementById("files");
+        const list = document.getElementById("file-list");
+        const uploadResult = document.getElementById("upload-result");
+
+        const serverFiles = document.getElementById("server-files");
+        const deleteResult = document.getElementById("delete-result");
+
+        /*
+         * UPLOAD UI
+         */
+        input.addEventListener("change", function () {
+            list.innerHTML = "";
+
+            for (let i = 0; i < input.files.length; ++i) {
+                const file = input.files[i];
+
+                const row = document.createElement("div");
+
+                const original = document.createElement("span");
+                original.textContent = file.name + " → ";
+
+                const name = document.createElement("input");
+                name.type = "text";
+                name.className = "new-name";
+
+                const dot = file.name.lastIndexOf(".");
+
+                if (dot > 0)
+                    name.value = file.name.substring(0, dot);
+                else
+                    name.value = file.name;
+
+                const ext = document.createElement("select");
+                ext.className = "extension";
+
+                const extensions = [
+                    "",
+                    ".txt",
+                    ".jpg",
+                    ".jpeg",
+                    ".png",
+                    ".gif",
+                    ".pdf"
+                ];
+
+                for (let j = 0; j < extensions.length; ++j) {
+                    const option = document.createElement("option");
+
+                    option.value = extensions[j];
+                    option.textContent =
+                        extensions[j] === ""
+                        ? "(no extension)"
+                        : extensions[j];
+
+                    if (
+                        dot > 0 &&
+                        extensions[j] ===
+                            file.name.substring(dot).toLowerCase()
+                    )
+                        option.selected = true;
+
+                    ext.appendChild(option);
+                }
+
+                row.appendChild(original);
+                row.appendChild(name);
+                row.appendChild(ext);
+
+                list.appendChild(row);
+                list.appendChild(document.createElement("br"));
+            }
+        });
+
+        /*
+         * UPLOAD REQUEST
+         */
+        document.getElementById("upload-btn")
+            .addEventListener("click", function () {
+
+                if (input.files.length === 0) {
+                    uploadResult.textContent =
+                        "Choose at least one file.";
+                    return;
+                }
+
+                const form = new FormData();
+
+                const names =
+                    document.getElementsByClassName("new-name");
+
+                const extensions =
+                    document.getElementsByClassName("extension");
+
+                for (let i = 0; i < input.files.length; ++i) {
+                    const finalName =
+                        names[i].value + extensions[i].value;
+
+                    form.append(
+                        "file",
+                        input.files[i],
+                        finalName
+                    );
+                }
+
+                fetch("/upload_storage", {
+                    method: "POST",
+                    body: form
+                })
+                .then(function (response) {
+                    uploadResult.textContent =
+                        "Server returned HTTP " +
+                        response.status;
+
+                    if (response.ok)
+                        loadServerFiles();
+                })
+                .catch(function () {
+                    uploadResult.textContent =
+                        "Upload failed.";
+                });
+            });
+
+        /*
+         * LOAD SERVER-SIDE FILES
+         *
+         * This requests your Webserv autoindex page and extracts
+         * the links corresponding to files.
+         */
+        function loadServerFiles() {
+            serverFiles.textContent = "Loading...";
+
+            fetch("/upload_storage/", {
+                method: "GET"
+            })
+            .then(function (response) {
+                if (!response.ok)
+                    throw new Error(
+                        "HTTP " + response.status
+                    );
+
+                return response.text();
+            })
+            .then(function (html) {
+                const parser = new DOMParser();
+
+                const documentResult =
+                    parser.parseFromString(
+                        html,
+                        "text/html"
+                    );
+
+                const links =
+                    documentResult.getElementsByTagName("a");
+
+                serverFiles.innerHTML = "";
+
+                let count = 0;
+
+                for (let i = 0; i < links.length; ++i) {
+                    const href =
+                        links[i].getAttribute("href");
+
+                    if (!href)
+                        continue;
+
+                    /*
+                     * Ignore parent-directory links
+                     * and directory links.
+                     */
+                    if (
+                        href === "../" ||
+                        href === ".." ||
+                        href[href.length - 1] === '/'
+                    )
+                        continue;
+
+                    const row =
+                        document.createElement("div");
+
+                    const checkbox =
+                        document.createElement("input");
+
+                    checkbox.type = "checkbox";
+                    checkbox.className =
+                        "server-file";
+
+                    /*
+                     * Store the href returned by the server.
+                     * This will be used when issuing DELETE.
+                     */
+                    checkbox.value = href;
+
+                    const label =
+                        document.createElement("span");
+
+                    let displayName = href;
+
+                    try {
+                        displayName =
+                            decodeURIComponent(href);
+                    }
+                    catch (e) {
+                    }
+
+                    label.textContent =
+                        " " + displayName;
+
+                    row.appendChild(checkbox);
+                    row.appendChild(label);
+
+                    serverFiles.appendChild(row);
+
+                    ++count;
+                }
+
+                if (count === 0)
+                    serverFiles.textContent =
+                        "No uploaded files.";
+            })
+            .catch(function () {
+                serverFiles.textContent =
+                    "Could not load server files.";
+            });
+        }
+
+        /*
+         * DELETE SELECTED FILES
+         */
+        document.getElementById("delete-btn")
+            .addEventListener("click", function () {
+
+                const files =
+                    document.getElementsByClassName(
+                        "server-file"
+                    );
+
+                const selected = [];
+
+                for (let i = 0; i < files.length; ++i) {
+                    if (files[i].checked)
+                        selected.push(files[i].value);
+                }
+
+                if (selected.length === 0) {
+                    deleteResult.textContent =
+                        "Select at least one file.";
+                    return;
+                }
+
+                let finished = 0;
+                let successes = 0;
+
+                deleteResult.textContent =
+                    "Deleting...";
+
+                for (let i = 0; i < selected.length; ++i) {
+                    fetch(
+                        "/upload_storage/" +
+                        selected[i],
+                        {
+                            method: "DELETE"
+                        }
+                    )
+                    .then(function (response) {
+                        if (response.ok)
+                            ++successes;
+
+                        ++finished;
+
+                        if (finished === selected.length) {
+                            deleteResult.textContent =
+                                "Deleted " +
+                                successes +
+                                " of " +
+                                selected.length +
+                                " selected file(s).";
+
+                            loadServerFiles();
+                        }
+                    })
+                    .catch(function () {
+                        ++finished;
+
+                        if (finished === selected.length) {
+                            deleteResult.textContent =
+                                "Deleted " +
+                                successes +
+                                " of " +
+                                selected.length +
+                                " selected file(s).";
+
+                            loadServerFiles();
+                        }
+                    });
+                }
+            });
+
+        /*
+         * MANUAL REFRESH
+         */
+        document.getElementById("refresh-btn")
+            .addEventListener(
+                "click",
+                loadServerFiles
+            );
+
+        /*
+         * Populate the list when the page loads.
+         */
+        loadServerFiles();
+    </script>
+</body>
+</html>
