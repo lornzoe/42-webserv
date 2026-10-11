@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
+#    By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/09/14 16:43:50 by lyanga           ###   ########.fr        #
+#    Updated: 2026/10/11 17:53:44 by ypua             ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -37,7 +37,7 @@ DIRECTIVES_CONC_SRC_BASE =	ServerDirective  ServerNameDirective  ListenDirective
 DIRECTIVES_CONC_SRC_FILES =	$(addsuffix .cpp, $(DIRECTIVES_CONC_SRC_BASE))
 
 WSAPP_SRC_DIR =		$(SRC_DIR)/wsapp
-WSAPP_SRC_BASE =	WSApp  Poller  Server  Listener  Client
+WSAPP_SRC_BASE =	WSApp  Poller  Server  Listener  Client Pipe
 WSAPP_SRC_FILES =	$(addsuffix .cpp, $(WSAPP_SRC_BASE))
 
 HTTP_SRC_DIR =		$(SRC_DIR)/http
