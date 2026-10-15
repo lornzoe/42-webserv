@@ -127,13 +127,19 @@ namespace {
 		ss << "<html><head><title>" << currLoc << "</title></head>\r\n"
 		<< "<body><center><h1>Index of " << currLoc << "</h1></center>\r\n"
 		<< "<table><tr><th>Name</th><th>Last Modified</th><th>Size</th></tr>\r\n";
+		std::string base = currLoc;
+		if (base.empty() || base[base.size() - 1] != '/')
+			base += "/";
 		// middle entries
 		for (std::size_t i = 0;  i < entries.size(); ++i)
 		{
 			const AutoindexEntry &e = entries[i];
+			if (e.name == "." || (e.name == ".." && base == "/"))
+				continue;
+				
 			std::string display = e.isDir ? e.name + "/" : e.name;
 
-			ss << "<tr><td><a href=\"" << currLoc << "/" << display << "\">" << display << "</a></td>"
+			ss << "<tr><td><a href=\"" << base << display << "\">" << display << "</a></td>"
 				<< "<td>" << e.mtime << "</td>"
 				<< "<td>";
 			if (e.isDir)
