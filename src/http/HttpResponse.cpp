@@ -133,7 +133,7 @@ namespace {
 			const AutoindexEntry &e = entries[i];
 			std::string display = e.isDir ? e.name + "/" : e.name;
 
-			ss << "<tr><td><a href=\"" << display << "\">" << display << "</a></td>"
+			ss << "<tr><td><a href=\"" << currLoc << "/" << display << "\">" << display << "</a></td>"
 				<< "<td>" << e.mtime << "</td>"
 				<< "<td>";
 			if (e.isDir)
