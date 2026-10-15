@@ -56,3 +56,8 @@ Pipe &Pipe::operator=(const Pipe &other)
 	(void)other;
 	return *this;
 }
+
+const char *Pipe::PipeException::what() const throw()
+{
+	return "Pipe::PipeException.";
+}

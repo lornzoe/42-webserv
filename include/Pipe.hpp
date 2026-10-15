@@ -18,6 +18,12 @@ public:
 	void closeWrite();
 	void closeAll();
 
+	class PipeException : public std::exception
+	{
+	public:
+		virtual const char *what() const throw();
+	};
+
 private:
 	FileDescriptor _read_end;
 	FileDescriptor _write_end;
