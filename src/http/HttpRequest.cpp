@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/09/13 03:50:44 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/10/15 19:28:09 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -160,7 +160,7 @@ namespace {
 			size_t line_end = inbox.find(CRLF, pos);
 
 			if (line_end == std::string::npos)
-				return ParseResult(INCOMPLETE, 0);
+				return ParseResult(INCOMPLETE, 408);
 
 			// Extract chunk size
 			std::string size_str = inbox.substr(pos, line_end - pos);
@@ -202,7 +202,7 @@ namespace {
 
 			// Check if entire chunk presents
 			if (inbox.size() < pos + chunk_size + 2)
-				return ParseResult(INCOMPLETE, 0);
+				return ParseResult(INCOMPLETE, 408);
 
 			// Extract chunk data
 			body.append(inbox, pos, chunk_size);
@@ -229,7 +229,7 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 	{
 		if (inbox.size() > MAX_HEADER_SIZE)
 			return ParseResult(INVALID, 431);
-		return ParseResult(INCOMPLETE, 0);
+		return ParseResult(INCOMPLETE, 408);
 	}
 	else if (header_end > MAX_HEADER_SIZE)
 		return ParseResult(INVALID, 431);
@@ -262,7 +262,7 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 
 	// 4. Check whether entire body has arrived
 	if (inbox.size() < header_length + content_length)
-		return ParseResult(INCOMPLETE, 0);
+		return ParseResult(INCOMPLETE, 408);
 
 	parsed.body = inbox.substr(header_length, content_length);
 

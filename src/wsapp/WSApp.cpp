@@ -25,7 +25,7 @@ namespace
 
 }
 
-const int WSApp::TIMEOUT_SECOND = 30;
+const int WSApp::TIMEOUT_SECOND = 5;
 
 // OCF ------------------------------------------------------------------------
 
@@ -104,10 +104,12 @@ int WSApp::run()
 					{
 						LOG_DEBUG("HTTP request is incomplete, waiting for more data.");
 						time_t current_time = time(NULL);
-						// TODO: Handle timeout
-						if (current_time - cli.get_last_activity_time() > TIMEOUT_SECOND)
+						if (current_time - cli.get_last_activity_time() >= TIMEOUT_SECOND)
 						{
-							std::cout << "TIMEOUT FOR CLIENT " << cli.fd() << std::endl;
+							LOG_DEBUG("TIMEOUT FOR CLIENT " << cli.fd());
+							cli.send_response(HttpResponse::buildError(res.errorCode, res.request.path, &cli.servDir()));
+							_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
+							cli.addStat(CLOSING);
 						}
 					}
 					else if (res.status == INVALID)
