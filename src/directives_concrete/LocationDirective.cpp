@@ -21,7 +21,11 @@ LocationDirective::LocationDirective(TokenisedBlock::const_iterator& cit) : Bloc
 		throw std::runtime_error("location: malformed location block (first token was not 'location')");
 	if (args.size() != 2)
 		throw std::runtime_error("location: expects exactly one path argument (e.g. 'location /uploads {')");
-
+	if (args[1].empty())
+		throw std::runtime_error("location: path argument must not be empty");
+	if (args[1][args[1].size() - 1] != '/')
+		throw std::runtime_error("location: path argument must end with '/'");
+		
 	requireAtMostOne<RootDirective>("location", "root");
 	requireAtMostOne<AliasDirective>("location", "alias");
 	requireAtMostOne<IndexDirective>("location", "index");
