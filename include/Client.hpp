@@ -5,6 +5,7 @@
 #include "w_eventCtx.hpp"
 #include "HttpRequest.hpp"
 #include "ReqProc.hpp"
+#include "CgiProcess.hpp"
 
 #include <unistd.h>
 #include <string>
@@ -41,6 +42,8 @@ private:
 
 	time_t _last_activity_time;
 
+	CgiProcess _cgi;
+
 public:
 	Client();
 	~Client();
@@ -62,7 +65,7 @@ public:
 	void rmStat(int flag) { _status &= ~flag; }
 
 	ssize_t recv1();
-	ReqProc::status	process_request(ParseResult const &result);
+	ReqProc::status process_request(ParseResult const &result);
 
 	void comsume_inbox(ssize_t req_offset);
 	void send_response(std::string const &resp);
@@ -71,6 +74,8 @@ public:
 	time_t get_last_activity_time();
 	void refresh_last_activity_time();
 
+	int getCgiReadFd() const;
+	int getCgiWriteFd() const;
 };
 
 #endif

@@ -3,47 +3,27 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/10/15 19:28:09 by ypua             ###   ########.fr       */
+/*   Updated: 2026/10/18 17:36:49 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
-#include "Utils.hpp"
-#include "w_logger.hpp"
-#include <sstream>
 
-// All responses to the HEAD request method
-// MUST NOT include a message-body, even though the presence of entity-
-// header fields might lead one to believe they do. All 1xx
-// (informational), 204 (no content), and 304 (not modified) responses
-// MUST NOT include a message-body. All other responses do include a
-// message-body, although it MAY be of zero length.
+std::string ParsedRequest::getHeader(const std::string &key) const
+{
+	std::map<std::string, std::string>::const_iterator it = headers.find(key);
+	if (it != headers.end())
+		return it->second;
+	return "";
+}
 
-// An origin server SHOULD return the status code 405 (Method Not Allowed)
-// if the method is known by the origin server but not allowed for the
-// requested resource, and 501 (Not Implemented) if the method is
-// unrecognized or not implemented by the origin server.
+namespace
+{
 
-// 1. If Request-URI is an absoluteURI, the host is part of the
-//    Request-URI. Any Host header field value in the request MUST be
-//    ignored.
-
-// 2. If the Request-URI is not an absoluteURI, and the request includes
-//    a Host header field, the host is determined by the Host header
-//    field value.
-
-// 3. If the host as determined by rule 1 or 2 is not a valid host on
-//    the server, the response MUST be a 400 (Bad Request) error message.
-
-// Returns 0 when the request is valid, otherwise the HTTP status code that
-// should be sent back to the client.
-
-namespace {
-
-	int		validateReqst(ParsedRequest const &req)
+	int validateReqst(ParsedRequest const &req)
 	{
 		if (req.method.empty() || req.path.empty() || req.http_version.empty())
 			return 400;
@@ -98,7 +78,7 @@ namespace {
 		// put the raw path into raw_path
 		// path stores the processed path after normalisation
 		result.raw_path = result.path;
-		size_t	queryPos = result.raw_path.find('?');
+		size_t queryPos = result.raw_path.find('?');
 		if (queryPos != std::string::npos)
 		{
 			result.query = result.raw_path.substr(queryPos + 1);
@@ -127,8 +107,16 @@ namespace {
 			// Reject duplicate headers for simplification
 			if (result.header_keys.count(key))
 				return result;
-			result.header_keys.insert(key);
-			result.headers[key] = value;
+
+			if (key == "host")
+			{
+				result.host = value;
+			}
+			else
+			{
+				result.header_keys.insert(key);
+				result.headers[key] = value;
+			}
 
 			if (key == "content-length")
 			{
@@ -140,7 +128,7 @@ namespace {
 			}
 		}
 
-		if (result.http_version == "HTTP/1.1" && !result.header_keys.count("host"))
+		if (result.http_version == "HTTP/1.1" && result.host.empty())
 			return result;
 
 		result.valid = true;
@@ -173,7 +161,7 @@ namespace {
 			if (end == size_str.c_str() || *end != '\0')
 				return ParseResult(INVALID);
 
-			size_t	tmp_clientMaxBodySize = 52428800;
+			size_t tmp_clientMaxBodySize = 52428800;
 			if (chunk_size > tmp_clientMaxBodySize - body.size())
 				return ParseResult(INVALID, 413);
 
@@ -194,7 +182,7 @@ namespace {
 
 				parsed.body = body;
 
-				int	errCode;
+				int errCode;
 				if ((errCode = validateReqst(parsed)) != 0)
 					return ParseResult(INVALID, errCode);
 				return ParseResult(COMPLETE, 0, pos, parsed);
@@ -222,7 +210,7 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 {
 	static const size_t MAX_HEADER_SIZE = 8192;
 	LOG_DEBUG("Parsing HTTP request of size: " << inbox.size() << " bytes");
-	
+
 	// 1. Look for end of headers
 	size_t header_end = inbox.find(HEADER_END);
 	if (header_end == std::string::npos)
@@ -269,12 +257,12 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 	// 5. Entire request exists
 	size_t request_size = header_length + content_length;
 
-	//final check if complete request is syntactically valid
-	int	errCode;
+	// final check if complete request is syntactically valid
+	int errCode;
 	if ((errCode = validateReqst(parsed)) != 0)
 		return ParseResult(INVALID, errCode);
 
 	LOG_DEBUG("Parsed HTTP request successfully: " + parsed.method + " " + parsed.path + " " + parsed.http_version);
-	//request is syntactically valid and complete to handover to ReqProc
+	// request is syntactically valid and complete to handover to ReqProc
 	return ParseResult(COMPLETE, 0, request_size, parsed);
 }

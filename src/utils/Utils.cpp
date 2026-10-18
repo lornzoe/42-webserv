@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.cpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 20:18:55 by ypua              #+#    #+#             */
-/*   Updated: 2026/09/13 03:26:55 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/10/18 16:48:03 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,7 @@
 #include <fstream>
 #include <sys/stat.h>
 
-static void		LeftTrim(std::string &s)
+static void LeftTrim(std::string &s)
 {
 	size_t found = s.find_first_not_of(OWS);
 	if (found != std::string::npos)
@@ -25,7 +25,7 @@ static void		LeftTrim(std::string &s)
 		s.clear();
 }
 
-static void		RightTrim(std::string &s)
+static void RightTrim(std::string &s)
 {
 	size_t found = s.find_last_not_of(OWS);
 	if (found != std::string::npos)
@@ -49,13 +49,6 @@ void Utils::safeClose(int &fd)
 	fd = -1;
 }
 
-std::string Utils::ft_itoa(int num)
-{
-	std::stringstream ss;
-	ss << num;
-	return (ss.str());
-}
-
 std::string Utils::toLowercase(std::string str)
 {
 	for (size_t j = 0; j < str.length(); j++)
@@ -63,36 +56,37 @@ std::string Utils::toLowercase(std::string str)
 	return str;
 }
 
-bool	Utils::canFind(char c, std::string const &str) {
+bool Utils::canFind(char c, std::string const &str)
+{
 	return str.find(c) != std::string::npos;
 }
 
-bool		Utils::split_pair(std::string const &str, char sep, kvpair &kvp)
+bool Utils::split_pair(std::string const &str, char sep, kvpair &kvp)
 {
-	size_t	sep_idx = 0;
-	
+	size_t sep_idx = 0;
+
 	if ((sep_idx = str.find(sep)) == std::string::npos)
 		return false;
-	
+
 	kvp.first = str.substr(0, sep_idx);
 	kvp.second = str.substr(sep_idx + 1);
 	return true;
 }
 
-std::vector<std::string>	Utils::ft_split(
+std::vector<std::string> Utils::ft_split(
 	std::string const &str, std::string const &delim, bool ignoreEmpty)
 {
-	size_t	cursr = 0;
-	size_t	index = 0;
-	size_t	dSize = delim.size();
-	std::vector<std::string>	str_vect;
+	size_t cursr = 0;
+	size_t index = 0;
+	size_t dSize = delim.size();
+	std::vector<std::string> str_vect;
 
 	if (dSize == 0)
 		return str_vect.push_back(str), str_vect;
 
 	while ((index = str.find(delim, cursr)) != std::string::npos)
 	{
-		size_t	len = index - cursr;
+		size_t len = index - cursr;
 		if (len != 0 || !ignoreEmpty)
 			str_vect.push_back(str.substr(cursr, len));
 		cursr = index + dSize;
@@ -104,7 +98,7 @@ std::vector<std::string>	Utils::ft_split(
 	return str_vect;
 }
 
-bool	Utils::readFile(const std::string &path, std::string &body)
+bool Utils::readFile(const std::string &path, std::string &body)
 {
 	FileDescriptor file(path);
 	if (file.get() == -1)
@@ -127,10 +121,10 @@ bool	Utils::readFile(const std::string &path, std::string &body)
 	return true;
 }
 
-bool	Utils::saveFile(std::string const &dirPath, std::string const &fname, std::string const &content)
+bool Utils::saveFile(std::string const &dirPath, std::string const &fname, std::string const &content)
 {
-	std::string		filename;
-	std::string		fullPath;
+	std::string filename;
+	std::string fullPath;
 
 	if (fname.find("/") != std::string::npos || fname == "." || fname == "..")
 		return false;
@@ -139,10 +133,10 @@ bool	Utils::saveFile(std::string const &dirPath, std::string const &fname, std::
 	else
 		filename = fname;
 
-	struct stat		stmp;
-	int				serial = 1;
-	bool			dot = false, dot_check = false;
-	size_t			dot_pos;
+	struct stat stmp;
+	int serial = 1;
+	bool dot = false, dot_check = false;
+	size_t dot_pos;
 	fullPath = dirPath + '/' + filename;
 	while (!stat(fullPath.c_str(), &stmp))
 	{
@@ -156,8 +150,8 @@ bool	Utils::saveFile(std::string const &dirPath, std::string const &fname, std::
 			}
 		}
 
-		std::string		tmp_fname = filename;
-		std::string		suffix = "(" + Utils::ft_itoa(serial++) + ")";
+		std::string tmp_fname = filename;
+		std::string suffix = "(" + Utils::to_string(serial++) + ")";
 		if (dot && dot_pos != 0)
 			tmp_fname.insert(dot_pos, suffix);
 		else
@@ -165,13 +159,14 @@ bool	Utils::saveFile(std::string const &dirPath, std::string const &fname, std::
 		fullPath = dirPath + '/' + tmp_fname;
 	}
 
-	std::ofstream	ofs(fullPath.c_str(), std::ios::trunc | std::ios::binary);
+	std::ofstream ofs(fullPath.c_str(), std::ios::trunc | std::ios::binary);
 	ofs.write(content.data(), content.size());
 	return (!ofs.fail());
 }
 
-namespace {
-	int	hexVal(char c)
+namespace
+{
+	int hexVal(char c)
 	{
 		if (c >= '0' && c <= '9')
 			return c - '0';
@@ -183,7 +178,7 @@ namespace {
 	}
 
 	// decdes %-encoded chars in str (e.g. %20 -> ' ')
-	bool	percentDecode(std::string const &in, std::string &out)
+	bool percentDecode(std::string const &in, std::string &out)
 	{
 		out.clear();
 		out.reserve(in.size());
@@ -199,12 +194,12 @@ namespace {
 			if (i + 2 >= in.size())
 				return false;
 
-			int	hi = hexVal(in[i + 1]);
-			int	lo = hexVal(in[i + 2]);
+			int hi = hexVal(in[i + 1]);
+			int lo = hexVal(in[i + 2]);
 			if (hi < 0 || lo < 0)
 				return false;
 
-			char	c = static_cast<char>(hi * 16 + lo);
+			char c = static_cast<char>(hi * 16 + lo);
 			if (c == '\0')
 				return false;
 
@@ -217,15 +212,15 @@ namespace {
 
 // guarantee output is a valid path
 // returns false if the input is malformed or escapes document root
-bool	Utils::normaliseUri(const std::string &uri, std::string &out)
+bool Utils::normaliseUri(const std::string &uri, std::string &out)
 {
 	out.clear();
 	if (uri.empty() || uri[0] != '/') // absolute path check
 		return false;
 
 	// convert uri to decoded cform
-	std::string	decoded;
-	if (!percentDecode(uri, decoded)) 
+	std::string decoded;
+	if (!percentDecode(uri, decoded))
 		return false;
 
 	// check if decoded is still valid
@@ -233,16 +228,15 @@ bool	Utils::normaliseUri(const std::string &uri, std::string &out)
 		return false;
 	for (size_t i = 0; i < decoded.size(); i++)
 	{
-		unsigned char	c = static_cast<unsigned char>(decoded[i]);
+		unsigned char c = static_cast<unsigned char>(decoded[i]);
 		if (c < 0x20 || c == 0x7F) // control chars check
 			return false;
 	}
 
 	// split uri into segments and resolve . and .. segments
-	std::vector<std::string> segments = Utils::ft_split(decoded, "/"); 
-	bool	trailingSlash = (decoded[decoded.size() - 1] == '/');
-	if (!segments.empty()
-		&& (segments[segments.size() - 1] == "." || segments[segments.size() - 1] == ".."))
+	std::vector<std::string> segments = Utils::ft_split(decoded, "/");
+	bool trailingSlash = (decoded[decoded.size() - 1] == '/');
+	if (!segments.empty() && (segments[segments.size() - 1] == "." || segments[segments.size() - 1] == ".."))
 		trailingSlash = true;
 
 	// using vector instead of stack to help with debugging

@@ -57,6 +57,27 @@ Pipe &Pipe::operator=(const Pipe &other)
 	return *this;
 }
 
+bool Pipe::setNonBlockingRead()
+{
+	if (_read_end.get() == -1)
+		return false;
+	int flags = fcntl(_read_end.get(), F_GETFL, 0);
+	return flags != -1 && fcntl(_read_end.get(), F_SETFL, flags | O_NONBLOCK) != -1;
+}
+
+bool Pipe::setNonBlockingWrite()
+{
+	if (_write_end.get() == -1)
+		return false;
+	int flags = fcntl(_write_end.get(), F_GETFL, 0);
+	return flags != -1 && fcntl(_write_end.get(), F_SETFL, flags | O_NONBLOCK) != -1;
+}
+
+bool Pipe::setNonBlockingAll()
+{
+	return setNonBlockingRead() && setNonBlockingWrite();
+}
+
 const char *Pipe::PipeException::what() const throw()
 {
 	return "Pipe::PipeException.";

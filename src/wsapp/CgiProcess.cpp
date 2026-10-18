@@ -1,7 +1,13 @@
 #include "CgiProcess.hpp"
 
 CgiProcess::CgiProcess()
+	: _child_pid(-1)
 {
+}
+
+void CgiProcess::init(ParseResult const &pars_res)
+{
+	_pars_res = pars_res;
 }
 
 void CgiProcess::start()
@@ -17,16 +23,13 @@ void CgiProcess::start()
 		throw ForkException();
 	}
 
-	// Child process
+	// Child process (Standard Blocking I/O)
 	if (pid == 0)
 	{
-		if (true)
-			_exit(1);
-
 		if (dup2(_parent_to_child.getReadFd(), STDIN_FILENO) == -1 ||
 			dup2(_child_to_parent.getWriteFd(), STDOUT_FILENO) == -1)
 		{
-			_exit(1);
+			throw ChildProcessException();
 		}
 
 		_parent_to_child.closeAll();
@@ -34,84 +37,114 @@ void CgiProcess::start()
 
 		// TODO: resolve the CGI script path using server's configuration
 		// and the incoming request
-		char *argv[3];
-		argv[0] = const_cast<char *>("/usr/bin/python3");
-		argv[1] = const_cast<char *>("scripts/cgi.py");
-		argv[2] = NULL;
+		const char *argv[] = {"/usr/bin/python3", "scripts/cgi.py", NULL};
 
-		// TODO:
-		char *envp[3];
-		envp[0] = const_cast<char *>("MY_VAR1=env1");
-		envp[1] = const_cast<char *>("MY_VAR2=env2");
-		envp[2] = NULL;
+		std::vector<const char *> envp = buildEnvp();
+		execve(argv[0], const_cast<char *const *>(argv), const_cast<char *const *>(envp.data()));
 
-		execve(argv[0], argv, envp);
-
-		_exit(1);
+		throw ChildProcessException();
 	}
-	// Parent process.
+	// Parent process (Non-blocking I/O for epoll)
 	else
 	{
 		_parent_to_child.closeRead();
 		_child_to_parent.closeWrite();
+
+		// 1. Set ONLY the parent's read end to non-blocking for epoll
+		_child_to_parent.setNonBlockingRead();
+
+		// 2. If parent has a request body to send to CGI stdin, set non-blocking write:
+		// _parent_to_child.setNonBlockingWrite();
+
+		// 3. Store child pid for non-blocking waitpid(pid, status, WNOHANG)
+		_child_pid = pid;
+	}
+}
+
+std::vector<const char *> CgiProcess::buildEnvp()
+{
+	populateCgiVars();
+
+	std::vector<const char *> envp;
+	for (size_t i = 0; i < _cgi_vars.size(); ++i)
+	{
+		envp.push_back(_cgi_vars[i].c_str());
+	}
+	envp.push_back(NULL);
+
+	return envp;
+}
+
+void CgiProcess::populateCgiVars()
+{
+	std::string host = _pars_res.request.host;
+	std::string server_name = host;
+	// TODO: This
+	std::string server_port = "80";
+
+	size_t colon_pos = host.find(':');
+	if (colon_pos != std::string::npos)
+	{
+		server_name = host.substr(0, colon_pos);
+		server_port = host.substr(colon_pos + 1);
 	}
 
-	// // Parent process
-	// else
-	// {
-	// 	parent_to_child.closeRead();
-	// 	child_to_parent.closeWrite();
+	// Mandatory
+	_cgi_vars.push_back("GATEWAY_INTERFACE=CGI/1.1");
+	// _cgi_vars.push_back("REMOTE_ADDR=" + client->get_remote_addr());
+	// _cgi_vars.push_back("REMOTE_PORT=" + client->get_remote_port());
+	_cgi_vars.push_back("REQUEST_METHOD=" + _pars_res.request.method);
+	_cgi_vars.push_back("SCRIPT_NAME=" + _pars_res.request.path);
+	_cgi_vars.push_back("REDIRECT_STATUS=200");
+	_cgi_vars.push_back("SCRIPT_FILENAME=" + _pars_res.request.raw_path);
+	_cgi_vars.push_back("SERVER_NAME=" + server_name);
+	_cgi_vars.push_back("SERVER_PORT=" + server_port);
+	_cgi_vars.push_back("SERVER_PROTOCOL=HTTP/1.0");
+	_cgi_vars.push_back("SERVER_SOFTWARE=webserv");
 
-	// 	// TODO: Write to parent_to_child_pipes[1]
-	// 	parent_to_child.closeWrite();
+	// optional
+	_cgi_vars.push_back("CONTENT_LENGTH=" + Utils::to_string(_pars_res.request.content_length));
+	std::string content_type = _pars_res.request.getHeader("Content-Type");
+	if (!content_type.empty())
+	{
+		_cgi_vars.push_back("CONTENT_TYPE=" + content_type);
+	}
+	std::string query_string = _pars_res.request.query;
+	if (!query_string.empty())
+	{
+		_cgi_vars.push_back("QUERY_STRING=" + query_string);
+	}
 
-	// 	// Read the CGI script's output.
-	// 	std::string cgi_output;
-	// 	char buffer[1024];
-	// 	ssize_t bytes_read;
+	for (std::map<std::string, std::string>::const_iterator it = _pars_res.request.headers.begin(); it != _pars_res.request.headers.end(); it++)
+	{
+		std::string cgi_var_key = "HTTP_" + it->first;
 
-	// 	while ((bytes_read = read(
-	// 				child_to_parent.getReadFd(),
-	// 				buffer,
-	// 				sizeof(buffer))) > 0)
-	// 	{
-	// 		cgi_output.append(buffer, bytes_read);
-	// 	}
+		for (size_t idx = 0; idx < cgi_var_key.length(); idx++)
+		{
+			if (cgi_var_key[idx] == '-')
+				cgi_var_key[idx] = '_';
+			cgi_var_key[idx] = std::toupper(cgi_var_key[idx]);
+		}
+		_cgi_vars.push_back(cgi_var_key + "=" + it->second);
+	}
+}
 
-	// 	if (bytes_read < 0)
-	// 	{
-	// 		std::cerr << "Error reading CGI output" << std::endl;
-	// 	}
+int CgiProcess::getCgiReadFd() const
+{
+	return _child_to_parent.getReadFd();
+}
 
-	// 	child_to_parent.closeRead();
-
-	// 	LOG_DEBUG(cgi_output);
-
-	// 	std::string::size_type header_end = cgi_output.find("\r\n\r\n");
-
-	// 	if (header_end == std::string::npos)
-	// 	{
-	// 		// Invalid or incomplete CGI response.
-	// 	}
-	// 	std::string cgi_headers = cgi_output.substr(0, header_end);
-	// 	std::string cgi_body = cgi_output.substr(header_end + 4);
-
-	// 	LOG_DEBUG(cgi_headers);
-	// 	LOG_DEBUG(cgi_body);
-
-	// 	// TODO: this needs to be changed as it is blocking
-	// 	int status;
-	// 	waitpid(pid, &status, 0);
-
-	// 	if (WIFEXITED(status))
-	// 	{
-	// 		std::cout << "CGI exit code: "
-	// 				  << WEXITSTATUS(status) << std::endl;
-	// 	}
-	// }
+int CgiProcess::getCgiWriteFd() const
+{
+	return _parent_to_child.getWriteFd();
 }
 
 const char *CgiProcess::ForkException::what() const throw()
 {
 	return "CgiProcess::ForkException.";
+}
+
+const char *CgiProcess::ChildProcessException::what() const throw()
+{
+	return "CgiProcess::ChildProcessException.";
 }

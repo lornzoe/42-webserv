@@ -3,7 +3,6 @@
 #include "Utils.hpp"
 #include "w_eventCtx.hpp"
 #include "w_logger.hpp"
-#include "CgiProcess.hpp"
 
 #include <iostream>
 #include <sys/socket.h>
@@ -113,8 +112,8 @@ ReqProc::status Client::process_request(ParseResult const &pars_res)
 	}
 	else
 	{
-		CgiProcess cgi_process;
-		cgi_process.start();
+		_cgi.init(pars_res);
+		_cgi.start();
 	}
 	return resp_res.stat;
 }
@@ -162,4 +161,14 @@ time_t Client::get_last_activity_time()
 void Client::refresh_last_activity_time()
 {
 	_last_activity_time = time(NULL);
+}
+
+int Client::getCgiReadFd() const
+{
+	return _cgi.getCgiReadFd();
+}
+
+int Client::getCgiWriteFd() const
+{
+	return _cgi.getCgiWriteFd();
 }

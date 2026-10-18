@@ -130,8 +130,9 @@ int WSApp::run()
 						}
 						else
 						{
-							// _pol.add cgi_write on EPOLLOUT
-							// _pol.add cgi_read on EPOLLIN
+							// TODO: Check the third argument
+							_pol.add(cli.getCgiReadFd(), EPOLLIN, &cli.ectx());
+							_pol.add(cli.getCgiWriteFd(), EPOLLOUT, &cli.ectx());
 							_pol.del(cli.fd());
 						}
 					}
