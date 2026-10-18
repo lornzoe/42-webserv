@@ -12,6 +12,7 @@
 Client::Client()
 	: _server(NULL),
 	  _fd(-1),
+	  _rinfo(remote_info()),
 	  _eCtx(eventCtx()),
 	  _status(0),
 	  _outPend(0),
@@ -23,6 +24,7 @@ Client::Client()
 Client::Client(Client const &other)
 	: _server(NULL),
 	  _fd(-1),
+	  _rinfo(remote_info()),
 	  _eCtx(eventCtx()),
 	  _status(0),
 	  _outPend(0),
@@ -38,6 +40,7 @@ Client &Client::operator=(Client const &other)
 		return *this;
 	_server = NULL;
 	_fd = -1;
+	_rinfo = remote_info();
 	_eCtx = eventCtx();
 	_status = 0;
 	_outPend = 0;
@@ -55,7 +58,7 @@ Client::~Client()
 
 // ----------------------------------------------------------------------------
 
-void Client::initClient(Server &server, int fd)
+void Client::initClient(Server &server, int fd, const remote_info &rinfo)
 {
 	if (_fd != -1)
 	{
@@ -64,6 +67,7 @@ void Client::initClient(Server &server, int fd)
 	}
 	_server = &server;
 	_fd = fd;
+	_rinfo = rinfo;
 
 	_eCtx.fd = _fd;
 	_eCtx.type = SCK_CLIENT;

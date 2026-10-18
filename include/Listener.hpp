@@ -2,6 +2,7 @@
 # define LISTENER_H
 
 #include "w_eventCtx.hpp"
+#include "Client.hpp"
 
 #include <string>
 
@@ -27,7 +28,7 @@ public:
 	int				fd() 		{ return _fd; }
 	eventCtx &		ectx() 		{ return _eCtx; }
 
-	int				welcome() const;
+	int				welcome(remote_info &rinfo);
 };
 
 #endif

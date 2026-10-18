@@ -182,12 +182,13 @@ int WSApp::hndl_Lis(eventCtx *ctx)
 {
 	Listener &lis = *(static_cast<Listener *>(ctx->owner));
 	Server &ser = lis.server();
-
-	int client_fd = lis.welcome();
+	
+	remote_info	rinfo;
+	int client_fd = lis.welcome(rinfo);
 	if (client_fd == -1)
 		return -1;
 
-	Client *cli = ser.addClient(client_fd);
+	Client *cli = ser.addClient(client_fd, rinfo);
 	if (!cli)
 		return -1;
 

@@ -18,11 +18,18 @@ enum cli_status
 	CLOSING = 1 << 1
 };
 
+struct remote_info
+{
+	std::string		addr;
+	int				port;
+};
+
 class Client
 {
 private:
 	Server *_server;
 	int _fd;
+	remote_info	_rinfo;
 	eventCtx _eCtx;
 
 	int _status;
@@ -41,10 +48,11 @@ public:
 	Client(Client const &other);
 	Client &operator=(Client const &other);
 
-	void initClient(Server &server, int fd);
+	void initClient(Server &server, int fd, const remote_info &rinfo);
 
 	ServerDirective const &servDir() const;
 	Server &server() { return *_server; }
+	remote_info const &remote() const { return _rinfo; }
 	int fd() { return _fd; }
 	eventCtx &ectx() { return _eCtx; }
 

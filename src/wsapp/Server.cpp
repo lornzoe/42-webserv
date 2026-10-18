@@ -19,7 +19,7 @@ Server::~Server() {}
 
 // ----------------------------------------------------------------------------
 
-Client *		Server::addClient(int fd)
+Client *		Server::addClient(int fd, const remote_info &rinfo)
 {
 	std::pair<client_map_t::iterator, bool>	kv;
 
@@ -30,7 +30,7 @@ Client *		Server::addClient(int fd)
 		close(fd);
 		return NULL;
 	}
-	kv.first->second.initClient(*this, fd);
+	kv.first->second.initClient(*this, fd, rinfo);
 	LOG_INFO("Added Client fd " << fd << " to Server " << _name);
 	return &kv.first->second;
 }

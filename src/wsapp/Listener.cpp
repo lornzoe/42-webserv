@@ -80,11 +80,24 @@ int		Listener::reuseAddr(int fd) {
 
 // ----------------------------------------------------------------------------
 
-int				Listener::welcome() const
+static std::string	IPv4_addrStr(unsigned int addr)
+{
+	std::stringstream ss;
+	ss	<< ((addr >> 24) & 0xFF) << "."
+		<< ((addr >> 16) & 0xFF) << "."
+		<< ((addr >> 8) & 0xFF) << "."
+		<< ((addr >> 0) & 0xFF);
+	return ss.str();
+}
+
+int				Listener::welcome(remote_info &rinfo)
 {
 	int client_fd = -1;
 
-	client_fd = accept(_fd, NULL, NULL);
+	struct sockaddr_in			sin;
+	socklen_t					sin_len = sizeof(sin);
+
+	client_fd = accept(_fd, reinterpret_cast<sockaddr *>(&sin), &sin_len);
 	if (client_fd == -1)
 	{
 		if (errno != EAGAIN)
@@ -98,6 +111,9 @@ int				Listener::welcome() const
 		Utils::safeClose(client_fd);
 		return -1;
 	}
+
+	rinfo.addr = IPv4_addrStr(ntohl(sin.sin_addr.s_addr));
+	rinfo.port = ntohs(sin.sin_port);
 
 	return client_fd;
 }
