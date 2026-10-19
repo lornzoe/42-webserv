@@ -1,13 +1,15 @@
 #include "CgiProcess.hpp"
 
 CgiProcess::CgiProcess()
-	: _child_pid(-1)
+	: _server_port(-1), _child_pid(-1), _rinfo()
 {
 }
 
-void CgiProcess::init(ParseResult const &pars_res)
+void CgiProcess::init(ParseResult const &pars_res, int server_port, const remote_info &rinfo)
 {
 	_pars_res = pars_res;
+	_server_port = server_port;
+	_rinfo = rinfo;
 }
 
 void CgiProcess::start()
@@ -79,8 +81,7 @@ void CgiProcess::populateCgiVars()
 {
 	std::string host = _pars_res.request.host;
 	std::string server_name = host;
-	// TODO: This
-	std::string server_port = "80";
+	std::string server_port = Utils::to_string(_server_port);
 
 	size_t colon_pos = host.find(':');
 	if (colon_pos != std::string::npos)
@@ -91,8 +92,8 @@ void CgiProcess::populateCgiVars()
 
 	// Mandatory
 	_cgi_vars.push_back("GATEWAY_INTERFACE=CGI/1.1");
-	// _cgi_vars.push_back("REMOTE_ADDR=" + client->get_remote_addr());
-	// _cgi_vars.push_back("REMOTE_PORT=" + client->get_remote_port());
+	_cgi_vars.push_back("REMOTE_ADDR=" + _rinfo.addr);
+	_cgi_vars.push_back("REMOTE_PORT=" + Utils::to_string(_rinfo.port));
 	_cgi_vars.push_back("REQUEST_METHOD=" + _pars_res.request.method);
 	_cgi_vars.push_back("SCRIPT_NAME=" + _pars_res.request.path);
 	_cgi_vars.push_back("REDIRECT_STATUS=200");

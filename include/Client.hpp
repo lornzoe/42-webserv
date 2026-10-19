@@ -19,18 +19,12 @@ enum cli_status
 	CLOSING = 1 << 1
 };
 
-struct remote_info
-{
-	std::string		addr;
-	int				port;
-};
-
 class Client
 {
 private:
 	Server *_server;
 	int _fd;
-	remote_info	_rinfo;
+	remote_info _rinfo;
 	eventCtx _eCtx;
 
 	int _status;

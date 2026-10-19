@@ -112,7 +112,7 @@ ReqProc::status Client::process_request(ParseResult const &pars_res)
 	}
 	else
 	{
-		_cgi.init(pars_res);
+		_cgi.init(pars_res, _server->port(), remote());
 		_cgi.start();
 	}
 	return resp_res.stat;
