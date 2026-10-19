@@ -100,7 +100,7 @@ void CgiProcess::populateCgiVars()
 	_cgi_vars.push_back("SCRIPT_FILENAME=" + _pars_res.request.raw_path);
 	_cgi_vars.push_back("SERVER_NAME=" + server_name);
 	_cgi_vars.push_back("SERVER_PORT=" + server_port);
-	_cgi_vars.push_back("SERVER_PROTOCOL=HTTP/1.0");
+	_cgi_vars.push_back("SERVER_PROTOCOL=HTTP/1.1");
 	_cgi_vars.push_back("SERVER_SOFTWARE=webserv");
 
 	// optional
