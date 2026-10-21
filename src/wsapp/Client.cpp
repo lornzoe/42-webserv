@@ -110,7 +110,7 @@ ReqProc::status Client::process_request(ParseResult const &pars_res)
 			resp_res.resp.insert(resp_res.resp.find(HEADER_END), "\r\nConnection: close");
 		send_response(resp_res.resp);
 	}
-	else
+	if (resp_res.stat == ReqProc::CGI_REQ)
 	{
 		_cgi.init(pars_res, _server->port(), remote());
 		_cgi.start();

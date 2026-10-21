@@ -92,6 +92,10 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 		// and locDir has CGI enabled
 			// note execution context info: script path and interpreter etc.
 			// defer resp to CGI: result.stat = CGI_REQ
+	// if (true)
+	// {
+	// 	result.stat = CGI_REQ;
+	// }
 
 	if (req.method == "GET")
 	{

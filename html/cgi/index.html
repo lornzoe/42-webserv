@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8">
+        <title>CGI Manager</title>
+	</head>
+	<body>
+        <div>
+            <!-- PHP Form -->
+            <form id="php">
+              <header><h1>PHP</h1></header>
+              <label><strong>Input:</strong> <input required type="text" /></label>
+              <input type="submit" value="Add" />
+              <h4>List:</h4>
+              <ul></ul>
+            </form>
+
+            <!-- Python Form -->
+            <form id="py">
+                <header><h1>Python</h1></header>
+                <label><strong>Input:</strong> <input required type="text" /></label>
+                <input type="submit" value="Add" />
+                <h4>List:</h4>
+                <ul></ul>
+            </form>
+        </div>
+    <div>
+
+    <script>
+        ["py", "php"].forEach((cgi) => {
+            const ENDPOINT = `${cgi}/cgi.${cgi}`;
+
+            /** @type {HTMLFormElement} */
+            const $form = document.querySelector(`#${cgi}`);
+
+            /** @type {HTMLInputElement} */
+            const $input =$form.querySelector("input[type='text']");
+            
+            /** @type {HTMLUListElement} */
+            const $ul = $form.querySelector("ul");
+
+            /** @type {string[]} */
+            let names = [];
+
+            const handleRefresh = async () => {
+                try {
+                    const response = await fetch(ENDPOINT);
+                    names = await response.json();
+                } catch {
+                    names = [];
+                    alert(`Failed to fetch for ${cgi}`);
+                }
+
+                $ul.innerHTML = "";
+                
+                if (names.length === 0) {
+                    const $li = document.createElement("li");
+                    $li.style.fontWeight = "bold";
+                    $li.textContent = "NIL";
+                    $ul.appendChild($li);
+                    return ;
+                }
+
+                names.forEach((name) => {
+                    const $li = document.createElement("li");
+                    const $del = document.createElement("button");
+                    const $text = document.createElement("span");
+                    
+                    $text.textContent = name;
+                    $del.textContent = "x";
+                    $del.style.marginLeft = "0.5rem";
+
+                    $li.appendChild($text);
+                    $li.appendChild($del);
+                    $ul.appendChild($li);
+
+                    $del.addEventListener("click", (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleDelete(name);
+                    });
+                });
+                
+            };
+
+            const handleDelete = async (name) => {
+                try {
+                    await fetch(`${ENDPOINT}?name=${encodeURIComponent(name)}`, {
+                        method: "DELETE",
+                    });
+                    handleRefresh();
+                } catch {
+                    alert(`Failed to delete for ${cgi}`);
+                }
+            };
+
+            const handleCreate = async (name) => {
+                if (names.includes(name)) {
+                    alert(`Cannot add duplicate`);
+                    return;
+                }
+                try {
+                    await fetch(ENDPOINT, {
+                        method: "POST",
+                        body: name,
+                    });
+                    handleRefresh();
+                } catch {
+                    alert(`Failed to add for ${cgi}`);
+                }
+            };
+
+            $form.addEventListener("submit", (e) => {
+                e.preventDefault();
+                handleCreate($input.value);
+            });
+
+            handleRefresh();
+        });
+    </script>
+    </div>
+	</body>
+</html>
