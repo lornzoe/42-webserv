@@ -6,11 +6,12 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 00:00:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/02 07:16:59 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/10/22 14:49:26 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "AliasDirective.hpp"
+#include "w_logger.hpp"
 #include <stdexcept>
 #include <iostream>
 
@@ -18,7 +19,8 @@ AliasDirective::AliasDirective(TokenisedBlock::const_iterator& cit) : SimpleDire
 {
 	if (args.size() != 2)
 		throw std::runtime_error("alias: expects exactly one argument (e.g. 'alias /var/www/html;')");
-
+	if (args[1][args[1].size() - 1] != '/')
+		throw std::runtime_error("alias: must end with '/'");
 	path = args[1];
 }
 
