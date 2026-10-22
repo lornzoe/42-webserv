@@ -40,6 +40,25 @@ namespace {
 		}
 		return false;
 	}
+
+	// check if uri has a respective locationdir with a '/' appended to the back
+	// e.g. /uploads -> /uploads/
+	bool needsLocationSlashRedirect(const std::string& uri, const ServerDirective& servDir)
+	{
+		std::string slashed;
+
+		if (uri.empty() || uri[uri.size() - 1] == '/')
+			return false;
+		else 
+			slashed = uri + '/';
+		std::vector<const LocationDirective*> locs = servDir.getLocations();
+		for (std::size_t i = 0; i < locs.size(); i++)
+		{
+			if (locs[i]->getPath() == slashed)
+				return true;
+		}
+		return false;
+	}
 }
 
 ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective const &servDir)
@@ -84,6 +103,17 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 		}
 	}
 
+	// if the uri doesnt have a slash but has a locdir with a slash, redirect (302) to it
+	// for the sake of this project, deliberately avoid 301 to dodge browser complications
+	if (needsLocationSlashRedirect(req.path, servDir))
+	{
+		LOG_DEBUG("uri path of " << req.path << " has a slashed location, should send redirect");
+		std::string target = req.raw_path + '/';
+		// may need to expand to cover other types of redirects
+		result.resp = HttpResponse::build(302, "", "", "Location: " + target);
+		return result;
+	}
+
 	if (!ServerDirective::resolveFsPath(servDir, req.path, locDir, fsPath))
 		return result.resp = HttpResponse::buildError(403, req.path, &servDir), result;
 
@@ -111,7 +141,7 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 
 			// see if this is needed, remove comment if unnecessary:
 			// 		if uri does not end with /, force 302 (301, but no lol) to <path> with / appeneded to end 
-			
+
 			// stat might cause a problem with alias directives
 			// remove this comment if it doesnt and is ok as-is
 			if (stat(fsPath.c_str(), &st) == 0 && S_ISDIR(st.st_mode))
