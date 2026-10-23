@@ -68,8 +68,7 @@ public:
 	time_t get_last_activity_time();
 	void refresh_last_activity_time();
 
-	int getCgiReadFd() const;
-	int getCgiWriteFd() const;
+	CgiProcess &get_cgi_process();
 };
 
 #endif

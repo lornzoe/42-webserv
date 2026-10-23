@@ -163,12 +163,7 @@ void Client::refresh_last_activity_time()
 	_last_activity_time = time(NULL);
 }
 
-int Client::getCgiReadFd() const
+CgiProcess &Client::get_cgi_process()
 {
-	return _cgi.getCgiReadFd();
-}
-
-int Client::getCgiWriteFd() const
-{
-	return _cgi.getCgiWriteFd();
+	return _cgi;
 }

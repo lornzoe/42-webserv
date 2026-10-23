@@ -74,6 +74,12 @@ int WSApp::run()
 			case SCK_CLIENT:
 				hndl_Cli(ctx, _epRes.epEv[i].events);
 				break;
+			case CGI_IN:
+				handle_cgi_in(ctx);
+				break;
+			case CGI_OUT:
+				handle_cgi_out(ctx);
+				break;
 			default:
 				break;
 			}
@@ -130,9 +136,15 @@ int WSApp::run()
 						}
 						else
 						{
-							// TODO: Check the third argument
-							_pol.add(cli.getCgiReadFd(), EPOLLIN, &cli.ectx());
-							_pol.add(cli.getCgiWriteFd(), EPOLLOUT, &cli.ectx());
+							_pol.add(cli.get_cgi_process().getCgiReadFd(), EPOLLIN, &cli.get_cgi_process().get_in_ectx());
+							if (res.request.method == "POST" && !res.request.content_length)
+							{
+								_pol.add(cli.get_cgi_process().getCgiWriteFd(), EPOLLOUT, &cli.get_cgi_process().get_out_ectx());
+							}
+							else
+							{
+								close(cli.get_cgi_process().getCgiWriteFd());
+							}
 							_pol.del(cli.fd());
 						}
 					}
@@ -185,8 +197,8 @@ int WSApp::hndl_Lis(eventCtx *ctx)
 {
 	Listener &lis = *(static_cast<Listener *>(ctx->owner));
 	Server &ser = lis.server();
-	
-	remote_info	rinfo;
+
+	remote_info rinfo;
 	int client_fd = lis.welcome(rinfo);
 	if (client_fd == -1)
 		return -1;
@@ -222,5 +234,20 @@ int WSApp::hndl_Cli(eventCtx *ctx, uint32_t events)
 			_pol.mod(cli.fd(), EPOLLIN, &cli.ectx());
 	}
 
+	return 0;
+}
+
+// TODO:
+int WSApp::handle_cgi_in(eventCtx *ctx)
+{
+	(void)ctx;
+	std::cout << "handle_cgi_in\n";
+	return 0;
+}
+
+int WSApp::handle_cgi_out(eventCtx *ctx)
+{
+	(void)ctx;
+	std::cout << "handle_cgi_out\n";
 	return 0;
 }

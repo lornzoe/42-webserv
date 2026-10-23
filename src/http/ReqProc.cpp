@@ -87,12 +87,13 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 	if (!ServerDirective::resolveFsPath(servDir, req.path, locDir, fsPath))
 		return result.resp = HttpResponse::buildError(403, req.path, &servDir), result;
 
+	// TODO:
 	// For CGI
 		// if fsPath ends in recognized CGI extension
 		// and locDir has CGI enabled
 			// note execution context info: script path and interpreter etc.
 			// defer resp to CGI: result.stat = CGI_REQ
-	// if (true)
+	// if (fsPath && )
 	// {
 	// 	result.stat = CGI_REQ;
 	// }

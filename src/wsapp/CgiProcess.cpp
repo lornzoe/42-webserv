@@ -56,10 +56,18 @@ void CgiProcess::start()
 		_child_to_parent.setNonBlockingRead();
 
 		// 2. If parent has a request body to send to CGI stdin, set non-blocking write:
-		// _parent_to_child.setNonBlockingWrite();
+		_parent_to_child.setNonBlockingWrite();
 
 		// 3. Store child pid for non-blocking waitpid(pid, status, WNOHANG)
 		_child_pid = pid;
+
+		_in_eCtx.fd =  _child_to_parent.getReadFd();
+		_in_eCtx.type = CGI_IN;
+		_in_eCtx.owner = this;
+
+		_out_eCtx.fd = _parent_to_child.getWriteFd();
+		_out_eCtx.type = CGI_OUT;
+		_out_eCtx.owner = this;
 	}
 }
 
@@ -138,6 +146,16 @@ int CgiProcess::getCgiReadFd() const
 int CgiProcess::getCgiWriteFd() const
 {
 	return _parent_to_child.getWriteFd();
+}
+
+eventCtx &CgiProcess::get_in_ectx()
+{
+	return _in_eCtx;
+}
+
+eventCtx &CgiProcess::get_out_ectx()
+{
+	return _out_eCtx;
 }
 
 const char *CgiProcess::ForkException::what() const throw()

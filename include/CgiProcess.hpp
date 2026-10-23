@@ -5,6 +5,7 @@
 
 #include "Pipe.hpp"
 #include "HttpRequest.hpp"
+#include "w_eventCtx.hpp"
 
 struct remote_info
 {
@@ -21,6 +22,9 @@ public:
 	void start();
 	int getCgiReadFd() const;
 	int getCgiWriteFd() const;
+
+	eventCtx &get_in_ectx();
+	eventCtx &get_out_ectx();
 
 	class ForkException : public std::exception
 	{
@@ -42,6 +46,9 @@ private:
 	ParseResult _pars_res;
 	std::vector<std::string> _cgi_vars;
 	remote_info _rinfo;
+
+	eventCtx _in_eCtx;
+	eventCtx _out_eCtx;
 
 	void populateCgiVars();
 	std::vector<const char *> buildEnvp();
