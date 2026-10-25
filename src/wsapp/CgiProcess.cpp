@@ -1,7 +1,7 @@
 #include "CgiProcess.hpp"
 
 CgiProcess::CgiProcess()
-	: _server_port(-1), _child_pid(-1), _rinfo()
+	: _server_port(-1), _child_pid(-1), _rinfo(), _bodyWriteOffset(0)
 {
 }
 
@@ -39,7 +39,7 @@ void CgiProcess::start()
 
 		// TODO: resolve the CGI script path using server's configuration
 		// and the incoming request
-		const char *argv[] = {"/usr/bin/python3", "scripts/cgi.py", NULL};
+		const char *argv[] = {"/usr/bin/python3", "html/cgi/py/cgi.py", NULL};
 
 		std::vector<const char *> envp = buildEnvp();
 		execve(argv[0], const_cast<char *const *>(argv), const_cast<char *const *>(envp.data()));
@@ -61,7 +61,7 @@ void CgiProcess::start()
 		// 3. Store child pid for non-blocking waitpid(pid, status, WNOHANG)
 		_child_pid = pid;
 
-		_in_eCtx.fd =  _child_to_parent.getReadFd();
+		_in_eCtx.fd = _child_to_parent.getReadFd();
 		_in_eCtx.type = CGI_IN;
 		_in_eCtx.owner = this;
 
@@ -143,9 +143,19 @@ int CgiProcess::getCgiReadFd() const
 	return _child_to_parent.getReadFd();
 }
 
+void CgiProcess::closeCgiReadFd()
+{
+	_child_to_parent.closeRead();
+}
+
 int CgiProcess::getCgiWriteFd() const
 {
 	return _parent_to_child.getWriteFd();
+}
+
+void CgiProcess::closeCgiWriteFd()
+{
+	_parent_to_child.closeWrite();
 }
 
 eventCtx &CgiProcess::get_in_ectx()
@@ -166,4 +176,24 @@ const char *CgiProcess::ForkException::what() const throw()
 const char *CgiProcess::ChildProcessException::what() const throw()
 {
 	return "CgiProcess::ChildProcessException.";
+}
+
+void CgiProcess::appendOutbox(std::string const &data)
+{
+	_cgi_outbox += data;
+}
+
+std::string const &CgiProcess::getOutbox() const
+{
+	return _cgi_outbox;
+}
+
+std::string const &CgiProcess::getRequestBody() const
+{
+	return _requestBody;
+}
+
+size_t &CgiProcess::getBodyWriteOffset()
+{
+	return _bodyWriteOffset;
 }

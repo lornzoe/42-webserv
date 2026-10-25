@@ -21,10 +21,18 @@ public:
 	void init(ParseResult const &pars_res, int server_port, const remote_info &rinfo);
 	void start();
 	int getCgiReadFd() const;
+	void closeCgiReadFd();
 	int getCgiWriteFd() const;
+	void closeCgiWriteFd();
 
 	eventCtx &get_in_ectx();
 	eventCtx &get_out_ectx();
+
+	void appendOutbox(std::string const &data);
+	std::string const &getOutbox() const;
+
+	std::string const &getRequestBody() const;
+	size_t &getBodyWriteOffset();
 
 	class ForkException : public std::exception
 	{
@@ -49,6 +57,11 @@ private:
 
 	eventCtx _in_eCtx;
 	eventCtx _out_eCtx;
+
+	std::string _requestBody;
+	size_t _bodyWriteOffset;
+
+	std::string _cgi_outbox;
 
 	void populateCgiVars();
 	std::vector<const char *> buildEnvp();

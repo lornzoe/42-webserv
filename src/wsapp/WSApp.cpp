@@ -137,13 +137,16 @@ int WSApp::run()
 						else
 						{
 							_pol.add(cli.get_cgi_process().getCgiReadFd(), EPOLLIN, &cli.get_cgi_process().get_in_ectx());
-							if (res.request.method == "POST" && !res.request.content_length)
+							if (res.request.method == "POST" &&
+								res.request.content_length > 0)
 							{
 								_pol.add(cli.get_cgi_process().getCgiWriteFd(), EPOLLOUT, &cli.get_cgi_process().get_out_ectx());
 							}
 							else
 							{
-								close(cli.get_cgi_process().getCgiWriteFd());
+								// No request body to send.
+								// Close the parent's write end so the CGI child receives EOF.
+								cli.get_cgi_process().closeCgiWriteFd();
 							}
 							_pol.del(cli.fd());
 						}
@@ -240,14 +243,146 @@ int WSApp::hndl_Cli(eventCtx *ctx, uint32_t events)
 // TODO:
 int WSApp::handle_cgi_in(eventCtx *ctx)
 {
-	(void)ctx;
-	std::cout << "handle_cgi_in\n";
-	return 0;
+	CgiProcess &cgi_process = *(static_cast<CgiProcess *>(ctx->owner));
+
+	int cgi_read_fd = cgi_process.getCgiReadFd();
+	if (cgi_read_fd < 0)
+		return 0;
+
+	char buffer[4096];
+	ssize_t bytes_read = read(
+		cgi_read_fd,
+		buffer,
+		sizeof(buffer));
+
+	if (bytes_read > 0)
+	{
+		cgi_process.appendOutbox(
+			std::string(buffer, static_cast<size_t>(bytes_read)));
+		return 0;
+	}
+
+	if (bytes_read == 0)
+	{
+		_pol.del(cgi_read_fd);
+		cgi_process.closeCgiReadFd();
+
+		// Find the associated Client.
+		// Client *client = findCgiClient(cgi_process);
+		// if (!client)
+		// {
+		// 	// The client disconnected or no association exists.
+		// 	// Clean up the CGI process and return.
+		// 	return -1;
+		// }
+
+		// Parse the complete CGI response.
+		std::string const &cgi_output = cgi_process.getOutbox();
+		std::cout << cgi_output << std::endl;
+
+		// Build the HTTP response.
+		// HttpResponse HttpResponse::buildCgiResponse(
+		// 	int status,
+		// 	std::string const &headers,
+		// 	std::string const &body
+		// );
+
+		// Register the client fd for EPOLLOUT.
+		// cli.send_response(response);
+		// _pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
+
+		return 0;
+	}
+
+	// No data is currently available, wait for the next readiness notification
+	if (errno == EAGAIN || errno == EWOULDBLOCK)
+		return 0;
+
+	if (errno == EINTR)
+		return 0;
+
+	// A genuine read error occurred.
+	_pol.del(cgi_read_fd);
+	cgi_process.closeCgiReadFd();
+
+	return -1;
 }
 
 int WSApp::handle_cgi_out(eventCtx *ctx)
 {
-	(void)ctx;
-	std::cout << "handle_cgi_out\n";
-	return 0;
+	CgiProcess &cgi_process = *(static_cast<CgiProcess *>(ctx->owner));
+
+	int fd = cgi_process.getCgiWriteFd();
+	if (fd < 0)
+		return 0;
+
+	std::string const &body = cgi_process.getRequestBody();
+	size_t &offset = cgi_process.getBodyWriteOffset();
+
+	// No body, or the entire body has already been sent.
+	if (offset >= body.size())
+	{
+		_pol.del(fd);
+		cgi_process.closeCgiWriteFd();
+		return 0;
+	}
+
+	ssize_t bytes_written = write(
+		fd,
+		body.data() + offset,
+		body.size() - offset);
+
+	if (bytes_written > 0)
+	{
+		offset += static_cast<size_t>(bytes_written);
+
+		// The CGI child has received the entire request body.
+		if (offset == body.size())
+		{
+			_pol.del(fd);
+			cgi_process.closeCgiWriteFd();
+		}
+
+		return 0;
+	}
+
+	if (bytes_written == -1)
+	{
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return 0;
+
+		if (errno == EINTR)
+			return 0;
+	}
+
+	// write() returned 0 unexpectedly, or a non-retryable error occurred.
+	_pol.del(fd);
+	cgi_process.closeCgiWriteFd();
+
+	return -1;
 }
+
+// For reference
+// Client *WSApp::findCgiClient(CgiProcess &cgi_process)
+// {
+//     for (std::vector<Server *>::iterator it = _servs.begin();
+//          it != _servs.end(); ++it)
+//     {
+//         Server &server = **it;
+
+//         Server::client_map_t::iterator client_it =
+//             server.clients().begin();
+
+//         while (client_it != server.clients().end())
+//         {
+//             Client &client = client_it->second;
+
+//             if (&client.get_cgi_process() == &cgi_process)
+//                 return &client;
+
+//             ++client_it;
+//         }
+//     }
+
+//     return NULL;
+// }
