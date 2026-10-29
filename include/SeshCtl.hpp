@@ -15,8 +15,10 @@ struct sesh_data
 	int				profile_visits;
 	std::time_t		last_time_active;
 	int				activeCGI;				//increment CGI start, decrement when end
+	bool			profile_updated;
 
-	sesh_data() : name("Mr. Guest"), profile_visits(), last_time_active(-1), activeCGI(0) {}
+	sesh_data() : name("Mr. Guest"), profile_visits(), 
+	last_time_active(-1), activeCGI(0),  profile_updated(false){}
 };
 
 class SeshCtl

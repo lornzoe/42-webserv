@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Webserv Session Demo</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			max-width: 700px;
+			margin: 40px auto;
+			padding: 0 20px;
+		}
+
+		.session-info {
+			padding: 20px;
+			background: #f4f4f4;
+			border-radius: 8px;
+		}
+
+		.food-image {
+			display: block;
+			max-width: 300px;
+			margin-top: 20px;
+		}
+
+		.updated {
+			font-weight: bold;
+			color: green;
+		}
+
+		form {
+			margin-top: 30px;
+		}
+
+		label {
+			display: inline-block;
+			width: 120px;
+			margin-bottom: 15px;
+		}
+
+		input, select {
+			padding: 5px;
+		}
+	</style>
+</head>
+
+<body>
+
+	<h1>Webserv Session Demo</h1>
+
+	<div class="session-info">
+		<p><strong>Session ID:</strong> {{SID}}</p>
+		<p><strong>Name:</strong> {{NAME}}</p>
+		<p><strong>Favourite food:</strong> {{FAV_FOOD}}</p>
+		<p><strong>Profile visits:</strong> {{PROFILE_VISITS}}</p>
+
+		{{UPDATED_MESSAGE}}
+		{{FOOD_IMAGE}}
+	</div>
+
+	<h2>Update Profile</h2>
+
+	<form action="/profile" method="POST">
+
+		<label for="name">New name:</label>
+		<input
+			type="text"
+			id="name"
+			name="name"
+			placeholder="Leave blank to keep current name"
+		>
+
+		<br>
+
+		<label for="fav_food">Favourite food:</label>
+		<select id="fav_food" name="fav_food">
+			{{FOOD_OPTIONS}}
+		</select>
+
+		<br>
+
+		<button type="submit">Save Profile</button>
+
+	</form>
+
+</body>
+</html>
