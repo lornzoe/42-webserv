@@ -240,7 +240,9 @@ int WSApp::hndl_Cli(eventCtx *ctx, uint32_t events)
 	return 0;
 }
 
-// TODO:
+// TODO: The CGI child process fails or exits unsuccessfully.
+// Reading CGI output (handle_cgi_in) fails.
+// Writing the request body to CGI stdin (handle_cgi_out) fails.
 int WSApp::handle_cgi_in(eventCtx *ctx)
 {
 	CgiProcess &cgi_process = *(static_cast<CgiProcess *>(ctx->owner));
@@ -268,28 +270,44 @@ int WSApp::handle_cgi_in(eventCtx *ctx)
 		cgi_process.closeCgiReadFd();
 
 		// Find the associated Client.
-		// Client *client = findCgiClient(cgi_process);
-		// if (!client)
-		// {
-		// 	// The client disconnected or no association exists.
-		// 	// Clean up the CGI process and return.
-		// 	return -1;
-		// }
+		Client *client = findCgiClient(cgi_process);
+		if (!client)
+		{
+			// The client disconnected or no association exists.
+			return -1;
+		}
 
 		// Parse the complete CGI response.
 		std::string const &cgi_output = cgi_process.getOutbox();
-		std::cout << cgi_output << std::endl;
 
-		// Build the HTTP response.
-		// HttpResponse HttpResponse::buildCgiResponse(
-		// 	int status,
-		// 	std::string const &headers,
-		// 	std::string const &body
-		// );
+		size_t separator = cgi_output.find("\r\n\r\n");
+		size_t separator_length = 4;
+
+		if (separator == std::string::npos)
+		{
+			// Invalid CGI response: no header/body separator.
+			// Handle this as a server-side error.
+			// TODO:
+			// client->send_response(
+			// 	HttpResponse::buildError(
+			// 		500, client->getRequestPath(), &client->servDir()));
+
+			// _pol.mod(client->fd(), EPOLLOUT, &client->ectx());
+			// client->addStat(CLOSING);
+			return -1;
+		}
+
+		// TODO: Extract the status code
+		int code = 200;
+		std::string header = cgi_output.substr(0, separator);
+		std::string body = cgi_output.substr(separator + separator_length);
+
+		// TODO: Build the HTTP response.
+		std::string response = HttpResponse::buildCgiResponse(code, header, body);
 
 		// Register the client fd for EPOLLOUT.
-		// cli.send_response(response);
-		// _pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
+		client->send_response(response);
+		_pol.add(client->fd(), EPOLLOUT, &client->ectx());
 
 		return 0;
 	}
@@ -362,27 +380,26 @@ int WSApp::handle_cgi_out(eventCtx *ctx)
 	return -1;
 }
 
-// For reference
-// Client *WSApp::findCgiClient(CgiProcess &cgi_process)
-// {
-//     for (std::vector<Server *>::iterator it = _servs.begin();
-//          it != _servs.end(); ++it)
-//     {
-//         Server &server = **it;
+Client *WSApp::findCgiClient(CgiProcess &cgi_process)
+{
+	for (std::vector<Server *>::iterator it = _servs.begin();
+		 it != _servs.end(); ++it)
+	{
+		Server &server = **it;
 
-//         Server::client_map_t::iterator client_it =
-//             server.clients().begin();
+		Server::client_map_t::iterator client_it =
+			server.clients().begin();
 
-//         while (client_it != server.clients().end())
-//         {
-//             Client &client = client_it->second;
+		while (client_it != server.clients().end())
+		{
+			Client &client = client_it->second;
 
-//             if (&client.get_cgi_process() == &cgi_process)
-//                 return &client;
+			if (&client.get_cgi_process() == &cgi_process)
+				return &client;
 
-//             ++client_it;
-//         }
-//     }
+			++client_it;
+		}
+	}
 
-//     return NULL;
-// }
+	return NULL;
+}

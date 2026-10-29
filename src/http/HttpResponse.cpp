@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpResponse.cpp                                   :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 17:50:51 by lyanga            #+#    #+#             */
-/*   Updated: 2026/09/12 18:27:20 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/10/29 20:33:40 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,13 +52,13 @@ std::string HttpResponse::build(int code, const std::string &contentType, const 
 	// build the body
 	if (!noBody)
 		ss << body;
-	
+
 	return ss.str();
 }
 
 // Looks up a configured custom error page for the given uri/code and, when one
 // exists and can be read, fills `out` with a ready-to-send response.
-static bool		getErrorPage(ServerDirective const *servDir, const std::string &uri,
+static bool getErrorPage(ServerDirective const *servDir, const std::string &uri,
 						 int code, std::string &out)
 {
 	ServerDirective::ResourcePath errorPath = servDir->getErrorPage(uri, code);
@@ -76,8 +76,8 @@ static bool		getErrorPage(ServerDirective const *servDir, const std::string &uri
 
 // Builds a response for `code` using a custom error page when configured,
 // otherwise a generated default error body.
-std::string		HttpResponse::buildError(int code, const std::string &uri,
-											ServerDirective const *servDir)
+std::string HttpResponse::buildError(int code, const std::string &uri,
+									 ServerDirective const *servDir)
 {
 	std::string response;
 	if (getErrorPage(servDir, uri, code, response))
@@ -87,14 +87,15 @@ std::string		HttpResponse::buildError(int code, const std::string &uri,
 	return HttpResponse::build(code, "text/html", body, "Connection: close");
 }
 
-namespace {
+namespace
+{
 
 	struct AutoindexEntry
 	{
-		std::string	name;
-		bool		isDir;
-		off_t		size;
-		std::string	mtime;
+		std::string name;
+		bool isDir;
+		off_t size;
+		std::string mtime;
 	};
 
 #ifdef DEBUG
@@ -102,11 +103,16 @@ namespace {
 	{
 		switch (t)
 		{
-			case DT_REG:     return "file";
-			case DT_DIR:     return "dir";
-			case DT_LNK:     return "symlink";
-			case DT_UNKNOWN: return "unknown";
-			default:         return "other";
+		case DT_REG:
+			return "file";
+		case DT_DIR:
+			return "dir";
+		case DT_LNK:
+			return "symlink";
+		case DT_UNKNOWN:
+			return "unknown";
+		default:
+			return "other";
 		}
 	}
 #endif
@@ -125,24 +131,24 @@ namespace {
 		// top
 		std::stringstream ss;
 		ss << "<html><head><title>" << currLoc << "</title></head>\r\n"
-		<< "<body><center><h1>Index of " << currLoc << "</h1></center>\r\n"
-		<< "<table><tr><th>Name</th><th>Last Modified</th><th>Size</th></tr>\r\n";
+		   << "<body><center><h1>Index of " << currLoc << "</h1></center>\r\n"
+		   << "<table><tr><th>Name</th><th>Last Modified</th><th>Size</th></tr>\r\n";
 		// middle entries
-		for (std::size_t i = 0;  i < entries.size(); ++i)
+		for (std::size_t i = 0; i < entries.size(); ++i)
 		{
 			const AutoindexEntry &e = entries[i];
 			std::string display = e.isDir ? e.name + "/" : e.name;
 
 			ss << "<tr><td><a href=\"" << display << "\">" << display << "</a></td>"
-				<< "<td>" << e.mtime << "</td>"
-				<< "<td>";
+			   << "<td>" << e.mtime << "</td>"
+			   << "<td>";
 			if (e.isDir)
 				ss << "-";
 			else
 				ss << e.size;
 			ss << "</td></tr>\r\n";
 		}
-		//bottom
+		// bottom
 		ss << "</table><hr><center>webserv</center></body></html>\r\n";
 
 		return ss.str();
@@ -166,13 +172,13 @@ std::string HttpResponse::buildAutoindex(const std::string &fsDir, const std::st
 			continue;
 
 		LOG_DEBUG("entry: " << entry->d_ino << ", " << name << ", "
-			<< entry->d_off << ", " << entry->d_reclen << ", "
-			<< dirent_type_str(entry->d_type));
+							<< entry->d_off << ", " << entry->d_reclen << ", "
+							<< dirent_type_str(entry->d_type));
 
 		AutoindexEntry ae;
-		ae.name  = name;
+		ae.name = name;
 		ae.isDir = S_ISDIR(est.st_mode);
-		ae.size  = est.st_size;
+		ae.size = est.st_size;
 		ae.mtime = formatMtime(est.st_mtime);
 		entries.push_back(ae);
 	}
@@ -189,7 +195,15 @@ std::string HttpResponse::defaultErrorBody(int code)
 
 	std::stringstream ss;
 	ss << "<html><head><title>" << code << " " << reason << "</title></head>\r\n"
-		<< "<body><center><h1>" << code << " " << reason << "</h1></center>\r\n"
-		<< "<hr><center>webserv</center></body></html>\r\n";
+	   << "<body><center><h1>" << code << " " << reason << "</h1></center>\r\n"
+	   << "<hr><center>webserv</center></body></html>\r\n";
 	return ss.str();
+}
+
+std::string HttpResponse::buildCgiResponse(int code, std::string const &headers, std::string const &body)
+{
+	std::cout << code << std::endl;
+	std::cout << headers << std::endl;
+	std::cout << body << std::endl;
+	return "";
 }

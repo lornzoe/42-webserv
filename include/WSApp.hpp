@@ -32,6 +32,8 @@ private:
 	int handle_cgi_in(eventCtx *ctx);
 	int handle_cgi_out(eventCtx *ctx);
 
+	Client *findCgiClient(CgiProcess &cgi_process);
+
 	WSApp(WSApp const &other);
 	WSApp &operator=(WSApp const &other);
 
