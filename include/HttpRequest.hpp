@@ -21,6 +21,7 @@
 
 #include "FileDescriptor.hpp"
 #include "HttpStat.hpp"
+#include "SeshCtl.hpp"
 
 #include "Utils.hpp"
 
@@ -46,7 +47,9 @@ struct ParsedRequest
 
 	std::string body;
 
-	ParsedRequest() : valid(false), content_length(0) {}
+	sesh_data *	sdata;
+
+	ParsedRequest() : valid(false), content_length(0), sdata(NULL) {}
 };
 
 struct ParseResult

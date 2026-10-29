@@ -13,7 +13,7 @@ std::string		SeshCtl::set_cookie_header(std::string sid)
 	return ss.str();
 }
 
-std::string		SeshCtl::get_headr_sid(std::string cookie_val)
+std::string		SeshCtl::get_header_sid(std::string cookie_val)
 {
 	std::vector<std::string>	cookies = Utils::ft_split(cookie_val, ";", true);
 	std::vector<std::string>::iterator it = cookies.begin();
@@ -77,7 +77,7 @@ sesh_data *	SeshCtl::retrieve(std::string sid)
 		return NULL;
 
 	std::time_t	time_now = std::time(NULL);
-	if (is_expired(time_now, it->second.last_time_active))
+	if (is_expired(time_now, it->second.last_time_active) && it->second.activeCGI == 0)
 	{
 		_sessions.erase(it);
 		return NULL;
@@ -95,7 +95,7 @@ void	SeshCtl::clear_expired()
 
 	while (it != _sessions.end())
 	{
-		if (is_expired(time_now, it->second.last_time_active))
+		if (is_expired(time_now, it->second.last_time_active) && it->second.activeCGI == 0)
 		{
 			del_it = it;
 			it++;

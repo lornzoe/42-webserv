@@ -14,8 +14,9 @@ struct sesh_data
 	std::string		fav_food;
 	int				profile_visits;
 	std::time_t		last_time_active;
+	int				activeCGI;				//increment CGI start, decrement when end
 
-	sesh_data() : name("Mr. Guest"), profile_visits(), last_time_active(-1) {}
+	sesh_data() : name("Mr. Guest"), profile_visits(), last_time_active(-1), activeCGI(0) {}
 };
 
 class SeshCtl
@@ -39,8 +40,9 @@ public:
 	sesh_data *	retrieve(std::string sid);
 	void		clear_expired();
 
+	//Cookie helpers
 	static std::string		set_cookie_header(std::string sid);
-	static std::string		get_headr_sid(std::string cookie_val);
+	static std::string		get_header_sid(std::string cookie_val);
 };
 
 #endif

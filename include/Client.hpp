@@ -15,7 +15,8 @@ class Server;
 enum cli_status
 {
 	SENDING = 1 << 0,
-	CLOSING = 1 << 1
+	CLOSING = 1 << 1,
+	NEWSESH = 1 << 8
 };
 
 class Client
@@ -33,6 +34,7 @@ private:
 	int _outCursor;
 
 	time_t _last_activity_time;
+	sesh_data *		_sdata;
 
 public:
 	Client();
@@ -54,7 +56,7 @@ public:
 	void rmStat(int flag) { _status &= ~flag; }
 
 	ssize_t recv1();
-	ReqProc::status	process_request(ParseResult const &result);
+	ReqProc::status	process_request(ParseResult &result);
 
 	void comsume_inbox(ssize_t req_offset);
 	void send_response(std::string const &resp);

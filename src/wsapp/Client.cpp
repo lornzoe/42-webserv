@@ -16,7 +16,8 @@ Client::Client()
 	  _status(0),
 	  _outPend(0),
 	  _outCursor(0),
-	  _last_activity_time(time(NULL))
+	  _last_activity_time(time(NULL)),
+	  _sdata(NULL)
 {
 }
 
@@ -27,7 +28,8 @@ Client::Client(Client const &other)
 	  _status(0),
 	  _outPend(0),
 	  _outCursor(0),
-	  _last_activity_time(time(NULL))
+	  _last_activity_time(time(NULL)),
+	  _sdata(NULL)
 {
 	(void)other;
 }
@@ -43,6 +45,7 @@ Client &Client::operator=(Client const &other)
 	_outPend = 0;
 	_outCursor = 0;
 	_last_activity_time = time(NULL);
+	_sdata = NULL;
 	return *this;
 }
 
@@ -90,12 +93,31 @@ ssize_t Client::recv1()
 	return bytesRd;
 }
 
-ReqProc::status Client::process_request(ParseResult const &pars_res)
+ReqProc::status Client::process_request(ParseResult &pars_res)
 {
 	std::map<std::string, std::string>::const_iterator cit;
 	cit = pars_res.request.headers.find("connection");
 	if (cit != pars_res.request.headers.end() && cit->second == "close")
 		addStat(CLOSING);
+
+	//Cookies & Session ---------------------------
+	std::string sid;
+	SeshCtl &	sctl = server().seshctl();
+	sesh_data *sdata;
+
+	//Confirm SID exists and create or retrieve
+	cit = pars_res.request.headers.find("cookie");
+	if (cit == pars_res.request.headers.end() 
+		|| (sid = SeshCtl::get_header_sid(cit->second)) == ""
+		|| (sdata = sctl.retrieve(sid)) == NULL)
+	{
+		addStat(NEWSESH);
+		_sdata = &sctl.create();
+	}
+	else
+		_sdata = sdata;
+	pars_res.request.sdata = _sdata;
+	//Cookies & Session ---------------------------
 
 	ReqProc::result resp_res = ReqProc::process(pars_res.request, servDir());
 	comsume_inbox(pars_res.consumed);
@@ -103,10 +125,18 @@ ReqProc::status Client::process_request(ParseResult const &pars_res)
 	{
 		if (isStat(CLOSING))
 			resp_res.resp.insert(resp_res.resp.find(HEADER_END), "\r\nConnection: close");
+		if (isStat(NEWSESH))
+		{
+			std::string set_cookie_hdr = SeshCtl::set_cookie_header(_sdata->sid);
+			resp_res.resp.insert(resp_res.resp.find(HEADER_END), "\r\n" + set_cookie_hdr);
+			rmStat(NEWSESH);
+		}
 		send_response(resp_res.resp);
+		_sdata = NULL;
 	}
 	else
 	{
+		_sdata->activeCGI++;
 		// Some embedded CGI object?
 		// save pars_res body, set up child with meta vars & pipes
 		// have api to
