@@ -38,6 +38,9 @@ public:
 	sesh_data &	create();
 	sesh_data *	retrieve(std::string sid);
 	void		clear_expired();
+
+	static std::string		set_cookie_header(std::string sid);
+	static std::string		get_headr_sid(std::string cookie_val);
 };
 
 #endif

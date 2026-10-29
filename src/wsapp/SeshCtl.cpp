@@ -1,5 +1,33 @@
 #include "SeshCtl.hpp"
+#include "Utils.hpp"
 #include <cstdlib>
+#include <vector>
+#include <sstream>
+
+// Static ---------------------------------------------------------------------
+
+std::string		SeshCtl::set_cookie_header(std::string sid)
+{
+	std::stringstream	ss;
+	ss << "Set-Cookie: sid=" << sid << "; Path=/";
+	return ss.str();
+}
+
+std::string		SeshCtl::get_headr_sid(std::string cookie_val)
+{
+	std::vector<std::string>	cookies = Utils::ft_split(cookie_val, ";", true);
+	std::vector<std::string>::iterator it = cookies.begin();
+
+	while (it != cookies.end())
+	{
+		Utils::kvpair	kv;
+		Utils::split_pair(Utils::Trim(*it), '=', kv);
+		if (kv.first == "sid")
+			return kv.second;
+		++it;
+	}
+	return "";
+}
 
 // OCF ------------------------------------------------------------------------
 
