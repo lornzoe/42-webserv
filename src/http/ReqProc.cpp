@@ -57,7 +57,6 @@ namespace {
 	std::string	url_decode(std::string const &str)
 	{
 		std::string	out;
-
 		for (size_t i = 0; i < str.size(); ++i)
 		{
 			if (str[i] == '+')
@@ -84,7 +83,6 @@ namespace {
 	std::string	html_escape(std::string const &str)
 	{
 		std::string	out;
-
 		for (size_t i = 0; i < str.size(); ++i)
 		{
 			switch (str[i])
@@ -100,10 +98,7 @@ namespace {
 		return out;
 	}
 
-	void	replace_all(
-		std::string &body,
-		std::string const &token,
-		std::string const &value)
+	void	replace_all(std::string &body, std::string const &token, std::string const &value)
 	{
 		size_t	pos = 0;
 
@@ -117,7 +112,6 @@ namespace {
 	std::map<std::string, std::string>	make_foods()
 	{
 		std::map<std::string, std::string> foods;
-
 		foods["Pizza"] = "pizza.jpeg";
 		foods["Salad"] = "salad.jpeg";
 		foods["Burger"] = "burger.jpeg";
@@ -128,18 +122,16 @@ namespace {
 		foods["Tacos"] = "tacos.jpeg";
 		foods["Ice Cream"] = "ice_cream.jpeg";
 		foods["Durian"] = "durian.jpeg";
-
 		return foods;
 	}
 
 	std::map<std::string, std::string> const	&food_map()
 	{
 		static const std::map<std::string, std::string> foods = make_foods();
-
 		return foods;
 	}
 
-	void	update_session_profile(ParsedRequest const &req)
+	void	update_sesh_profile(ParsedRequest const &req)
 	{
 		sesh_data	&sesh = *req.sdata;
 
@@ -176,21 +168,15 @@ namespace {
 		sesh.profile_updated = true;
 	}
 
-	void	dynamic_sesh_profile(std::string &body, ParsedRequest const &req)
+	void	fill_sesh_profile(std::string &body, ParsedRequest const &req)
 	{
 		sesh_data	&sesh = *req.sdata;
-
 		sesh.profile_visits++;
-
 		std::map<std::string, std::string> const &foods =
 			food_map();
 
-		// ------------------------------------------------------------
-		// Build food dropdown
-		// ------------------------------------------------------------
-
+		// Template replacement: Food options -------------------------
 		std::stringstream	options;
-
 		options
 			<< "<option value=\"\" selected>"
 			<< "Choose one..."
@@ -208,10 +194,7 @@ namespace {
 				<< "</option>\n";
 		}
 
-		// ------------------------------------------------------------
-		// Build selected food image
-		// ------------------------------------------------------------
-
+		// Template replacement: Fav food -----------------------------
 		std::string	image;
 
 		it = foods.find(sesh.fav_food);
@@ -225,17 +208,11 @@ namespace {
 				+ "\">";
 		}
 
-		// ------------------------------------------------------------
-		// Visit counter
-		// ------------------------------------------------------------
-
+		// Template replacement: Profile visits -----------------------
 		std::stringstream	visits;
 		visits << sesh.profile_visits;
 
-		// ------------------------------------------------------------
-		// One-shot update message
-		// ------------------------------------------------------------
-
+		// Template replacement: Update message -----------------------
 		std::string	updated_message;
 
 		if (sesh.profile_updated)
@@ -244,9 +221,7 @@ namespace {
 			sesh.profile_updated = false;
 		}
 
-		// ------------------------------------------------------------
-		// Fill template
-		// ------------------------------------------------------------
+		// Fill templates
 		replace_all(body, "{{SID}}", html_escape(sesh.sid));
 		replace_all(body, "{{NAME}}", html_escape(sesh.name));
 		replace_all(body, "{{FAV_FOOD}}", sesh.fav_food.empty() ? "Not selected" : html_escape(sesh.fav_food));
@@ -316,7 +291,7 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 			if (Utils::readFile(rsrc_path.second, body))
 			{
 				if (req.path == "/profile")
-					dynamic_sesh_profile(body, req);
+					fill_sesh_profile(body, req);
 				result.resp = HttpResponse::build(200, MimeTypes::forPath(rsrc_path.second), body);
 			}
 			else
@@ -349,7 +324,7 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 	{
 		if (req.path == "/profile")
 		{
-			update_session_profile(req);
+			update_sesh_profile(req);
 			result.resp = HttpResponse::build(303, "text/html", "");
 			result.resp.insert(result.resp.find(HEADER_END), "\r\nLocation: /profile");
 			return result;
