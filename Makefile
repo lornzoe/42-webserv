@@ -41,8 +41,8 @@ WSAPP_SRC_BASE =	WSApp  Poller  Server  Listener  Client  SeshCtl
 WSAPP_SRC_FILES =	$(addsuffix .cpp, $(WSAPP_SRC_BASE))
 
 HTTP_SRC_DIR =		$(SRC_DIR)/http
-HTTP_SRC_BASE =		HttpStat  HttpRequest  HttpResponse			\
-					MimeTypes  ReqProc  MultipartBody
+HTTP_SRC_BASE =		HttpStat  HttpRequest  HttpResponse  ReqProc	\
+					MimeTypes  MultipartBody  SeshProfile
 HTTP_SRC_FILES =	$(addsuffix .cpp, $(HTTP_SRC_BASE))
 
 UTILS_SRC_DIR =		$(SRC_DIR)/utils
