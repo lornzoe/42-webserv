@@ -25,6 +25,7 @@ private:
 	void addServ(ServerDirective const &servDir);
 	void ep_regisListeners();
 	int ep_wait();
+	void sesh_cleanup(std::time_t &last_sesh_cleanup);
 
 	int hndl_Lis(eventCtx *ctx);
 	int hndl_Cli(eventCtx *ctx, uint32_t events);
@@ -33,6 +34,7 @@ private:
 	WSApp &operator=(WSApp const &other);
 
 	static const int TIMEOUT_SECOND;
+	static const int TIME_SESH_CLEAN = 900;
 
 public:
 	WSApp();

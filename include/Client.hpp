@@ -28,7 +28,6 @@ private:
 
 	int 	_status;
 	
-	size_t	_maxBodySize;
 	std::string _inbox;
 	std::string _outBox;
 	int _outPend;
@@ -55,7 +54,6 @@ public:
 	void addStat(int flag) { _status |= flag; }
 	void rmStat(int flag) { _status &= ~flag; }
 
-	size_t	maxBodySize() const { return _maxBodySize; }
 	std::string const &readInbox() const { return _inbox; }
 
 	ssize_t recv1();

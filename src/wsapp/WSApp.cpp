@@ -11,6 +11,7 @@
 #include <sstream>
 #include <sys/stat.h>
 #include <csignal>
+#include <ctime>
 
 namespace
 {
@@ -53,6 +54,8 @@ int WSApp::run()
 	signal(SIGINT, sigint_handler);
 	signal(SIGPIPE, SIG_IGN);
 	ep_regisListeners();
+	std::time_t	last_sesh_cleanup = std::time(NULL);
+
 	while (!g_shutdownRequest)
 	{
 		ep_wait();
@@ -98,7 +101,7 @@ int WSApp::run()
 				std::string const &inbox = cli.readInbox();
 				if (inbox.size() > 0 && !cli.isStat(SENDING))
 				{
-					ParseResult res = HttpRequest::parse_http_request(inbox, cli.maxBodySize());
+					ParseResult res = HttpRequest::parse_http_request(inbox, s.climax());
 					LOG_DEBUG("Parsed HTTP request with status: " << res.status);
 					if (res.status == INCOMPLETE)
 					{
@@ -142,6 +145,7 @@ int WSApp::run()
 			}
 			++it;
 		}
+		sesh_cleanup(last_sesh_cleanup);
 	}
 	return 0;
 }
@@ -176,6 +180,23 @@ int WSApp::ep_wait()
 	_epRes.epEv = _pol.rdy_events();
 
 	return _epRes.n;
+}
+
+void	WSApp::sesh_cleanup(std::time_t &last_sesh_cleanup)
+{
+	std::time_t		time_now = std::time(NULL);
+
+	if (std::difftime(time_now, last_sesh_cleanup) >= TIME_SESH_CLEAN)
+	{
+		LOG_DEBUG("Running session cleanup check");
+		std::vector<Server *>::iterator it = _servs.begin();
+		while (it != _servs.end())
+		{
+			(**it).seshctl().clear_expired();
+			++it;
+		}
+		last_sesh_cleanup = time_now;
+	}
 }
 
 int WSApp::hndl_Lis(eventCtx *ctx)

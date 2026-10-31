@@ -14,7 +14,6 @@ Client::Client()
 	  _fd(-1),
 	  _eCtx(eventCtx()),
 	  _status(0),
-	  _maxBodySize(52428800),
 	  _outPend(0),
 	  _outCursor(0),
 	  _last_activity_time(time(NULL)),
@@ -27,7 +26,6 @@ Client::Client(Client const &other)
 	  _fd(-1),
 	  _eCtx(eventCtx()),
 	  _status(0),
-	  _maxBodySize(52428800),
 	  _outPend(0),
 	  _outCursor(0),
 	  _last_activity_time(time(NULL)),
@@ -44,7 +42,6 @@ Client &Client::operator=(Client const &other)
 	_fd = -1;
 	_eCtx = eventCtx();
 	_status = 0;
-	_maxBodySize = 52428800;
 	_outPend = 0;
 	_outCursor = 0;
 	_last_activity_time = time(NULL);
@@ -70,10 +67,6 @@ void Client::initClient(Server &server, int fd)
 	}
 	_server = &server;
 	_fd = fd;
-
-	// std::cout << "before get client\n";
-	// _maxBodySize = server.servDir().getClientMaxBodySize()->getBytes();
-	// std::cout << "after get client\n";
 
 	_eCtx.fd = _fd;
 	_eCtx.type = SCK_CLIENT;

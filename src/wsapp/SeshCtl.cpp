@@ -3,6 +3,7 @@
 #include <cstdlib>
 #include <vector>
 #include <sstream>
+#include <iostream>
 
 // Static ---------------------------------------------------------------------
 
@@ -92,6 +93,7 @@ void	SeshCtl::clear_expired()
 	std::map<std::string, sesh_data>::iterator	it = _sessions.begin();
 	std::map<std::string, sesh_data>::iterator del_it;
 	std::time_t		time_now = std::time(NULL);
+	bool	flag = true;
 
 	while (it != _sessions.end())
 	{
@@ -102,6 +104,20 @@ void	SeshCtl::clear_expired()
 			_sessions.erase(del_it);
 		}
 		else
+		{
+			if (flag)
+			{
+				std::cout << "Active Sessions: ----------\n" << std::endl;
+				flag = false;
+			}
+
+			const sesh_data &	s = it->second;
+			std::cout	<< "Session ID: " << s.sid << std::endl
+						<< "Name: " << s.name << std::endl
+						<< "Profile Visits: " << s.profile_visits << std::endl
+						<< "Last Active: " << s.last_time_active << std::endl
+						<< std::endl;
 			it++;
+		}
 	}
 }

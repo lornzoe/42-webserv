@@ -10,8 +10,15 @@
 Server::Server(ServerDirective const &servDir, std::string const &host, int port)
 : _servDir(servDir), _host(host), _port(port),
 	_name("(" + host + ":" + Utils::ft_itoa(port) + ")"),
+	_clientMaxBodySize(52428800),
 	_listener(*this, host, port), _seshctl(*this)
-{ LOG_INFO("Server " << _name << " created"); }
+{
+	ClientMaxBodySizeDirective const *climaxDir = _servDir.getClientMaxBodySize();
+	if (climaxDir)
+		_clientMaxBodySize = climaxDir->getBytes();
+
+	LOG_INFO("Server " << _name << " created");
+}
 
 Server::~Server() {}
 
