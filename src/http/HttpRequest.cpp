@@ -149,7 +149,8 @@ namespace {
 
 	ParseResult parseChunkedRequest(const std::string &inbox,
 									size_t header_length,
-									ParsedRequest &parsed)
+									ParsedRequest &parsed,
+									size_t clientMaxBody)
 	{
 		size_t pos = header_length;
 		std::string body;
@@ -173,8 +174,7 @@ namespace {
 			if (end == size_str.c_str() || *end != '\0')
 				return ParseResult(INVALID);
 
-			size_t	tmp_clientMaxBodySize = 52428800;
-			if (chunk_size > tmp_clientMaxBodySize - body.size())
+			if (chunk_size > clientMaxBody - body.size())
 				return ParseResult(INVALID, 413);
 
 			// Move past "size\r\n"
@@ -218,7 +218,7 @@ namespace {
 	}
 }
 
-ParseResult HttpRequest::parse_http_request(const std::string &inbox)
+ParseResult HttpRequest::parse_http_request(const std::string &inbox, size_t clientMaxBody)
 {
 	static const size_t MAX_HEADER_SIZE = 8192;
 	LOG_DEBUG("Parsing HTTP request of size: " << inbox.size() << " bytes");
@@ -247,17 +247,13 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox)
 	{
 		std::string value = Utils::toLowercase(it->second);
 		if (value == "chunked")
-		{
-			return parseChunkedRequest(inbox, header_length, parsed);
-		}
-
+			return parseChunkedRequest(inbox, header_length, parsed, clientMaxBody);
 		return ParseResult(INVALID);
 	}
 
 	// 3. Determine body length
 	size_t content_length = parsed.content_length;
-	size_t tmp_clientMaxBodySize = 52428800;
-	if (content_length > tmp_clientMaxBodySize)
+	if (content_length > clientMaxBody)
 		return ParseResult(INVALID, 413);
 
 	// 4. Check whether entire body has arrived

@@ -66,7 +66,7 @@ struct ParseResult
 class HttpRequest
 {
 public:
-	static ParseResult parse_http_request(const std::string &inbox);
+	static ParseResult parse_http_request(const std::string &inbox, size_t clientMaxBody);
 };
 
 #endif

@@ -98,7 +98,7 @@ int WSApp::run()
 				std::string const &inbox = cli.readInbox();
 				if (inbox.size() > 0 && !cli.isStat(SENDING))
 				{
-					ParseResult res = HttpRequest::parse_http_request(inbox);
+					ParseResult res = HttpRequest::parse_http_request(inbox, cli.maxBodySize());
 					LOG_DEBUG("Parsed HTTP request with status: " << res.status);
 					if (res.status == INCOMPLETE)
 					{

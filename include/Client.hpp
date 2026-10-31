@@ -26,8 +26,9 @@ private:
 	int _fd;
 	eventCtx _eCtx;
 
-	int _status;
-
+	int 	_status;
+	
+	size_t	_maxBodySize;
 	std::string _inbox;
 	std::string _outBox;
 	int _outPend;
@@ -50,10 +51,12 @@ public:
 	int fd() { return _fd; }
 	eventCtx &ectx() { return _eCtx; }
 
-	std::string const &readInbox() const { return _inbox; }
 	bool isStat(int flag) const { return ((_status & flag) == flag); }
 	void addStat(int flag) { _status |= flag; }
 	void rmStat(int flag) { _status &= ~flag; }
+
+	size_t	maxBodySize() const { return _maxBodySize; }
+	std::string const &readInbox() const { return _inbox; }
 
 	ssize_t recv1();
 	ReqProc::status	process_request(ParseResult &result);
