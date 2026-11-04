@@ -43,7 +43,12 @@ Listener::Listener(Server &server, std::string const &host, int port)
 	struct addrinfo *cur = res;
 	while (cur)
 	{
-		if ((_fd = socket(cur->ai_family, cur->ai_socktype, cur->ai_protocol)) == -1 || noBlock(_fd) == -1 || reuseAddr(_fd) == -1 || bind(_fd, cur->ai_addr, cur->ai_addrlen) == -1 || listen(_fd, 1024) == -1)
+		if ((_fd = socket(cur->ai_family, cur->ai_socktype, cur->ai_protocol)) == -1 ||
+			closeOnExec(_fd) == -1 ||
+			noBlock(_fd) == -1 ||
+			reuseAddr(_fd) == -1 ||
+			bind(_fd, cur->ai_addr, cur->ai_addrlen) == -1 ||
+			listen(_fd, 1024) == -1)
 		{
 			if (cur->ai_next != NULL)
 			{
@@ -104,12 +109,12 @@ int Listener::welcome(remote_info &rinfo)
 	client_fd = accept(_fd, reinterpret_cast<sockaddr *>(&sin), &sin_len);
 	if (client_fd == -1)
 	{
-		if (errno != EAGAIN)
+		if (errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR)
 			LOG_WARN(strerror(errno));
 		return -1;
 	}
 
-	if (noBlock(client_fd) == -1)
+	if (closeOnExec(client_fd) == -1 || noBlock(client_fd) == -1)
 	{
 		LOG_WARN(strerror(errno));
 		Utils::safeClose(client_fd);
@@ -120,4 +125,9 @@ int Listener::welcome(remote_info &rinfo)
 	rinfo.port = ntohs(sin.sin_port);
 
 	return client_fd;
+}
+
+int Listener::closeOnExec(int fd)
+{
+	return fcntl(fd, F_SETFD, FD_CLOEXEC);
 }

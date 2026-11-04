@@ -26,6 +26,7 @@ namespace
 }
 
 const int WSApp::TIMEOUT_SECOND = 5;
+const int WSApp::CGI_TIMEOUT_SECOND = 10;
 
 // OCF ------------------------------------------------------------------------
 
@@ -93,7 +94,7 @@ int WSApp::run()
 			while (i != s.clients().end())
 			{
 				Client &cli = i->second;
-				if (cli.isStat(CLOSING) && !cli.isStat(SENDING))
+				if (cli.isStat(CLOSING) && !cli.isStat(SENDING) && !cli.isStat(WAIT_CGI))
 				{
 					int cls_fd = cli.fd();
 					++i;
@@ -101,6 +102,37 @@ int WSApp::run()
 					s.rmClient(cls_fd);
 					continue;
 				}
+
+				if (cli.isStat(WAIT_CGI))
+				{
+					if (time(NULL) - cli.get_cgi_process().startTime() >= CGI_TIMEOUT_SECOND)
+					{
+						LOG_DEBUG("CGI TIMEOUT for client " << cli.fd());
+						cgi_abort(cli, 504);
+					}
+					++i;
+					continue;
+				}
+
+				if (!cli.isStat(CLOSING) &&
+					time(NULL) - cli.get_last_activity_time() >= TIMEOUT_SECOND)
+				{
+					if (cli.isStat(SENDING))
+					{
+						// Client stopped reading our response: just drop it.
+						cli.rmStat(SENDING);
+						cli.addStat(CLOSING);
+					}
+					else if (cli.readInbox().empty())
+					{
+						// Idle keep-alive connection, nothing pending: close quietly.
+						cli.addStat(CLOSING);
+					}
+					// partial request in the inbox, handled by INCOMPLETE branch (408)
+					++i;
+					continue;
+				}
+
 				std::string const &inbox = cli.readInbox();
 				if (inbox.size() > 0 && !cli.isStat(SENDING))
 				{
@@ -128,34 +160,42 @@ int WSApp::run()
 					else
 					{
 						LOG_DEBUG("HTTP request is complete, processing request.");
-						if (cli.process_request(res) == ReqProc::RESP_RDY)
+						try
 						{
-							LOG_DEBUG("HTTP response prepared, switching to EPOLLOUT for sending.");
-							_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
-							LOG_DEBUG("Finished handling client request.");
-						}
-						else
-						{
-							_pol.add(cli.get_cgi_process().getCgiReadFd(), EPOLLIN, &cli.get_cgi_process().get_in_ectx());
-							if (res.request.method == "POST" &&
-								res.request.content_length > 0)
+							if (cli.process_request(res) == ReqProc::RESP_RDY)
 							{
-								_pol.add(cli.get_cgi_process().getCgiWriteFd(), EPOLLOUT, &cli.get_cgi_process().get_out_ectx());
+								LOG_DEBUG("HTTP response prepared, switching to EPOLLOUT for sending.");
+								_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
+								LOG_DEBUG("Finished handling client request.");
 							}
 							else
 							{
-								// No request body to send.
-								// Close the parent's write end so the CGI child receives EOF.
-								cli.get_cgi_process().closeCgiWriteFd();
+								cli.addStat(WAIT_CGI);
+								_pol.add(cli.get_cgi_process().getCgiReadFd(), EPOLLIN, &cli.get_cgi_process().get_in_ectx());
+								if (res.request.method == "POST" && !cli.get_cgi_process().getRequestBody().empty())
+								{
+									_pol.add(cli.get_cgi_process().getCgiWriteFd(), EPOLLOUT, &cli.get_cgi_process().get_out_ectx());
+								}
+								else
+								{
+									// No request body to send.
+									// Close the parent's write end so the CGI child receives EOF.
+									cli.get_cgi_process().closeCgiWriteFd();
+								}
+								_pol.del(cli.fd());
 							}
-							_pol.del(cli.fd());
+						}
+						catch (const std::exception &e)
+						{
+							LOG_DEBUG("CGI start failed: " << e.what());
+							cli.get_cgi_process().killAndReap(); // safe: does nothing if no child
+							cli.rmStat(WAIT_CGI);				 // in case it was set
+							cli.send_response(HttpResponse::buildError(500, res.request.path, &cli.servDir()));
+							_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
+							cli.addStat(CLOSING);
 						}
 					}
 				}
-				// if is WAIT_CGI
-				// if complete
-				// package response and send on cli outbox
-				// update EPOLL and client status
 				++i;
 			}
 			++it;
@@ -240,9 +280,6 @@ int WSApp::hndl_Cli(eventCtx *ctx, uint32_t events)
 	return 0;
 }
 
-// TODO: The CGI child process fails or exits unsuccessfully.
-// Reading CGI output (handle_cgi_in) fails.
-// Writing the request body to CGI stdin (handle_cgi_out) fails.
 int WSApp::handle_cgi_in(eventCtx *ctx)
 {
 	CgiProcess &cgi_process = *(static_cast<CgiProcess *>(ctx->owner));
@@ -250,6 +287,15 @@ int WSApp::handle_cgi_in(eventCtx *ctx)
 	int cgi_read_fd = cgi_process.getCgiReadFd();
 	if (cgi_read_fd < 0)
 		return 0;
+
+	// Find the associated Client.
+	Client *client = findCgiClient(cgi_process);
+	if (!client)
+	{
+		// The client disconnected or no association exists.
+		cgi_cleanup(cgi_process);
+		return -1;
+	}
 
 	char buffer[4096];
 	ssize_t bytes_read = read(
@@ -269,59 +315,15 @@ int WSApp::handle_cgi_in(eventCtx *ctx)
 		_pol.del(cgi_read_fd);
 		cgi_process.closeCgiReadFd();
 
-		// Find the associated Client.
-		Client *client = findCgiClient(cgi_process);
-		if (!client)
-		{
-			// The client disconnected or no association exists.
-			return -1;
-		}
-
-		// Parse the complete CGI response.
-		std::string const &cgi_output = cgi_process.getOutbox();
-
-		size_t separator = cgi_output.find("\r\n\r\n");
-		size_t separator_length = 4;
-
-		if (separator == std::string::npos)
-		{
-			// Invalid CGI response: no header/body separator.
-			// Handle this as a server-side error.
-			// TODO:
-			// client->send_response(
-			// 	HttpResponse::buildError(
-			// 		500, client->getRequestPath(), &client->servDir()));
-
-			// _pol.mod(client->fd(), EPOLLOUT, &client->ectx());
-			// client->addStat(CLOSING);
-			return -1;
-		}
-
-		// TODO: Extract the status code
-		int code = 200;
-		std::string header = cgi_output.substr(0, separator);
-		std::string body = cgi_output.substr(separator + separator_length);
-
-		// TODO: Build the HTTP response.
-		std::string response = HttpResponse::buildCgiResponse(code, header, body);
-
-		// Register the client fd for EPOLLOUT.
-		client->send_response(response);
-		_pol.add(client->fd(), EPOLLOUT, &client->ectx());
-
-		return 0;
+		return cgi_finish(*client);
 	}
 
 	// No data is currently available, wait for the next readiness notification
-	if (errno == EAGAIN || errno == EWOULDBLOCK)
-		return 0;
-
-	if (errno == EINTR)
+	if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
 		return 0;
 
 	// A genuine read error occurred.
-	_pol.del(cgi_read_fd);
-	cgi_process.closeCgiReadFd();
+	cgi_abort(*client, 502);
 
 	return -1;
 }
@@ -366,10 +368,7 @@ int WSApp::handle_cgi_out(eventCtx *ctx)
 
 	if (bytes_written == -1)
 	{
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return 0;
-
-		if (errno == EINTR)
+		if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
 			return 0;
 	}
 
@@ -402,4 +401,92 @@ Client *WSApp::findCgiClient(CgiProcess &cgi_process)
 	}
 
 	return NULL;
+}
+
+// Close both CGI fds (if open) and make sure the child is dead and reaped.
+void WSApp::cgi_cleanup(CgiProcess &cgi)
+{
+	int rfd = cgi.getCgiReadFd();
+	if (rfd >= 0)
+	{
+		_pol.del(rfd);
+		cgi.closeCgiReadFd();
+	}
+
+	int wfd = cgi.getCgiWriteFd();
+	if (wfd >= 0)
+	{
+		_pol.del(wfd);
+		cgi.closeCgiWriteFd();
+	}
+
+	cgi.killAndReap();
+}
+
+// Something went wrong: clean up, tell the client, close the connection.
+void WSApp::cgi_abort(Client &cli, int code)
+{
+	cgi_cleanup(cli.get_cgi_process());
+	cli.rmStat(WAIT_CGI);
+	cli.send_response(HttpResponse::buildError(code, "", &cli.servDir()));
+	_pol.add(cli.fd(), EPOLLOUT, &cli.ectx());
+	cli.addStat(CLOSING);
+}
+
+// Called ONLY when the CGI's stdout reached EOF. Output is complete.
+int WSApp::cgi_finish(Client &cli)
+{
+	CgiProcess &cgi = cli.get_cgi_process();
+
+	// Stop sending the request body if we still were.
+	int wfd = cgi.getCgiWriteFd();
+	if (wfd >= 0)
+	{
+		_pol.del(wfd);
+		cgi.closeCgiWriteFd();
+	}
+
+	// NOW check the exit status.
+	int status = 0;
+	if (!cgi.tryReap(status))
+		cgi.killAndReap(); // closed stdout but still running: stop it
+	else if (!WIFEXITED(status) || WEXITSTATUS(status) != 0)
+	{
+		cgi_abort(cli, 502);
+		return -1;
+	}
+
+	// Split header/body (accept "\r\n\r\n" or "\n\n")
+	std::string const &out = cgi.getOutbox();
+	size_t sep = out.find("\r\n\r\n");
+	size_t sepLen = 4;
+	size_t lf = out.find("\n\n");
+	if (lf != std::string::npos && (sep == std::string::npos || lf < sep))
+	{
+		sep = lf;
+		sepLen = 2;
+	}
+	if (sep == std::string::npos)
+	{
+		cgi_abort(cli, 502);
+		return -1;
+	}
+
+	std::string header = out.substr(0, sep);
+	std::string body = out.substr(sep + sepLen);
+
+	int code = 200;
+	size_t pos = header.find("Status:");
+	if (pos != std::string::npos && (pos == 0 || header[pos - 1] == '\n'))
+		code = std::atoi(header.c_str() + pos + 7);
+	if (code < 100 || code > 599)
+	{
+		cgi_abort(cli, 502);
+		return -1;
+	}
+
+	cli.rmStat(WAIT_CGI);
+	cli.send_response(HttpResponse::buildCgiResponse(code, header, body));
+	_pol.add(cli.fd(), EPOLLOUT, &cli.ectx());
+	return 0;
 }

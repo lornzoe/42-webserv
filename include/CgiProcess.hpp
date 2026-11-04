@@ -2,6 +2,8 @@
 #define CGIPROCESS_H
 
 #include <vector>
+#include <signal.h>
+#include <sys/wait.h>
 
 #include "Pipe.hpp"
 #include "HttpRequest.hpp"
@@ -17,6 +19,7 @@ class CgiProcess
 {
 public:
 	CgiProcess();
+	~CgiProcess();
 
 	void init(ParseResult const &pars_res, int server_port, const remote_info &rinfo);
 	void start();
@@ -33,6 +36,11 @@ public:
 
 	std::string const &getRequestBody() const;
 	size_t &getBodyWriteOffset();
+
+	bool tryReap(int &status);
+	void killAndReap();
+
+	time_t startTime() const;
 
 	class ForkException : public std::exception
 	{
@@ -65,6 +73,8 @@ private:
 
 	void populateCgiVars();
 	std::vector<const char *> buildEnvp();
+
+	time_t _start_time;
 };
 
 #endif

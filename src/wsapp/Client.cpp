@@ -46,7 +46,7 @@ Client &Client::operator=(Client const &other)
 	_status = 0;
 	_outPend = 0;
 	_outCursor = 0;
-	_last_activity_time = time(NULL);
+	refresh_last_activity_time();
 	return *this;
 }
 
@@ -90,6 +90,7 @@ ssize_t Client::recv1()
 		_inbox.append(buf, bytesRd);
 		if (bytesRd < 4096)
 			buf[bytesRd] = '\0';
+		refresh_last_activity_time();
 	}
 
 	return bytesRd;
@@ -143,6 +144,7 @@ ssize_t Client::send1()
 	{
 		_outPend -= bytesSent;
 		_outCursor += bytesSent;
+		refresh_last_activity_time();
 	}
 	if (_outPend == 0)
 	{

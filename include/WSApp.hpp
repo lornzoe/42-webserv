@@ -38,6 +38,11 @@ private:
 	WSApp &operator=(WSApp const &other);
 
 	static const int TIMEOUT_SECOND;
+	static const int CGI_TIMEOUT_SECOND;
+
+	void cgi_cleanup(CgiProcess &cgi);
+	void cgi_abort(Client &cli, int code);
+	int cgi_finish(Client &cli);
 
 public:
 	WSApp();

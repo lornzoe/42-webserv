@@ -20,7 +20,6 @@ public:
 
 	bool setNonBlockingRead();
 	bool setNonBlockingWrite();
-	bool setNonBlockingAll();
 
 	class PipeException : public std::exception
 	{

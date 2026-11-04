@@ -19,6 +19,16 @@ bool Pipe::create()
 		return false;
 	}
 
+	for (int i = 0; i < 2; ++i)
+	{
+		if (fcntl(fds[i], F_SETFD, FD_CLOEXEC) == -1)
+		{
+			close(fds[0]);
+			close(fds[1]);
+			return false;
+		}
+	}
+
 	_read_end.resetFd(fds[0]);
 	_write_end.resetFd(fds[1]);
 
@@ -71,11 +81,6 @@ bool Pipe::setNonBlockingWrite()
 		return false;
 	int flags = fcntl(_write_end.get(), F_GETFL, 0);
 	return flags != -1 && fcntl(_write_end.get(), F_SETFL, flags | O_NONBLOCK) != -1;
-}
-
-bool Pipe::setNonBlockingAll()
-{
-	return setNonBlockingRead() && setNonBlockingWrite();
 }
 
 const char *Pipe::PipeException::what() const throw()

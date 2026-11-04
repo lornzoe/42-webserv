@@ -6,7 +6,7 @@
 /*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/20 17:50:51 by lyanga            #+#    #+#             */
-/*   Updated: 2026/10/29 20:33:40 by ypua             ###   ########.fr       */
+/*   Updated: 2026/11/04 20:49:18 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -200,6 +200,7 @@ std::string HttpResponse::defaultErrorBody(int code)
 	return ss.str();
 }
 
+// TODO: Remove line starting with Status:
 std::string HttpResponse::buildCgiResponse(int code, std::string const &headers, std::string const &body)
 {
 	std::cout << code << std::endl;

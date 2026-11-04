@@ -1,8 +1,13 @@
 #include "CgiProcess.hpp"
 
 CgiProcess::CgiProcess()
-	: _server_port(-1), _child_pid(-1), _rinfo(), _bodyWriteOffset(0)
+	: _server_port(-1), _child_pid(-1), _rinfo(), _bodyWriteOffset(0), _start_time(0)
 {
+}
+
+CgiProcess::~CgiProcess()
+{
+	killAndReap();
 }
 
 void CgiProcess::init(ParseResult const &pars_res, int server_port, const remote_info &rinfo)
@@ -10,6 +15,11 @@ void CgiProcess::init(ParseResult const &pars_res, int server_port, const remote
 	_pars_res = pars_res;
 	_server_port = server_port;
 	_rinfo = rinfo;
+
+	_cgi_vars.clear();
+	_cgi_outbox.clear();
+	_bodyWriteOffset = 0;
+	_requestBody = pars_res.request.body;
 }
 
 void CgiProcess::start()
@@ -60,6 +70,8 @@ void CgiProcess::start()
 
 		// 3. Store child pid for non-blocking waitpid(pid, status, WNOHANG)
 		_child_pid = pid;
+
+		_start_time = time(NULL);
 
 		_in_eCtx.fd = _child_to_parent.getReadFd();
 		_in_eCtx.type = CGI_IN;
@@ -113,7 +125,7 @@ void CgiProcess::populateCgiVars()
 
 	// optional
 	_cgi_vars.push_back("CONTENT_LENGTH=" + Utils::to_string(_pars_res.request.content_length));
-	std::string content_type = _pars_res.request.getHeader("Content-Type");
+	std::string content_type = _pars_res.request.getHeader("content-type");
 	if (!content_type.empty())
 	{
 		_cgi_vars.push_back("CONTENT_TYPE=" + content_type);
@@ -196,4 +208,32 @@ std::string const &CgiProcess::getRequestBody() const
 size_t &CgiProcess::getBodyWriteOffset()
 {
 	return _bodyWriteOffset;
+}
+
+bool CgiProcess::tryReap(int &status)
+{
+	if (_child_pid <= 0)
+		return true;
+	pid_t r = waitpid(_child_pid, &status, WNOHANG);
+	if (r == 0)
+		return false; // still running
+	if (r < 0)
+		status = 0; // already gone / error: treat as reaped
+	_child_pid = -1;
+	return true;
+}
+
+void CgiProcess::killAndReap()
+{
+	if (_child_pid > 0)
+	{
+		kill(_child_pid, SIGKILL);
+		waitpid(_child_pid, NULL, 0);
+		_child_pid = -1;
+	}
+}
+
+time_t CgiProcess::startTime() const
+{
+	return _start_time;
 }
