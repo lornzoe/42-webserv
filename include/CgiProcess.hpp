@@ -48,12 +48,6 @@ public:
 		virtual const char *what() const throw();
 	};
 
-	class ChildProcessException : public std::exception
-	{
-	public:
-		virtual const char *what() const throw();
-	};
-
 private:
 	int _server_port;
 	Pipe _parent_to_child;

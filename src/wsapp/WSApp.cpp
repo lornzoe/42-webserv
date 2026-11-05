@@ -456,37 +456,17 @@ int WSApp::cgi_finish(Client &cli)
 		return -1;
 	}
 
-	// Split header/body (accept "\r\n\r\n" or "\n\n")
-	std::string const &out = cgi.getOutbox();
-	size_t sep = out.find("\r\n\r\n");
-	size_t sepLen = 4;
-	size_t lf = out.find("\n\n");
-	if (lf != std::string::npos && (sep == std::string::npos || lf < sep))
-	{
-		sep = lf;
-		sepLen = 2;
-	}
-	if (sep == std::string::npos)
+	std::string resp;
+	if (!HttpResponse::buildCgiResponse(cgi.getOutbox(), resp))
 	{
 		cgi_abort(cli, 502);
 		return -1;
 	}
-
-	std::string header = out.substr(0, sep);
-	std::string body = out.substr(sep + sepLen);
-
-	int code = 200;
-	size_t pos = header.find("Status:");
-	if (pos != std::string::npos && (pos == 0 || header[pos - 1] == '\n'))
-		code = std::atoi(header.c_str() + pos + 7);
-	if (code < 100 || code > 599)
-	{
-		cgi_abort(cli, 502);
-		return -1;
-	}
+	if (cli.isStat(CLOSING)) // request had "Connection: close"
+		resp.insert(resp.find(HEADER_END), CRLF + "Connection: close");
 
 	cli.rmStat(WAIT_CGI);
-	cli.send_response(HttpResponse::buildCgiResponse(code, header, body));
+	cli.send_response(resp);
 	_pol.add(cli.fd(), EPOLLOUT, &cli.ectx());
 	return 0;
 }

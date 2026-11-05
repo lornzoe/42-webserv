@@ -206,11 +206,101 @@ std::string HttpResponse::defaultErrorBody(int code)
 	return ss.str();
 }
 
-// TODO: Remove line starting with Status:
-std::string HttpResponse::buildCgiResponse(int code, std::string const &headers, std::string const &body)
+namespace
 {
-	std::cout << code << std::endl;
-	std::cout << headers << std::endl;
-	std::cout << body << std::endl;
-	return "";
+	std::string trimWs(std::string const &s)
+	{
+		size_t start = s.find_first_not_of(" \t");
+		if (start == std::string::npos)
+			return "";
+		size_t end = s.find_last_not_of(" \t");
+		return s.substr(start, end - start + 1);
+	}
+
+	// "Status: 404 Not Found" -> 404. Returns -1 if it does not start with a 3-digit code.
+	int parseCgiStatus(std::string const &value)
+	{
+		if (value.size() < 3 || (value.size() > 3 && value[3] != ' '))
+			return -1;
+		int code = 0;
+		for (size_t i = 0; i < 3; ++i)
+		{
+			if (value[i] < '0' || value[i] > '9')
+				return -1;
+			code = code * 10 + (value[i] - '0');
+		}
+		return code;
+	}
+}
+
+/** Turns raw CGI stdout (RFC 3875 section 6) into a full HTTP response.
+ * Header lines may end in "\r\n" or "\n"; an empty line ends the headers.
+ * - Status:   sets the response code and is not forwarded.
+ * - Location: without a Status, the response is a 302.
+ * - Content-Length / Transfer-Encoding / Connection: dropped; the server
+ *   frames the body itself with Content-Length.
+ * - every other header is forwarded as-is (Set-Cookie, Cache-Control, ...).
+ * Returns false when the output is malformed; the caller should send a 502.
+ */
+bool HttpResponse::buildCgiResponse(std::string const &cgiOutput, std::string &resp)
+{
+	std::string contentType;
+	std::string extraHeaders;
+	bool hasLocation = false;
+	int code = -1;
+
+	size_t pos = 0;
+	while (true)
+	{
+		size_t nl = cgiOutput.find('\n', pos);
+		if (nl == std::string::npos)
+		{
+			LOG_DEBUG("CGI output has no blank line ending its headers");
+			return false;
+		}
+		std::string line = cgiOutput.substr(pos, nl - pos);
+		pos = nl + 1;
+		if (!line.empty() && line[line.size() - 1] == '\r')
+			line.erase(line.size() - 1);
+		if (line.empty())
+			break; // end of headers, body starts at pos
+
+		size_t colon = line.find(':');
+		if (colon == std::string::npos || colon == 0)
+		{
+			LOG_DEBUG("Malformed CGI header line: " << line);
+			return false;
+		}
+		std::string name = trimWs(line.substr(0, colon));
+		std::string value = trimWs(line.substr(colon + 1));
+		std::string key = Utils::toLowercase(name);
+
+		if (key == "status")
+		{
+			code = parseCgiStatus(value);
+			if (code < 100 || code > 599)
+			{
+				LOG_DEBUG("Invalid CGI Status header: " << value);
+				return false;
+			}
+		}
+		else if (key == "content-type")
+			contentType = value;
+		else if (key == "content-length" || key == "transfer-encoding" || key == "connection")
+			continue;
+		else
+		{
+			if (key == "location")
+				hasLocation = true;
+			if (!extraHeaders.empty())
+				extraHeaders += CRLF;
+			extraHeaders += name + ": " + value;
+		}
+	}
+
+	if (code == -1)
+		code = hasLocation ? 302 : 200;
+
+	resp = HttpResponse::build(code, contentType, cgiOutput.substr(pos), extraHeaders);
+	return true;
 }

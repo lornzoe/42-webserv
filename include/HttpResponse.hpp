@@ -24,7 +24,7 @@ namespace HttpResponse
 	std::string buildError(int code, const std::string &uri, ServerDirective const *servDir);
 	std::string buildAutoindex(const std::string &fsDir, const std::string &uriPath, const ServerDirective *servDir);
 	std::string defaultErrorBody(int code);
-	std::string buildCgiResponse(int code, std::string const &headers, std::string const &body);
+	bool buildCgiResponse(std::string const &cgiOutput, std::string &resp);
 };
 
 #endif

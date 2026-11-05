@@ -17,7 +17,7 @@ enum cli_status
 {
 	SENDING = 1 << 0,
 	CLOSING = 1 << 1,
-	WAIT_CGI
+	WAIT_CGI = 1 << 2 // must be its own bit: an implicit value (3) == SENDING | CLOSING
 };
 
 class Client

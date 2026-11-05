@@ -1,5 +1,7 @@
 #include "CgiProcess.hpp"
 
+#include <cstdlib>
+
 CgiProcess::CgiProcess()
 	: _server_port(-1), _child_pid(-1), _rinfo(), _bodyWriteOffset(0), _start_time(0)
 {
@@ -36,12 +38,16 @@ void CgiProcess::start(std::string script, std::string runner)
 	}
 
 	// Child process (Standard Blocking I/O)
+	// Never throw or return from here: an exception would unwind into
+	// WSApp::run's catch block and this child would keep running as a
+	// second copy of the server. Exit instead; the parent turns a
+	// non-zero exit status into a 502.
 	if (pid == 0)
 	{
 		if (dup2(_parent_to_child.getReadFd(), STDIN_FILENO) == -1 ||
 			dup2(_child_to_parent.getWriteFd(), STDOUT_FILENO) == -1)
 		{
-			throw ChildProcessException();
+			std::exit(1);
 		}
 
 		_parent_to_child.closeAll();
@@ -53,7 +59,7 @@ void CgiProcess::start(std::string script, std::string runner)
 		std::vector<const char *> envp = buildEnvp();
 		execve(argv[0], const_cast<char *const *>(argv), const_cast<char *const *>(envp.data()));
 
-		throw ChildProcessException();
+		std::exit(1);
 	}
 	// Parent process (Non-blocking I/O for epoll)
 	else
@@ -182,11 +188,6 @@ eventCtx &CgiProcess::get_out_ectx()
 const char *CgiProcess::ForkException::what() const throw()
 {
 	return "CgiProcess::ForkException.";
-}
-
-const char *CgiProcess::ChildProcessException::what() const throw()
-{
-	return "CgiProcess::ChildProcessException.";
 }
 
 void CgiProcess::appendOutbox(std::string const &data)
