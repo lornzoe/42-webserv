@@ -100,19 +100,19 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 		if (!text.empty())
 			result.resp = HttpResponse::build(code, "text/plain", text); // return code "text here";
 		else if (code >= 400)
-			result.resp = HttpResponse::buildError(code, req.path, &servDir); // return 404; (uses error_page)
+			result.resp = HttpResponse::buildError(code, req.path, &servDir);	// return 404; (uses error_page)
 		else
-			result.resp = HttpResponse::build(code, "", ""); // return 200; / return 204;
+			result.resp = HttpResponse::build(code, "", "");					// return 200; / return 204;
 		return result;
 	}
 
 	// if the uri doesnt have a slash but has a locdir with a slash, redirect to it
-	// for the sake of this project, deliberately avoid 301 to dodge browser complications
 	if (needsLocationSlashRedirect(req.path, servDir))
 	{
 		LOG_DEBUG("uri path of " << req.path << " has a slashed location, should send redirect");
 		std::string target = req.raw_path + '/';
-		// may need to expand to cover other types of redirects
+		if (!req.query.empty())
+			target += "?" + req.query;
 		result.resp = HttpResponse::build(301, "", "", "Location: " + target);
 		return result;
 	}
@@ -141,9 +141,6 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 			struct stat st;
 			LOG_DEBUG("Assuming autoindex route");
 			LOG_DEBUG("fsPath.c_str(): " << fsPath.c_str());
-
-			// see if this is needed, remove comment if unnecessary:
-			// 		if uri does not end with /, force 301, but no lol) to <path> with / appeneded to end 
 
 			// stat might cause a problem with alias directives
 			// remove this comment if it doesnt and is ok as-is
