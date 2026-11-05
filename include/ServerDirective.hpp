@@ -24,6 +24,7 @@
 #include "LocationDirective.hpp"
 #include "AutoindexDirective.hpp"
 #include "UploadStoreDirective.hpp"
+#include "CgiDirective.hpp"
 
 #include <vector>
 #include <string>
@@ -50,6 +51,8 @@ class ServerDirective : public BlockDirective
 		std::vector<const LocationDirective *> getLocations() const;
 		const AutoindexDirective* getAutoindex() const;
 		const UploadStoreDirective* getUploadStore() const;
+		std::vector<const CgiDirective *> getCgis() const;
+		const CgiDirective* findCgi(const std::string& path) const;
 
 		// just gonna overload to account for both...
 		bool isMatch(const std::string& host, const std::string& port) const;

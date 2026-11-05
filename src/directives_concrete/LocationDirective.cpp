@@ -45,6 +45,7 @@ LocationDirective::LocationDirective(TokenisedBlock::const_iterator& cit) : Bloc
 	requireAtMostOne<LimitExceptDirective>("location", "limit_except");
 	requireAtMostOne<AutoindexDirective>("location", "autoindex");
 	requireAtMostOne<UploadStoreDirective>("location", "upload_store");
+	CgiDirective::requireUniqueExtensions(getCgis(), "location");
 
 	// even though getResource() prefers alias,
 	// throw an error so that we won't have to deal with this ambiguity.
@@ -123,4 +124,14 @@ const AutoindexDirective *LocationDirective::getAutoindex() const
 const UploadStoreDirective *LocationDirective::getUploadStore() const
 {
     return getChild<UploadStoreDirective>();
+}
+
+std::vector<const CgiDirective *> LocationDirective::getCgis() const
+{
+	return getChildren<CgiDirective>();
+}
+
+const CgiDirective* LocationDirective::findCgi(const std::string& path) const
+{
+	return CgiDirective::find(getCgis(), path);
 }

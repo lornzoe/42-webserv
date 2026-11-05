@@ -34,12 +34,13 @@ public:
 
 	ServerDirective const &	servDir()	{ return _servDir; }
 	std::string	const &		name()		{ return _name; }
+	int						port()		{ return _port; }
 	Listener &				listener()	{ return _listener; }
 
 	client_map_t &	clients() { return _clients; }
 	Client	*		client(int fd);
 
-	Client *		addClient(int fd);
+	Client *		addClient(int fd, const remote_info &rinfo);
 	bool			rmClient(int fd);
 };
 

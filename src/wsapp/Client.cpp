@@ -4,14 +4,16 @@
 #include "w_eventCtx.hpp"
 #include "w_logger.hpp"
 
-#include <sys/socket.h>
 #include <iostream>
+#include <sys/socket.h>
+#include <sys/wait.h>
 
 // OCF ------------------------------------------------------------------------
 
 Client::Client()
 	: _server(NULL),
 	  _fd(-1),
+	  _rinfo(remote_info()),
 	  _eCtx(eventCtx()),
 	  _status(0),
 	  _outPend(0),
@@ -23,6 +25,7 @@ Client::Client()
 Client::Client(Client const &other)
 	: _server(NULL),
 	  _fd(-1),
+	  _rinfo(remote_info()),
 	  _eCtx(eventCtx()),
 	  _status(0),
 	  _outPend(0),
@@ -38,11 +41,12 @@ Client &Client::operator=(Client const &other)
 		return *this;
 	_server = NULL;
 	_fd = -1;
+	_rinfo = remote_info();
 	_eCtx = eventCtx();
 	_status = 0;
 	_outPend = 0;
 	_outCursor = 0;
-	_last_activity_time = time(NULL);
+	refresh_last_activity_time();
 	return *this;
 }
 
@@ -55,7 +59,7 @@ Client::~Client()
 
 // ----------------------------------------------------------------------------
 
-void Client::initClient(Server &server, int fd)
+void Client::initClient(Server &server, int fd, const remote_info &rinfo)
 {
 	if (_fd != -1)
 	{
@@ -64,6 +68,7 @@ void Client::initClient(Server &server, int fd)
 	}
 	_server = &server;
 	_fd = fd;
+	_rinfo = rinfo;
 
 	_eCtx.fd = _fd;
 	_eCtx.type = SCK_CLIENT;
@@ -85,6 +90,7 @@ ssize_t Client::recv1()
 		_inbox.append(buf, bytesRd);
 		if (bytesRd < 4096)
 			buf[bytesRd] = '\0';
+		refresh_last_activity_time();
 	}
 
 	return bytesRd;
@@ -105,16 +111,10 @@ ReqProc::status Client::process_request(ParseResult const &pars_res)
 			resp_res.resp.insert(resp_res.resp.find(HEADER_END), "\r\nConnection: close");
 		send_response(resp_res.resp);
 	}
-	else
+	if (resp_res.stat == ReqProc::CGI_REQ)
 	{
-		// Some embedded CGI object?
-		// save pars_res body, set up child with meta vars & pipes
-		// have api to
-		// write body to cgi_write
-		// read cgi_out into cgi_res buf
-		// check progress
-		// etc.
-		// add stat WAIT_CGI
+		_cgi.init(pars_res, _server->port(), remote());
+		_cgi.start(resp_res.cgiScript, resp_res.cgiRunner);
 	}
 	return resp_res.stat;
 }
@@ -144,6 +144,7 @@ ssize_t Client::send1()
 	{
 		_outPend -= bytesSent;
 		_outCursor += bytesSent;
+		refresh_last_activity_time();
 	}
 	if (_outPend == 0)
 	{
@@ -162,4 +163,9 @@ time_t Client::get_last_activity_time()
 void Client::refresh_last_activity_time()
 {
 	_last_activity_time = time(NULL);
+}
+
+CgiProcess &Client::get_cgi_process()
+{
+	return _cgi;
 }

@@ -11,6 +11,7 @@
 /* ************************************************************************** */
 
 #include "MimeTypes.hpp"
+#include "Utils.hpp"
 #include <map>
 
 namespace {
@@ -69,10 +70,6 @@ namespace MimeTypes {
 
     const std::string &forPath(const std::string &resource_path)
 	{
-		std::size_t dot = resource_path.rfind('.');
-		if (dot == std::string::npos)
-			return forExtn("");
-
-		return forExtn(resource_path.substr(dot));
+		return forExtn(Utils::getExtension(resource_path));
 	}
 }

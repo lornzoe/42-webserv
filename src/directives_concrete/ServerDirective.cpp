@@ -53,6 +53,7 @@ ServerDirective::ServerDirective(TokenisedBlock::const_iterator& cit) : BlockDir
 	requireAtMostOne<ServerNameDirective>("server", "server_name");
 	requireAtMostOne<AutoindexDirective>("server", "autoindex");
 	requireAtMostOne<UploadStoreDirective>("server", "upload_store");
+	CgiDirective::requireUniqueExtensions(getCgis(), "server");
 }
 
 ServerDirective::~ServerDirective()
@@ -129,6 +130,16 @@ const AutoindexDirective *ServerDirective::getAutoindex() const
 const UploadStoreDirective *ServerDirective::getUploadStore() const
 {
     return getChild<UploadStoreDirective>();
+}
+
+std::vector<const CgiDirective *> ServerDirective::getCgis() const
+{
+	return getChildren<CgiDirective>();
+}
+
+const CgiDirective* ServerDirective::findCgi(const std::string& path) const
+{
+	return CgiDirective::find(getCgis(), path);
 }
 
 const LocationDirective*	ServerDirective::matchLocation(

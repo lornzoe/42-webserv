@@ -8,6 +8,7 @@
 #include <csignal>
 #include <vector>
 #include <map>
+#include <cerrno>
 
 class WSApp
 {
@@ -28,11 +29,20 @@ private:
 
 	int hndl_Lis(eventCtx *ctx);
 	int hndl_Cli(eventCtx *ctx, uint32_t events);
+	int handle_cgi_in(eventCtx *ctx);
+	int handle_cgi_out(eventCtx *ctx);
+
+	Client *findCgiClient(CgiProcess &cgi_process);
 
 	WSApp(WSApp const &other);
 	WSApp &operator=(WSApp const &other);
 
 	static const int TIMEOUT_SECOND;
+	static const int CGI_TIMEOUT_SECOND;
+
+	void cgi_cleanup(CgiProcess &cgi);
+	void cgi_abort(Client &cli, int code);
+	int cgi_finish(Client &cli);
 
 public:
 	WSApp();

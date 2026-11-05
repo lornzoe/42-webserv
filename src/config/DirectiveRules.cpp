@@ -25,6 +25,7 @@
 #include "LimitExceptDirective.hpp"
 #include "AutoindexDirective.hpp"
 #include "UploadStoreDirective.hpp"
+#include "CgiDirective.hpp"
 #include <map>
 
 namespace {
@@ -70,6 +71,7 @@ namespace {
             allowedMap["error_page"]            = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<ErrorPageDirective>);
             allowedMap["autoindex"]             = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<AutoindexDirective>);
             allowedMap["upload_store"]          = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<UploadStoreDirective>);
+            allowedMap["cgi"]                   = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<CgiDirective>);
 
             allowedMap["return"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_LOCATION, &createDirective<ReturnDirective>);
         }
