@@ -74,29 +74,22 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 
 	if (locDir && locDir->getReturn())
 	{
-		//redirect
-			// resp avail imme diately
-			// resp code: rdir.getCode()
-			// resp location: rdir.getBody()
 		int code = locDir->getReturn()->getCode();
 		if (code >= 300 && code < 400)
 		{
 			std::string url = locDir->getReturn()->getBody();
 			switch(code)
 			{
-				case 301:
-				case 302:
+				case 301: // permanent redirect; client may switch to GET
+				case 302: // temporary redirect; client may switch to GET
+				case 303: // see other
+				case 307: // temporary redirect + carryover method
+				case 308: // permanent redirect + carryover method
 					LOG_DEBUG("Redirecting request to: " << url << " with status code: " << code);
-					//does single additional header require \r\n?
 					result.resp = HttpResponse::build(code, "", "", "Location: " + url);
 					return result;
-				case 303:
-				case 304:
-				case 307:
-				case 308:
-					break;
 				default:
-					LOG_WARN("Return directive with code " << code << " is not a valid redirection code. Returning error 500 instead.");
+					LOG_WARN("Return directive with code " << code << " is an unsupported code. Returning error 500 instead.");
 					result.resp = HttpResponse::buildError(500, "", &servDir);
 					return result;
 			}
