@@ -33,7 +33,8 @@ DIRECTIVES_CONC_SRC_DIR =	$(SRC_DIR)/directives_concrete
 DIRECTIVES_CONC_SRC_BASE =	ServerDirective  ServerNameDirective  ListenDirective	\
 	LocationDirective  AliasDirective  RootDirective  IndexDirective				\
 	LimitExceptDirective  ReturnDirective  ErrorPageDirective						\
-	ClientMaxBodySizeDirective  AutoindexDirective UploadStoreDirective				
+	ClientMaxBodySizeDirective  AutoindexDirective UploadStoreDirective				\
+	CgiDirective
 DIRECTIVES_CONC_SRC_FILES =	$(addsuffix .cpp, $(DIRECTIVES_CONC_SRC_BASE))
 
 WSAPP_SRC_DIR =		$(SRC_DIR)/wsapp

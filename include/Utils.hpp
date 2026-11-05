@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Utils.hpp                                          :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
+/*   By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/13 20:20:12 by ypua              #+#    #+#             */
-/*   Updated: 2026/10/18 16:48:30 by ypua             ###   ########.fr       */
+/*   Updated: 2026/11/05 18:34:11 by ypua             ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,10 @@ namespace Utils
 	bool readFile(const std::string &path, std::string &body);
 	bool saveFile(std::string const &dirPath, std::string const &fname, std::string const &content);
 
-	bool normaliseUri(const std::string &uri, std::string &out);
+	bool	normaliseUri(const std::string &uri, std::string &out);
+
+	// extension of the last path segment including the dot, e.g. ".py"; empty if none
+	std::string	getExtension(const std::string &path);
 }
 
 #endif

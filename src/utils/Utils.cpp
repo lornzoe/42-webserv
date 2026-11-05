@@ -267,3 +267,15 @@ bool Utils::normaliseUri(const std::string &uri, std::string &out)
 		out += '/';
 	return true;
 }
+
+std::string	Utils::getExtension(const std::string &path)
+{
+	std::size_t	slash = path.rfind('/');
+	std::size_t	start = (slash == std::string::npos) ? 0 : slash + 1;
+	std::size_t	dot = path.rfind('.');
+
+	// no dot in the last segment, or a dotfile like ".bashrc"
+	if (dot == std::string::npos || dot <= start)
+		return "";
+	return path.substr(dot);
+}
