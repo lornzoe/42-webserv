@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 00:00:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/11/05 16:27:02 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/11/05 18:44:39 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,9 +37,22 @@ ReturnDirective::ReturnDirective(TokenisedBlock::const_iterator& cit) : SimpleDi
 
 	if (!HttpStat::isKnown(code))
 		throw std::runtime_error("return: unknown HTTP status code '" + code_str + "'");
+	// 1xx is informational, pls reject.
+	if (code < 200)
+		throw std::runtime_error("return: informational code " + code_str + " is not allowed");
+	// 204 (no content) shouldnt carry a body
+	if (code == 204 && args.size() == 3)
+		throw std::runtime_error("return: 204 cannot have a body");
 
 	if (args.size() == 3)
+	{
 		body = args[2];
+		// strip outer quotes if they are present
+		// tokeniser keeps them but don't need them in args
+		if (body.size() >= 2 && (body[0] == '"' || body[0] == '\'')
+			&& body[body.size() - 1] == body[0])
+			body = body.substr(1, body.size() - 2);
+	}
 
 	bool isRedirect = (code == 301 || code == 302 || code == 303
 					|| code == 307 || code == 308);

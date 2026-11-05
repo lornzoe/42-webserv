@@ -94,6 +94,16 @@ ReqProc::result		ReqProc::process(ParsedRequest const &req, ServerDirective cons
 					return result;
 			}
 		}
+		// non-redirect return
+		const std::string& text = locDir->getReturn()->getBody();
+		LOG_DEBUG("Return directive responding with status code: " << code);
+		if (!text.empty())
+			result.resp = HttpResponse::build(code, "text/plain", text); // return code "text here";
+		else if (code >= 400)
+			result.resp = HttpResponse::buildError(code, req.path, &servDir); // return 404; (uses error_page)
+		else
+			result.resp = HttpResponse::build(code, "", ""); // return 200; / return 204;
+		return result;
 	}
 
 	// if the uri doesnt have a slash but has a locdir with a slash, redirect to it
