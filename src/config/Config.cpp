@@ -225,8 +225,6 @@ namespace {
 					context_stack.push(DirectiveRules::CONTEXT_SERVER);
 				else if (dir == "location")
 					context_stack.push(DirectiveRules::CONTEXT_LOCATION);
-				else if (dir == "if")
-					context_stack.push(DirectiveRules::CONTEXT_IF);
 			}
 		}
 		return context_stack.top() == DirectiveRules::CONTEXT_MAIN;

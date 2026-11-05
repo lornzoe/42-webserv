@@ -14,7 +14,6 @@
 
 #include "ServerDirective.hpp"
 #include "LocationDirective.hpp"
-#include "IfDirective.hpp"
 #include "ListenDirective.hpp"
 #include "ServerNameDirective.hpp"
 #include "AliasDirective.hpp"
@@ -58,7 +57,6 @@ namespace {
             // block directives
             allowedMap["server"]                = DirectiveInfo(TYPE_BLOCK, CONTEXT_MAIN, &createDirective<ServerDirective>);
             allowedMap["location"]              = DirectiveInfo(TYPE_BLOCK, CONTEXT_SERVER, &createDirective<LocationDirective>);
-            allowedMap["if"]                    = DirectiveInfo(TYPE_BLOCK, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<IfDirective>);
 
             // simple directives
             allowedMap["listen"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER, &createDirective<ListenDirective>);
@@ -73,7 +71,7 @@ namespace {
             allowedMap["autoindex"]             = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<AutoindexDirective>);
             allowedMap["upload_store"]          = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<UploadStoreDirective>);
 
-            allowedMap["return"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_LOCATION | CONTEXT_IF, &createDirective<ReturnDirective>);
+            allowedMap["return"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_LOCATION, &createDirective<ReturnDirective>);
         }
         return allowedMap;
     }
