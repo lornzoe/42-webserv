@@ -43,6 +43,9 @@ namespace Utils
 	bool	saveFile(std::string const &dirPath, std::string const &fname, std::string const &content);
 
 	bool	normaliseUri(const std::string &uri, std::string &out);
+
+	// extension of the last path segment including the dot, e.g. ".py"; empty if none
+	std::string	getExtension(const std::string &path);
 }
 
 #endif
