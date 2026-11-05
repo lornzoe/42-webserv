@@ -22,7 +22,7 @@ void CgiProcess::init(ParseResult const &pars_res, int server_port, const remote
 	_requestBody = pars_res.request.body;
 }
 
-void CgiProcess::start()
+void CgiProcess::start(std::string script, std::string runner)
 {
 	if (!_parent_to_child.create() || !_child_to_parent.create())
 	{
@@ -47,9 +47,8 @@ void CgiProcess::start()
 		_parent_to_child.closeAll();
 		_child_to_parent.closeAll();
 
-		// TODO: resolve the CGI script path using server's configuration
-		// and the incoming request
-		const char *argv[] = {"/usr/bin/python3", "html/cgi/py/cgi.py", NULL};
+
+		const char *argv[] = {runner.c_str(), script.c_str(), NULL};
 
 		std::vector<const char *> envp = buildEnvp();
 		execve(argv[0], const_cast<char *const *>(argv), const_cast<char *const *>(envp.data()));

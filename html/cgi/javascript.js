@@ -1,4 +1,4 @@
-["py", "php"].forEach((cgi) => {
+["py", "pl"].forEach((cgi) => {
   const ENDPOINT = `${cgi}/cgi.${cgi}`;
 
   /** @type {HTMLFormElement} */

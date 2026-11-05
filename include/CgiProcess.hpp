@@ -22,7 +22,7 @@ public:
 	~CgiProcess();
 
 	void init(ParseResult const &pars_res, int server_port, const remote_info &rinfo);
-	void start();
+	void start(std::string script, std::string runner);
 	int getCgiReadFd() const;
 	void closeCgiReadFd();
 	int getCgiWriteFd() const;
