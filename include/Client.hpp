@@ -5,6 +5,7 @@
 #include "w_eventCtx.hpp"
 #include "HttpRequest.hpp"
 #include "ReqProc.hpp"
+#include "CgiProcess.hpp"
 
 #include <unistd.h>
 #include <string>
@@ -15,7 +16,8 @@ class Server;
 enum cli_status
 {
 	SENDING = 1 << 0,
-	CLOSING = 1 << 1
+	CLOSING = 1 << 1,
+	WAIT_CGI
 };
 
 class Client
@@ -23,6 +25,7 @@ class Client
 private:
 	Server *_server;
 	int _fd;
+	remote_info _rinfo;
 	eventCtx _eCtx;
 
 	int _status;
@@ -34,6 +37,8 @@ private:
 
 	time_t _last_activity_time;
 
+	CgiProcess _cgi;
+
 public:
 	Client();
 	~Client();
@@ -41,10 +46,11 @@ public:
 	Client(Client const &other);
 	Client &operator=(Client const &other);
 
-	void initClient(Server &server, int fd);
+	void initClient(Server &server, int fd, const remote_info &rinfo);
 
 	ServerDirective const &servDir() const;
 	Server &server() { return *_server; }
+	remote_info const &remote() const { return _rinfo; }
 	int fd() { return _fd; }
 	eventCtx &ectx() { return _eCtx; }
 
@@ -54,7 +60,7 @@ public:
 	void rmStat(int flag) { _status &= ~flag; }
 
 	ssize_t recv1();
-	ReqProc::status	process_request(ParseResult const &result);
+	ReqProc::status process_request(ParseResult const &result);
 
 	void comsume_inbox(ssize_t req_offset);
 	void send_response(std::string const &resp);
@@ -63,6 +69,7 @@ public:
 	time_t get_last_activity_time();
 	void refresh_last_activity_time();
 
+	CgiProcess &get_cgi_process();
 };
 
 #endif
