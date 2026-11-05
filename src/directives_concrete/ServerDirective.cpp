@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:44:33 by lyanga            #+#    #+#             */
-/*   Updated: 2026/09/14 16:48:22 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/11/05 16:41:41 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,6 @@ ServerDirective::ServerDirective(TokenisedBlock::const_iterator& cit) : BlockDir
 	requireAtMostOne<RootDirective>("server", "root");
 	requireAtMostOne<IndexDirective>("server", "index");
 	requireAtMostOne<ClientMaxBodySizeDirective>("server", "client_max_body_size");
-	requireAtMostOne<ReturnDirective>("server", "return");
 	requireAtMostOne<ServerNameDirective>("server", "server_name");
 	requireAtMostOne<AutoindexDirective>("server", "autoindex");
 	requireAtMostOne<UploadStoreDirective>("server", "upload_store");

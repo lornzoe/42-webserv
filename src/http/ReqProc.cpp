@@ -41,6 +41,25 @@ namespace
 		}
 		return false;
 	}
+
+	// check if uri has a respective locationdir with a '/' appended to the back
+	// e.g. /uploads -> /uploads/
+	bool needsLocationSlashRedirect(const std::string& uri, const ServerDirective& servDir)
+	{
+		std::string slashed;
+
+		if (uri.empty() || uri[uri.size() - 1] == '/')
+			return false;
+		else 
+			slashed = uri + '/';
+		std::vector<const LocationDirective*> locs = servDir.getLocations();
+		for (std::size_t i = 0; i < locs.size(); i++)
+		{
+			if (locs[i]->getPath() == slashed)
+				return true;
+		}
+		return false;
+	}
 }
 
 ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const &servDir)
@@ -56,33 +75,47 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 
 	if (locDir && locDir->getReturn())
 	{
-		// redirect
-		//  resp avail imme diately
-		//  resp code: rdir.getCode()
-		//  resp location: rdir.getBody()
 		int code = locDir->getReturn()->getCode();
 		if (code >= 300 && code < 400)
 		{
 			std::string url = locDir->getReturn()->getBody();
 			switch (code)
 			{
-			case 301:
-			case 302:
-				LOG_DEBUG("Redirecting request to: " << url << " with status code: " << code);
-				// does single additional header require \r\n?
-				result.resp = HttpResponse::build(code, "", "", "Location: " + url + "\r\n");
-				return result;
-			case 303:
-			case 304:
-			case 307:
-			case 308:
-				break;
-			default:
-				LOG_WARN("Return directive with code " << code << " is not a valid redirection code. Returning error 500 instead.");
-				result.resp = HttpResponse::buildError(500, "", &servDir);
-				return result;
+				case 301: // permanent redirect; client may switch to GET
+				case 302: // temporary redirect; client may switch to GET
+				case 303: // see other
+				case 307: // temporary redirect + carryover method
+				case 308: // permanent redirect + carryover method
+					LOG_DEBUG("Redirecting request to: " << url << " with status code: " << code);
+					result.resp = HttpResponse::build(code, "", "", "Location: " + url);
+					return result;
+				default:
+					LOG_WARN("Return directive with code " << code << " is an unsupported code. Returning error 500 instead.");
+					result.resp = HttpResponse::buildError(500, "", &servDir);
+					return result;
 			}
 		}
+		// non-redirect return
+		const std::string& text = locDir->getReturn()->getBody();
+		LOG_DEBUG("Return directive responding with status code: " << code);
+		if (!text.empty())
+			result.resp = HttpResponse::build(code, "text/plain", text); // return code "text here";
+		else if (code >= 400)
+			result.resp = HttpResponse::buildError(code, req.path, &servDir);	// return 404; (uses error_page)
+		else
+			result.resp = HttpResponse::build(code, "", "");					// return 200; / return 204;
+		return result;
+	}
+
+	// if the uri doesnt have a slash but has a locdir with a slash, redirect to it
+	if (needsLocationSlashRedirect(req.path, servDir))
+	{
+		LOG_DEBUG("uri path of " << req.path << " has a slashed location, should send redirect");
+		std::string target = req.raw_path + '/';
+		if (!req.query.empty())
+			target += "?" + req.query;
+		result.resp = HttpResponse::build(301, "", "", "Location: " + target);
+		return result;
 	}
 
 	if (!ServerDirective::resolveFsPath(servDir, req.path, locDir, fsPath))
@@ -119,9 +152,6 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 			struct stat st;
 			LOG_DEBUG("Assuming autoindex route");
 			LOG_DEBUG("fsPath.c_str(): " << fsPath.c_str());
-
-			// see if this is needed, remove comment if unnecessary:
-			// 		if uri does not end with /, force 302 (301, but no lol) to <path> with / appeneded to end
 
 			// stat might cause a problem with alias directives
 			// remove this comment if it doesnt and is ok as-is

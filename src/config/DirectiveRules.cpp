@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/24 08:04:50 by lyanga            #+#    #+#             */
-/*   Updated: 2026/09/14 16:23:35 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/11/05 16:40:41 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,6 @@
 
 #include "ServerDirective.hpp"
 #include "LocationDirective.hpp"
-#include "IfDirective.hpp"
 #include "ListenDirective.hpp"
 #include "ServerNameDirective.hpp"
 #include "AliasDirective.hpp"
@@ -59,7 +58,6 @@ namespace {
             // block directives
             allowedMap["server"]                = DirectiveInfo(TYPE_BLOCK, CONTEXT_MAIN, &createDirective<ServerDirective>);
             allowedMap["location"]              = DirectiveInfo(TYPE_BLOCK, CONTEXT_SERVER, &createDirective<LocationDirective>);
-            allowedMap["if"]                    = DirectiveInfo(TYPE_BLOCK, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<IfDirective>);
 
             // simple directives
             allowedMap["listen"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER, &createDirective<ListenDirective>);
@@ -75,7 +73,7 @@ namespace {
             allowedMap["upload_store"]          = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<UploadStoreDirective>);
             allowedMap["cgi"]                   = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION, &createDirective<CgiDirective>);
 
-            allowedMap["return"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_SERVER | CONTEXT_LOCATION | CONTEXT_IF, &createDirective<ReturnDirective>);
+            allowedMap["return"]                = DirectiveInfo(TYPE_SIMPLE, CONTEXT_LOCATION, &createDirective<ReturnDirective>);
         }
         return allowedMap;
     }
