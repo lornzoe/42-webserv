@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 00:00:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/06 02:18:54 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/11/05 16:27:02 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,6 +40,17 @@ ReturnDirective::ReturnDirective(TokenisedBlock::const_iterator& cit) : SimpleDi
 
 	if (args.size() == 3)
 		body = args[2];
+
+	bool isRedirect = (code == 301 || code == 302 || code == 303
+					|| code == 307 || code == 308);
+	// reject redirect codes that are not supported here (300, 304, 305, 306)
+	if (code >= 300 && code < 400 && !isRedirect)
+		throw std::runtime_error("return: unsupported redirect code " + code_str + " (only 301, 302, 303, 307, 308 are supported)");
+	// reject redirect codes without a destination url
+	// e.g. reject 302;
+	if (isRedirect && body.empty())
+		throw std::runtime_error("return: redirect code " + code_str + " requires a URL (e.g. 'return " + code_str + " /url/;')");
+
 }
 
 void ReturnDirective::print(int depth) const
