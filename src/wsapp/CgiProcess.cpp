@@ -1,5 +1,7 @@
 #include "CgiProcess.hpp"
 
+bool CgiProcess::s_isForkedChild = false;
+
 CgiProcess::CgiProcess()
 	: _server_port(-1), _child_pid(-1), _rinfo(), _bodyWriteOffset(0), _start_time(0)
 {
@@ -38,6 +40,7 @@ void CgiProcess::start(std::string script, std::string runner)
 	// Child process (Standard Blocking I/O)
 	if (pid == 0)
 	{
+		s_isForkedChild = true;
 		if (dup2(_parent_to_child.getReadFd(), STDIN_FILENO) == -1 ||
 			dup2(_child_to_parent.getWriteFd(), STDOUT_FILENO) == -1)
 		{
@@ -46,7 +49,6 @@ void CgiProcess::start(std::string script, std::string runner)
 
 		_parent_to_child.closeAll();
 		_child_to_parent.closeAll();
-
 
 		const char *argv[] = {runner.c_str(), script.c_str(), NULL};
 
@@ -224,6 +226,8 @@ bool CgiProcess::tryReap(int &status)
 
 void CgiProcess::killAndReap()
 {
+	if (s_isForkedChild)
+		return;
 	if (_child_pid > 0)
 	{
 		kill(_child_pid, SIGKILL);

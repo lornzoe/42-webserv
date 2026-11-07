@@ -132,12 +132,19 @@ void Client::send_response(std::string const &resp)
 	_outBox.append(resp);
 	_outPend = _outBox.size();
 	_status |= SENDING;
+	// Restart the idle clock: the response may come after a slow CGI,
+	// and the client should get the full timeout to start reading it.
+	refresh_last_activity_time();
 }
 
 ssize_t Client::send1()
 {
 	if (_outPend == 0)
+	{
+		// Nothing queued: leave SENDING or EPOLLOUT keeps firing (busy loop).
+		_status &= ~SENDING;
 		return 0;
+	}
 
 	ssize_t bytesSent = send(_fd, &_outBox[_outCursor], _outPend, MSG_NOSIGNAL);
 	if (bytesSent > 0)
