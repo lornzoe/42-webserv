@@ -75,6 +75,8 @@ private:
 	std::vector<const char *> buildEnvp();
 
 	time_t _start_time;
+
+	static bool s_isForkedChild; // Shared by every CgiProcess
 };
 
 #endif
