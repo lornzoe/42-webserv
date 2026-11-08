@@ -145,7 +145,7 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 		{
 			if (Utils::readFile(rsrc_path.second, body))
 			{
-				if (req.path == "/profile")
+				if (req.path == "/profile/")
 					SeshProfile::dynamic_fill(body, *req.sdata);
 				result.resp = HttpResponse::build(200, MimeTypes::forPath(rsrc_path.second), body);
 			}
@@ -174,11 +174,11 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 	}
 	if (req.method == "POST")
 	{
-		if (req.path == "/profile")
+		if (req.path == "/profile/")
 		{
 			SeshProfile::post_update(req.body, *req.sdata);
 			result.resp = HttpResponse::build(303, "text/html", "");
-			result.resp.insert(result.resp.find(HEADER_END), "\r\nLocation: /profile");
+			result.resp.insert(result.resp.find(HEADER_END), "\r\nLocation: /profile/");
 			return result;
 		}
 		// uploads are allowed e.g. locDir.getUpload() != NULL -- 403
