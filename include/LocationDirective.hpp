@@ -23,6 +23,7 @@
 #include "LimitExceptDirective.hpp"
 #include "AutoindexDirective.hpp"
 #include "UploadStoreDirective.hpp"
+#include "CgiDirective.hpp"
 
 #include <vector>
 
@@ -46,6 +47,8 @@ class LocationDirective : public BlockDirective
 		std::vector<const LocationDirective *> getLocations() const;
 		const AutoindexDirective* getAutoindex() const;
 		const UploadStoreDirective* getUploadStore() const;
+		std::vector<const CgiDirective *> getCgis() const;
+		const CgiDirective* findCgi(const std::string& path) const;
 };
 
 #endif

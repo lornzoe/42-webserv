@@ -6,13 +6,14 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/01 19:11:46 by lyanga            #+#    #+#             */
-/*   Updated: 2026/09/14 16:48:45 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/10/22 14:08:40 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "LocationDirective.hpp"
 #include <stdexcept>
 #include <iostream>
+#include <cctype>
 
 LocationDirective::LocationDirective(TokenisedBlock::const_iterator& cit) : BlockDirective(cit)
 {
@@ -21,6 +22,20 @@ LocationDirective::LocationDirective(TokenisedBlock::const_iterator& cit) : Bloc
 		throw std::runtime_error("location: malformed location block (first token was not 'location')");
 	if (args.size() != 2)
 		throw std::runtime_error("location: expects exactly one path argument (e.g. 'location /uploads {')");
+	if (args[1].empty())
+		throw std::runtime_error("location: path argument must not be empty");
+	if (args[1][args[1].size() - 1] != '/')
+		throw std::runtime_error("location: path argument must end with '/'");
+	if (args[1][0] != '/')
+		throw std::runtime_error("location: path argument must start with '/'");
+
+	// additional checks; path should only have alnum, and/or these permitted chars: /_-
+	for (std::size_t i = 0; i < args[1].size(); i++)
+	{
+		unsigned char c = static_cast<unsigned char>(args[1][i]);
+		if (!std::isalnum(c) && c != '/' && c != '_' && c != '-')
+			throw std::runtime_error("location: path argument can only have alphanumic, or /_- characters.");
+	}
 
 	requireAtMostOne<RootDirective>("location", "root");
 	requireAtMostOne<AliasDirective>("location", "alias");
@@ -30,6 +45,7 @@ LocationDirective::LocationDirective(TokenisedBlock::const_iterator& cit) : Bloc
 	requireAtMostOne<LimitExceptDirective>("location", "limit_except");
 	requireAtMostOne<AutoindexDirective>("location", "autoindex");
 	requireAtMostOne<UploadStoreDirective>("location", "upload_store");
+	CgiDirective::requireUniqueExtensions(getCgis(), "location");
 
 	// even though getResource() prefers alias,
 	// throw an error so that we won't have to deal with this ambiguity.
@@ -108,4 +124,14 @@ const AutoindexDirective *LocationDirective::getAutoindex() const
 const UploadStoreDirective *LocationDirective::getUploadStore() const
 {
     return getChild<UploadStoreDirective>();
+}
+
+std::vector<const CgiDirective *> LocationDirective::getCgis() const
+{
+	return getChildren<CgiDirective>();
+}
+
+const CgiDirective* LocationDirective::findCgi(const std::string& path) const
+{
+	return CgiDirective::find(getCgis(), path);
 }

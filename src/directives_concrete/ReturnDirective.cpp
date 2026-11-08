@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/27 00:00:00 by lyanga            #+#    #+#             */
-/*   Updated: 2026/08/06 02:18:54 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/11/05 18:44:39 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,9 +37,33 @@ ReturnDirective::ReturnDirective(TokenisedBlock::const_iterator& cit) : SimpleDi
 
 	if (!HttpStat::isKnown(code))
 		throw std::runtime_error("return: unknown HTTP status code '" + code_str + "'");
+	// 1xx is informational, pls reject.
+	if (code < 200)
+		throw std::runtime_error("return: informational code " + code_str + " is not allowed");
+	// 204 (no content) shouldnt carry a body
+	if (code == 204 && args.size() == 3)
+		throw std::runtime_error("return: 204 cannot have a body");
 
 	if (args.size() == 3)
+	{
 		body = args[2];
+		// strip outer quotes if they are present
+		// tokeniser keeps them but don't need them in args
+		if (body.size() >= 2 && (body[0] == '"' || body[0] == '\'')
+			&& body[body.size() - 1] == body[0])
+			body = body.substr(1, body.size() - 2);
+	}
+
+	bool isRedirect = (code == 301 || code == 302 || code == 303
+					|| code == 307 || code == 308);
+	// reject redirect codes that are not supported here (300, 304, 305, 306)
+	if (code >= 300 && code < 400 && !isRedirect)
+		throw std::runtime_error("return: unsupported redirect code " + code_str + " (only 301, 302, 303, 307, 308 are supported)");
+	// reject redirect codes without a destination url
+	// e.g. reject 302;
+	if (isRedirect && body.empty())
+		throw std::runtime_error("return: redirect code " + code_str + " requires a URL (e.g. 'return " + code_str + " /url/;')");
+
 }
 
 void ReturnDirective::print(int depth) const

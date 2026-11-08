@@ -9,7 +9,7 @@
 
 Server::Server(ServerDirective const &servDir, std::string const &host, int port)
 : _servDir(servDir), _host(host), _port(port),
-	_name("(" + host + ":" + Utils::ft_itoa(port) + ")"),
+	_name("(" + host + ":" + Utils::to_string(port) + ")"),
 	_clientMaxBodySize(52428800),
 	_listener(*this, host, port), _seshctl(*this)
 {
@@ -26,9 +26,9 @@ Server::~Server() {}
 
 // ----------------------------------------------------------------------------
 
-Client *		Server::addClient(int fd)
+Client *Server::addClient(int fd, const remote_info &rinfo)
 {
-	std::pair<client_map_t::iterator, bool>	kv;
+	std::pair<client_map_t::iterator, bool> kv;
 
 	kv = _clients.insert(std::make_pair(fd, Client()));
 	if (!kv.second)
@@ -37,14 +37,14 @@ Client *		Server::addClient(int fd)
 		close(fd);
 		return NULL;
 	}
-	kv.first->second.initClient(*this, fd);
+	kv.first->second.initClient(*this, fd, rinfo);
 	LOG_INFO("Added Client fd " << fd << " to Server " << _name);
 	return &kv.first->second;
 }
 
-//remove client from server storage
-//cleanup of client is isolated to the client object destructor
-bool		Server::rmClient(int fd)
+// remove client from server storage
+// cleanup of client is isolated to the client object destructor
+bool Server::rmClient(int fd)
 {
 	int number_erased = _clients.erase(fd);
 	if (number_erased != 1)
@@ -56,9 +56,9 @@ bool		Server::rmClient(int fd)
 	return true;
 }
 
-Client	*		Server::client(int fd)
+Client *Server::client(int fd)
 {
-	client_map_t::iterator it; 
+	client_map_t::iterator it;
 
 	it = _clients.find(fd);
 	if (it == _clients.end())

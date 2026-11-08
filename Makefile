@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
+#    By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/09/14 16:43:50 by lyanga           ###   ########.fr        #
+#    Updated: 2026/10/15 19:42:35 by ypua             ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -33,11 +33,12 @@ DIRECTIVES_CONC_SRC_DIR =	$(SRC_DIR)/directives_concrete
 DIRECTIVES_CONC_SRC_BASE =	ServerDirective  ServerNameDirective  ListenDirective	\
 	LocationDirective  AliasDirective  RootDirective  IndexDirective				\
 	LimitExceptDirective  ReturnDirective  ErrorPageDirective						\
-	ClientMaxBodySizeDirective  AutoindexDirective UploadStoreDirective				
+	ClientMaxBodySizeDirective  AutoindexDirective UploadStoreDirective				\
+	CgiDirective
 DIRECTIVES_CONC_SRC_FILES =	$(addsuffix .cpp, $(DIRECTIVES_CONC_SRC_BASE))
 
 WSAPP_SRC_DIR =		$(SRC_DIR)/wsapp
-WSAPP_SRC_BASE =	WSApp  Poller  Server  Listener  Client  SeshCtl
+WSAPP_SRC_BASE =	WSApp  Poller  Server  Listener  Client  SeshCtl  Pipe  CgiProcess
 WSAPP_SRC_FILES =	$(addsuffix .cpp, $(WSAPP_SRC_BASE))
 
 HTTP_SRC_DIR =		$(SRC_DIR)/http

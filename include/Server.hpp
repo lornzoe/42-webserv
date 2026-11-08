@@ -37,6 +37,7 @@ public:
 
 	ServerDirective const &	servDir()	{ return _servDir; }
 	std::string	const &		name()		{ return _name; }
+	int						port()		{ return _port; }
 	Listener &				listener()	{ return _listener; }
 	SeshCtl	&				seshctl()	{ return _seshctl; }
 
@@ -44,7 +45,7 @@ public:
 	Client	*		client(int fd);
 	size_t			climax() const { return _clientMaxBodySize; }
 
-	Client *		addClient(int fd);
+	Client *		addClient(int fd, const remote_info &rinfo);
 	bool			rmClient(int fd);
 };
 

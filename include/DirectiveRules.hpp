@@ -27,8 +27,7 @@ namespace DirectiveRules {
     enum Context {
         CONTEXT_MAIN     = 1 << 0, // root
         CONTEXT_SERVER   = 1 << 1, // inside a server {} block
-        CONTEXT_LOCATION = 1 << 2, // inside a location {} block
-        CONTEXT_IF       = 1 << 3  // inside an if {} block
+        CONTEXT_LOCATION = 1 << 2  // inside a location {} block
     };
 
     // constructs the concrete Directive subclass for a given directive name
