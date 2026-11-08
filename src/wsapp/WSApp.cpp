@@ -197,6 +197,7 @@ int WSApp::run()
 							LOG_DEBUG("CGI start failed: " << e.what());
 							cli.get_cgi_process().killAndReap(); // safe: does nothing if no child
 							cli.rmStat(WAIT_CGI);				 // in case it was set
+							cli.seshCGIdone();
 							cli.send_response(HttpResponse::buildError(500, res.request.path, &cli.servDir()));
 							_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
 							cli.addStat(CLOSING);
@@ -453,6 +454,7 @@ void WSApp::cgi_abort(Client &cli, int code)
 {
 	cgi_cleanup(cli.get_cgi_process());
 	cli.rmStat(WAIT_CGI);
+	cli.seshCGIdone();
 	cli.send_response(HttpResponse::buildError(code, "", &cli.servDir()));
 	_pol.add(cli.fd(), EPOLLOUT, &cli.ectx());
 	cli.addStat(CLOSING);
@@ -489,7 +491,16 @@ int WSApp::cgi_finish(Client &cli)
 	}
 	if (cli.isStat(CLOSING)) // request had "Connection: close"
 		resp.insert(resp.find(HEADER_END), CRLF + "Connection: close");
-
+	if (cli.isStat(NEWSESH))
+	{
+		sesh_data *		sdata = cli.seshData();
+		if (sdata)
+		{
+			resp.insert(resp.find(HEADER_END), CRLF + SeshCtl::set_cookie_header(sdata->sid));
+			cli.rmStat(NEWSESH);
+		}
+	}
+	cli.seshCGIdone();
 	cli.rmStat(WAIT_CGI);
 	cli.send_response(resp);
 	_pol.add(cli.fd(), EPOLLOUT, &cli.ectx());

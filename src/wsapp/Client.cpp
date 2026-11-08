@@ -133,18 +133,17 @@ ReqProc::status Client::process_request(ParseResult &pars_res)
 			resp_res.resp.insert(resp_res.resp.find(HEADER_END), "\r\nConnection: close");
 		if (isStat(NEWSESH))
 		{
-			std::string set_cookie_hdr = SeshCtl::set_cookie_header(_sdata->sid);
-			resp_res.resp.insert(resp_res.resp.find(HEADER_END), "\r\n" + set_cookie_hdr);
+			resp_res.resp.insert(resp_res.resp.find(HEADER_END), CRLF + SeshCtl::set_cookie_header(_sdata->sid));
 			rmStat(NEWSESH);
 		}
-		send_response(resp_res.resp);
 		_sdata = NULL;
+		send_response(resp_res.resp);
 	}
 	if (resp_res.stat == ReqProc::CGI_REQ)
 	{
+		_sdata->activeCGI++;
 		_cgi.init(pars_res, _server->port(), remote());
 		_cgi.start(resp_res.cgiScript, resp_res.cgiRunner);
-		_sdata->activeCGI++;
 	}
 	return resp_res.stat;
 }
@@ -205,4 +204,11 @@ void Client::refresh_last_activity_time()
 CgiProcess &Client::get_cgi_process()
 {
 	return _cgi;
+}
+
+void	Client::seshCGIdone(void)
+{
+	if (_sdata->activeCGI > 0)
+		--_sdata->activeCGI;
+	_sdata = NULL;
 }

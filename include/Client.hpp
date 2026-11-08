@@ -56,6 +56,9 @@ public:
 	int fd() { return _fd; }
 	eventCtx &ectx() { return _eCtx; }
 
+	sesh_data *	seshData() { return _sdata; }
+	void		seshCGIdone();
+
 	bool isStat(int flag) const { return ((_status & flag) == flag); }
 	void addStat(int flag) { _status |= flag; }
 	void rmStat(int flag) { _status &= ~flag; }
