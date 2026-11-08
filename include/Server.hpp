@@ -4,6 +4,7 @@
 #include "ServerDirective.hpp"
 #include "Listener.hpp"
 #include "Client.hpp"
+#include "SeshCtl.hpp"
 
 #include <string>
 #include <map>
@@ -18,9 +19,11 @@ private:
 	std::string				_host;
 	int						_port;
 	std::string				_name;
+	size_t					_clientMaxBodySize;
 
 	Listener				_listener;
 	client_map_t			_clients;
+	SeshCtl					_seshctl;
 
 	// No default construction
 	// No copying; so for container of multiple servers, use vector<Server *>
@@ -36,9 +39,11 @@ public:
 	std::string	const &		name()		{ return _name; }
 	int						port()		{ return _port; }
 	Listener &				listener()	{ return _listener; }
+	SeshCtl	&				seshctl()	{ return _seshctl; }
 
 	client_map_t &	clients() { return _clients; }
 	Client	*		client(int fd);
+	size_t			climax() const { return _clientMaxBodySize; }
 
 	Client *		addClient(int fd, const remote_info &rinfo);
 	bool			rmClient(int fd);

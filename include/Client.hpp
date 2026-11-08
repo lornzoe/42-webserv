@@ -17,7 +17,8 @@ enum cli_status
 {
 	SENDING = 1 << 0,
 	CLOSING = 1 << 1,
-	WAIT_CGI = 1 << 2
+	WAIT_CGI = 1 << 2,
+	NEWSESH = 1 << 8
 };
 
 class Client
@@ -28,14 +29,15 @@ private:
 	remote_info _rinfo;
 	eventCtx _eCtx;
 
-	int _status;
-
+	int 	_status;
+	
 	std::string _inbox;
 	std::string _outBox;
 	int _outPend;
 	int _outCursor;
 
 	time_t _last_activity_time;
+	sesh_data *		_sdata;
 
 	CgiProcess _cgi;
 
@@ -54,13 +56,17 @@ public:
 	int fd() { return _fd; }
 	eventCtx &ectx() { return _eCtx; }
 
-	std::string const &readInbox() const { return _inbox; }
+	sesh_data *	seshData() { return _sdata; }
+	void		seshCGIdone();
+
 	bool isStat(int flag) const { return ((_status & flag) == flag); }
 	void addStat(int flag) { _status |= flag; }
 	void rmStat(int flag) { _status &= ~flag; }
 
+	std::string const &readInbox() const { return _inbox; }
+
 	ssize_t recv1();
-	ReqProc::status process_request(ParseResult const &result);
+	ReqProc::status	process_request(ParseResult &result);
 
 	void comsume_inbox(ssize_t req_offset);
 	void send_response(std::string const &resp);

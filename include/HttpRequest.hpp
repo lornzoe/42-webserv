@@ -22,6 +22,8 @@
 #include "w_logger.hpp"
 #include "FileDescriptor.hpp"
 #include "HttpStat.hpp"
+#include "SeshCtl.hpp"
+
 #include "Utils.hpp"
 
 enum ParseStatus
@@ -47,8 +49,10 @@ struct ParsedRequest
 
 	std::string body;
 
-	ParsedRequest() : valid(false), content_length(0) {}
+	sesh_data *	sdata;
 
+	ParsedRequest() : valid(false), content_length(0), sdata(NULL) {}
+	
 	std::string getHeader(const std::string &key) const;
 };
 
@@ -67,7 +71,7 @@ struct ParseResult
 class HttpRequest
 {
 public:
-	static ParseResult parse_http_request(const std::string &inbox);
+	static ParseResult parse_http_request(const std::string &inbox, size_t clientMaxBody);
 };
 
 #endif

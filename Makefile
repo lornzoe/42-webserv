@@ -38,12 +38,12 @@ DIRECTIVES_CONC_SRC_BASE =	ServerDirective  ServerNameDirective  ListenDirective
 DIRECTIVES_CONC_SRC_FILES =	$(addsuffix .cpp, $(DIRECTIVES_CONC_SRC_BASE))
 
 WSAPP_SRC_DIR =		$(SRC_DIR)/wsapp
-WSAPP_SRC_BASE =	WSApp  Poller  Server  Listener  Client Pipe CgiProcess
+WSAPP_SRC_BASE =	WSApp  Poller  Server  Listener  Client  SeshCtl  Pipe  CgiProcess
 WSAPP_SRC_FILES =	$(addsuffix .cpp, $(WSAPP_SRC_BASE))
 
 HTTP_SRC_DIR =		$(SRC_DIR)/http
-HTTP_SRC_BASE =		HttpStat  HttpRequest  HttpResponse			\
-					MimeTypes  ReqProc  MultipartBody
+HTTP_SRC_BASE =		HttpStat  HttpRequest  HttpResponse  ReqProc	\
+					MimeTypes  MultipartBody  SeshProfile
 HTTP_SRC_FILES =	$(addsuffix .cpp, $(HTTP_SRC_BASE))
 
 UTILS_SRC_DIR =		$(SRC_DIR)/utils

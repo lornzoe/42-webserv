@@ -1,4 +1,5 @@
 #include "ReqProc.hpp"
+#include "SeshProfile.hpp"
 #include "MultipartBody.hpp"
 #include "w_logger.hpp"
 
@@ -70,6 +71,18 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 	result result;
 	std::string fsPath;
 
+	// Canonicalize before checking the fallback location's allowed methods.
+	if (needsLocationSlashRedirect(req.path, servDir))
+	{
+		LOG_DEBUG("uri path of " << req.path << " has a slashed location, should send redirect");
+		std::string target = req.raw_path + '/';
+		if (!req.query.empty())
+			target += "?" + req.query;
+		// Preserve the method and body when redirecting POST or DELETE.
+		result.resp = HttpResponse::build(req.method == "GET" ? 301 : 308, "", "", "Location: " + target);
+		return result;
+	}
+
 	if (locDir && locDir->getLimitExcept() && !isMtdAllowed(req, *locDir))
 		return result.resp = HttpResponse::buildError(405, req.path, &servDir), result;
 
@@ -107,17 +120,6 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 		return result;
 	}
 
-	// if the uri doesnt have a slash but has a locdir with a slash, redirect to it
-	if (needsLocationSlashRedirect(req.path, servDir))
-	{
-		LOG_DEBUG("uri path of " << req.path << " has a slashed location, should send redirect");
-		std::string target = req.raw_path + '/';
-		if (!req.query.empty())
-			target += "?" + req.query;
-		result.resp = HttpResponse::build(301, "", "", "Location: " + target);
-		return result;
-	}
-
 	if (!ServerDirective::resolveFsPath(servDir, req.path, locDir, fsPath))
 		return result.resp = HttpResponse::buildError(403, req.path, &servDir), result;
 
@@ -143,7 +145,11 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 		if (rsrc_path.first == true)
 		{
 			if (Utils::readFile(rsrc_path.second, body))
+			{
+				if (req.path == "/profile/")
+					SeshProfile::dynamic_fill(body, *req.sdata);
 				result.resp = HttpResponse::build(200, MimeTypes::forPath(rsrc_path.second), body);
+			}
 			else
 				result.resp = HttpResponse::buildError(404, req.path, &servDir);
 		}
@@ -169,6 +175,13 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 	}
 	if (req.method == "POST")
 	{
+		if (req.path == "/profile/")
+		{
+			SeshProfile::post_update(req.body, *req.sdata);
+			result.resp = HttpResponse::build(303, "text/html", "");
+			result.resp.insert(result.resp.find(HEADER_END), "\r\nLocation: /profile/");
+			return result;
+		}
 		// uploads are allowed e.g. locDir.getUpload() != NULL -- 403
 		// upload_store provided e.g. UploadDir.getPath() -- proceed as normal
 		// no upload_store in location or server means uploads are not allowed
@@ -187,7 +200,7 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 		}
 		std::map<std::string, std::string>::const_iterator cit;
 		cit = req.headers.find("content-type");
-		if (cit->second.find("multipart/form-data") != 0)
+		if (cit == req.headers.end() || cit->second.find("multipart/form-data") != 0)
 		{
 			result.resp = HttpResponse::buildError(415, req.path, &servDir);
 			return result;

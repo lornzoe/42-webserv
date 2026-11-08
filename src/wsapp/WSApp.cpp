@@ -11,6 +11,7 @@
 #include <sstream>
 #include <sys/stat.h>
 #include <csignal>
+#include <ctime>
 
 namespace
 {
@@ -25,7 +26,7 @@ namespace
 
 }
 
-const int WSApp::TIMEOUT_SECOND = 5;
+const int WSApp::CLIENT_TIMEOUT_SEC = 5;
 const int WSApp::CGI_TIMEOUT_SECOND = 10;
 
 // OCF ------------------------------------------------------------------------
@@ -54,6 +55,8 @@ int WSApp::run()
 	signal(SIGINT, sigint_handler);
 	signal(SIGPIPE, SIG_IGN);
 	ep_regisListeners();
+	std::time_t	last_sesh_cleanup = std::time(NULL);
+
 	while (!g_shutdownRequest)
 	{
 		ep_wait();
@@ -115,7 +118,7 @@ int WSApp::run()
 				}
 
 				if (!cli.isStat(CLOSING) &&
-					time(NULL) - cli.get_last_activity_time() >= TIMEOUT_SECOND)
+					time(NULL) - cli.get_last_activity_time() >= CLIENT_TIMEOUT_SEC)
 				{
 					if (cli.isStat(SENDING))
 					{
@@ -136,13 +139,13 @@ int WSApp::run()
 				std::string const &inbox = cli.readInbox();
 				if (inbox.size() > 0 && !cli.isStat(SENDING))
 				{
-					ParseResult res = HttpRequest::parse_http_request(inbox);
+					ParseResult res = HttpRequest::parse_http_request(inbox, s.climax());
 					LOG_DEBUG("Parsed HTTP request with status: " << res.status);
 					if (res.status == INCOMPLETE)
 					{
 						LOG_DEBUG("HTTP request is incomplete, waiting for more data.");
 						time_t current_time = time(NULL);
-						if (current_time - cli.get_last_activity_time() >= TIMEOUT_SECOND)
+						if (current_time - cli.get_last_activity_time() >= CLIENT_TIMEOUT_SEC)
 						{
 							LOG_DEBUG("TIMEOUT FOR CLIENT " << cli.fd());
 							cli.send_response(HttpResponse::buildError(res.errorCode, res.request.path, &cli.servDir()));
@@ -194,6 +197,7 @@ int WSApp::run()
 							LOG_DEBUG("CGI start failed: " << e.what());
 							cli.get_cgi_process().killAndReap(); // safe: does nothing if no child
 							cli.rmStat(WAIT_CGI);				 // in case it was set
+							cli.seshCGIdone();
 							cli.send_response(HttpResponse::buildError(500, res.request.path, &cli.servDir()));
 							_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
 							cli.addStat(CLOSING);
@@ -204,6 +208,7 @@ int WSApp::run()
 			}
 			++it;
 		}
+		sesh_cleanup(last_sesh_cleanup);
 	}
 	return 0;
 }
@@ -238,6 +243,23 @@ int WSApp::ep_wait()
 	_epRes.epEv = _pol.rdy_events();
 
 	return _epRes.n;
+}
+
+void	WSApp::sesh_cleanup(std::time_t &last_sesh_cleanup)
+{
+	std::time_t		time_now = std::time(NULL);
+
+	if (std::difftime(time_now, last_sesh_cleanup) >= SESH_TIMEOUT_SEC)
+	{
+		LOG_DEBUG("Running session cleanup check");
+		std::vector<Server *>::iterator it = _servs.begin();
+		while (it != _servs.end())
+		{
+			(**it).seshctl().clear_expired();
+			++it;
+		}
+		last_sesh_cleanup = time_now;
+	}
 }
 
 int WSApp::hndl_Lis(eventCtx *ctx)
@@ -432,6 +454,7 @@ void WSApp::cgi_abort(Client &cli, int code)
 {
 	cgi_cleanup(cli.get_cgi_process());
 	cli.rmStat(WAIT_CGI);
+	cli.seshCGIdone();
 	cli.send_response(HttpResponse::buildError(code, "", &cli.servDir()));
 	_pol.add(cli.fd(), EPOLLOUT, &cli.ectx());
 	cli.addStat(CLOSING);
@@ -468,7 +491,16 @@ int WSApp::cgi_finish(Client &cli)
 	}
 	if (cli.isStat(CLOSING)) // request had "Connection: close"
 		resp.insert(resp.find(HEADER_END), CRLF + "Connection: close");
-
+	if (cli.isStat(NEWSESH))
+	{
+		sesh_data *		sdata = cli.seshData();
+		if (sdata)
+		{
+			resp.insert(resp.find(HEADER_END), CRLF + SeshCtl::set_cookie_header(sdata->sid));
+			cli.rmStat(NEWSESH);
+		}
+	}
+	cli.seshCGIdone();
 	cli.rmStat(WAIT_CGI);
 	cli.send_response(resp);
 	_pol.add(cli.fd(), EPOLLOUT, &cli.ectx());
