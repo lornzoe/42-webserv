@@ -71,6 +71,18 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 	result result;
 	std::string fsPath;
 
+	// Canonicalize before checking the fallback location's allowed methods.
+	if (needsLocationSlashRedirect(req.path, servDir))
+	{
+		LOG_DEBUG("uri path of " << req.path << " has a slashed location, should send redirect");
+		std::string target = req.raw_path + '/';
+		if (!req.query.empty())
+			target += "?" + req.query;
+		// Preserve the method and body when redirecting POST or DELETE.
+		result.resp = HttpResponse::build(req.method == "GET" ? 301 : 308, "", "", "Location: " + target);
+		return result;
+	}
+
 	if (locDir && locDir->getLimitExcept() && !isMtdAllowed(req, *locDir))
 		return result.resp = HttpResponse::buildError(405, req.path, &servDir), result;
 
@@ -105,17 +117,6 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 			result.resp = HttpResponse::buildError(code, req.path, &servDir);	// return 404; (uses error_page)
 		else
 			result.resp = HttpResponse::build(code, "", "");					// return 200; / return 204;
-		return result;
-	}
-
-	// if the uri doesnt have a slash but has a locdir with a slash, redirect to it
-	if (needsLocationSlashRedirect(req.path, servDir))
-	{
-		LOG_DEBUG("uri path of " << req.path << " has a slashed location, should send redirect");
-		std::string target = req.raw_path + '/';
-		if (!req.query.empty())
-			target += "?" + req.query;
-		result.resp = HttpResponse::build(301, "", "", "Location: " + target);
 		return result;
 	}
 
@@ -199,7 +200,7 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 		}
 		std::map<std::string, std::string>::const_iterator cit;
 		cit = req.headers.find("content-type");
-		if (cit->second.find("multipart/form-data") != 0)
+		if (cit == req.headers.end() || cit->second.find("multipart/form-data") != 0)
 		{
 			result.resp = HttpResponse::buildError(415, req.path, &servDir);
 			return result;
