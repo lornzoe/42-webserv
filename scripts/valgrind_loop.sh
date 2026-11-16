@@ -38,6 +38,9 @@ echo "CONFIGSDIR: $CONFIGSDIR"
 LOGDIR="$ROOTDIR/build/valgrind"
 echo "LOGDIR: $LOGDIR"
 
+VALGRIND_OPTS=(--leak-check=full --show-leak-kinds=all)
+echo "VALGRIND_OPTS: ${VALGRIND_OPTS[@]}" "--log-file=$LOGDIR/(config).log"
+
 rm -rf "$LOGDIR" || exit 1
 mkdir -p "$LOGDIR" || exit 1
 echo ""
@@ -49,12 +52,16 @@ for conf in "$CONFIGSDIR"/*.conf; do
     out="$ROOTDIR/build/valgrind/$name.out"
 
     # run valgrind with the config
-    timeout 5s valgrind \
-        --leak-check=full --show-leak-kinds=all \
-        --log-file="$log" "$WEBSERV" "$conf" > "$out" 2>&1
+    if  [ "$(basename "$WEBSERV")" != "webserv" ]; then
+        timeout 5s valgrind \
+        ${VALGRIND_OPTS[@]} --log-file="$log" "$WEBSERV" "$conf" > "$out" 2>&1
+    else
+        (sleep 3; echo "exit") | timeout 10s valgrind \
+        ${VALGRIND_OPTS[@]} --log-file="$log" "$WEBSERV" "$conf" > "$out" 2>&1
+    fi
 
     exitcode=$?
-    case exitcode in
+    case $exitcode in
         124) echo "valgrind timed out after 5 seconds (normal behavior)." ;;
         137) echo "valgrind was killed (did not exit on SIGINT)." ;;
         *)   echo "valgrind exited with code $exitcode." ;;

@@ -61,14 +61,12 @@ int WSApp::run()
 	// if stdin is in a terminal
 	// fill in std eventctx, add it to epoll watching for epollin
 	//  if the add fails, mark the ctx as unused 
-	if (isatty(STDIN_FILENO))
-	{
-		_stdinCtx.fd = STDIN_FILENO;
-		_stdinCtx.type = CONSOLE;
-		_stdinCtx.owner = this;
-		if (_pol.add(STDIN_FILENO, EPOLLIN, &_stdinCtx) == -1)
-			_stdinCtx.fd = -1;
-	}
+	_stdinCtx.fd = STDIN_FILENO;
+	_stdinCtx.type = CONSOLE;
+	_stdinCtx.owner = this;
+	if (_pol.add(STDIN_FILENO, EPOLLIN, &_stdinCtx) == -1)
+		_stdinCtx.fd = -1;
+
 	std::time_t	last_sesh_cleanup = std::time(NULL);
 
 	while (!g_shutdownRequest)
@@ -245,8 +243,49 @@ void WSApp::addServ(ServerDirective const &servDir)
 
 void WSApp::handle_console(uint32_t events)
 {
-	char buf[1024];
+	if (events & EPOLLIN)
+	{
+		char buf[1024];
 
+		ssize_t n = read(STDIN_FILENO, buf, sizeof(buf));
+
+		if (n < 0)
+		{
+			_pol.del(STDIN_FILENO);
+			return;
+		}
+		if (n == 0)
+			return;
+
+		_consoleBuf.append(buf, n);
+
+		std::size_t newline;
+		while (newline = _consoleBuf.find('\n'), newline != std::string::npos)
+		{
+			std::string line = _consoleBuf.substr(0, newline);
+			_consoleBuf.erase(0, newline + 1);
+
+			// trim whitespace from line
+			line.erase(0, line.find_first_not_of(" \t\r\n"));
+			line.erase(line.find_last_not_of(" \t\r\n") + 1);
+
+			if (line == "exit")
+			{
+				// shutdown flag
+				g_shutdownRequest = true;
+				return;
+			}
+			else if (!line.empty())
+			{
+				std::cout << "unknown command. available command(s): exit" << std::endl;
+			}
+		}
+
+	// guard against large input w/o newlines 
+	if (_consoleBuf.size() > 1024)
+    	_consoleBuf.clear();
+	}
+	
 	// if events has HUP or ERR:
     // remove fd 0 from epoll and return
 	if (events & (EPOLLHUP | EPOLLERR))
@@ -254,43 +293,6 @@ void WSApp::handle_console(uint32_t events)
 		_pol.del(STDIN_FILENO);
 		return;
 	}
-
-	ssize_t n = read(STDIN_FILENO, buf, sizeof(buf));
-
-	if (n < 0)
-	{
-		_pol.del(STDIN_FILENO);
-		return;
-	}
-	if (n == 0)
-		return;
-
-	_consoleBuf.append(buf, n);
-
-	std::size_t newline;
-	while (newline = _consoleBuf.find('\n'), newline != std::string::npos)
-	{
-		std::string line = _consoleBuf.substr(0, newline);
-		_consoleBuf.erase(0, newline + 1);
-
-		// trim whitespace from line
-		line.erase(0, line.find_first_not_of(" \t\r\n"));
-		line.erase(line.find_last_not_of(" \t\r\n") + 1);
-
-		if (line == "exit")
-		{
-			// shutdown flag
-			g_shutdownRequest = true;
-			return;
-		}
-		else if (!line.empty())
-		{
-			std::cout << "unknown command. available command(s): exit" << std::endl;
-		}
-	}
-	// guard against large input w/o newlines 
-	if (_consoleBuf.size() > 1024)
-    	_consoleBuf.clear();
 }
 
 // to check return from epoll add
