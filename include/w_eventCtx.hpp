@@ -8,7 +8,8 @@ enum e_type {
 	SCK_LISTENER,
 	SCK_CLIENT,
 	CGI_IN,
-	CGI_OUT
+	CGI_OUT,
+	CONSOLE
 };
 
 struct eventCtx
