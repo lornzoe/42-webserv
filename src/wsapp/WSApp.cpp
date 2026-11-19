@@ -417,10 +417,6 @@ int WSApp::handle_cgi_in(eventCtx *ctx)
 		return cgi_finish(*client);
 	}
 
-	// No data is currently available, wait for the next readiness notification
-	if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
-		return 0;
-
 	// A genuine read error occurred.
 	cgi_abort(*client, 502);
 
@@ -463,12 +459,6 @@ int WSApp::handle_cgi_out(eventCtx *ctx)
 		}
 
 		return 0;
-	}
-
-	if (bytes_written == -1)
-	{
-		if (errno == EAGAIN || errno == EWOULDBLOCK || errno == EINTR)
-			return 0;
 	}
 
 	// write() returned 0 unexpectedly, or a non-retryable error occurred.
