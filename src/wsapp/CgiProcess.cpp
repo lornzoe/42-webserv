@@ -143,7 +143,7 @@ void CgiProcess::populateCgiVars()
 	_cgi_vars.push_back("SERVER_SOFTWARE=webserv");
 
 	// optional
-	_cgi_vars.push_back("CONTENT_LENGTH=" + Utils::to_string(_pars_res.request.content_length));
+	_cgi_vars.push_back("CONTENT_LENGTH=" + Utils::to_string(_requestBody.size()));
 	std::string content_type = _pars_res.request.getHeader("content-type");
 	if (!content_type.empty())
 	{
