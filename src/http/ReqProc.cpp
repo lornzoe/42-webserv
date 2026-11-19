@@ -231,9 +231,9 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 		int code;
 
 		if (stat(fsPath.c_str(), &st) == -1)
-			code = 204;
+			code = 404;
 		else if (S_ISREG(st.st_mode))
-			code = std::remove(fsPath.c_str()) == 0 ? 200 : 403;
+			code = std::remove(fsPath.c_str()) == 0 ? 204 : 403;
 		else
 			code = 403;
 
