@@ -46,7 +46,7 @@
 <tr><td>DELETE missing file</td><td><a href="/playground/?method=DELETE&amp;path=/storage/nope.txt">Try</a></td><td><span class="chip err">404</span></td></tr>
 <tr><td>Unknown method</td><td><a href="/playground/?method=FOO&amp;path=/">Try</a></td><td><span class="chip err">501</span></td></tr>
 <tr><td>Upload not multipart</td><td><a href="/playground/?method=POST&amp;path=/storage/&amp;type=text/plain&amp;body=hi">Try</a></td><td><span class="chip err">415</span></td></tr>
-<tr><td>POST, no upload_store</td><td><a href="/playground/?method=POST&amp;path=/&amp;type=text/plain&amp;body=hi">Try</a></td><td><span class="chip err">403</span></td></tr>
+<tr><td>POST, no upload_store</td><td><a href="/playground/?method=POST&amp;path=/limits/&amp;type=text/plain&amp;body=hi">Try</a></td><td><span class="chip err">403</span></td></tr>
 </table>
 
 <h2>Body size limit</h2>

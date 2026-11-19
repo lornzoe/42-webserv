@@ -11,19 +11,20 @@ Root `showcase/www`, body limit 10m, custom error pages, CGI for `.py` and `.pl`
 
 | Location | Methods | Purpose | Verify |
 |---|---|---|---|
-| `/` | GET POST DELETE | Landing page listing every feature; also serves the folders below that have no location of their own | Browser: open `http://localhost:8080/` |
+| `/` | GET | Landing page listing every feature; also serves the folders below that have no location of their own (read-only) | Browser: open `http://localhost:8080/` |
 | `/static/` | (via `/`) | Sample files for MIME types (jpg, txt, json, csv, svg, webp) | `curl -s -D- -o /dev/null $H/static/sample.json \| grep -i content-type` → `application/json` |
 | `/playground/` | (via `/`) | Request tester: send any method/path/body, see status + headers | Browser: `/playground/`, click a preset button |
 | `/uploads/` | (via `/`) | Upload page: multi-file upload, list and delete (targets `/storage/`) | Browser: `/uploads/`, upload two files, tick them, Delete selected |
-| `/cgi/` | (via `/`) | Python + Perl list apps and the CGI demo scripts | Browser: `/cgi/`, add and remove an item in each list |
+| `/cgi/` | GET POST | CGI demo scripts (`env.py`, `echo.py`, `status.py`, …); other files here are read-only | `curl -X POST --data hi $H/cgi/echo.py` → `method: POST` |
+| `/cgi/py/`, `/cgi/pl/` | GET POST DELETE | Python + Perl list apps (DELETE removes a list item via CGI) | Browser: `/cgi/`, add and remove an item in each list |
 | `/errors/` | (via `/`) | The custom error pages | `curl $H/errors/404.html` (served as a normal page, 200) |
 | `/files/` | GET | Directory listing (`autoindex on`) | Browser: `/files/` shows "Index of /files/" |
-| `/noindex/` | GET POST DELETE | `autoindex off` and no index → 403 | `curl -i $H/noindex/` → 403 |
-| `/multi-index/` | GET POST DELETE | Index fallback: `index index.html home.htm` serves `home.htm` | `curl $H/multi-index/` → "home.htm" page |
+| `/noindex/` | GET | `autoindex off` and no index → 403 | `curl -i $H/noindex/` → 403 |
+| `/multi-index/` | GET | Index fallback: `index index.html home.htm` serves `home.htm` | `curl $H/multi-index/` → "home.htm" page |
 | `/gallery/` | GET | `alias` to `showcase/www/static/`, with listing | `curl -s -D- -o /dev/null $H/gallery/felis.jpg` → 200 `image/jpeg` |
 | `/docs/` | GET | `root showcase/www/files`, so `/docs/x` → `files/docs/x` | `curl $H/docs/guide.txt` |
 | `/readonly/` | GET | POST/DELETE → 405 | `curl -i -X DELETE $H/readonly/keep-me.txt` → 405 |
-| `/private/` | GET POST DELETE | Location-level `error_page 404` overriding the server's | `curl $H/private/missing` → "404 Not Found (private)" |
+| `/private/` | GET | Location-level `error_page 404` overriding the server's | `curl $H/private/missing` → "404 Not Found (private)" |
 | `/storage/` | GET POST DELETE | `upload_store` target (20m), listed with autoindex | `curl -i -F f=@/etc/hostname $H/storage/` → 201, then `curl -i -X DELETE $H/storage/hostname` → 200 |
 | `/tiny-upload/` | POST | Same store, 1k limit → 413 for larger uploads | `head -c 3000 /dev/urandom > /tmp/b; curl -i -F f=@/tmp/b $H/tiny-upload/` → 413 |
 | `/limits/` | GET POST | 100-byte body limit, POST to `/limits/echo.py` | `curl -i --data "$(printf 'x%.0s' {1..200})" $H/limits/echo.py` → 413 |
@@ -74,7 +75,8 @@ Root `showcase/www-b`, body limit 1k, **no** `error_page` (built-in error pages)
 | DELETE missing | `curl -i -X DELETE $H/storage/nope` | 404 |
 | Unknown method | `curl -i -X FOO $H/` | 501 |
 | Wrong upload type | `curl -i -X POST -H "Content-Type: text/plain" --data hi $H/storage/` | 415 |
-| No upload_store | `curl -i -X POST --data hi $H/` | 403 |
+| No upload_store | `curl -i -X POST --data hi $H/limits/` | 403 |
+| Static files can't be deleted | `curl -i -X DELETE $H/static/sample.txt` | 405 |
 | HTTP/1.0 | `printf 'GET / HTTP/1.0\r\n\r\n' \| nc localhost 8080` | 200 |
 | No Host | `printf 'GET / HTTP/1.1\r\n\r\n' \| nc localhost 8080` | 400 |
 | Bad request line | `printf 'HELLO\r\n\r\n' \| nc localhost 8080` | 400 |
