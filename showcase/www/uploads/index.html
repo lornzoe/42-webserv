@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Uploads — webserv</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+<a href="/">← Showcase</a>
+<h1>Upload &amp; delete</h1>
+
+<div class="panel">
+	<input id="files" type="file" multiple>
+	<select id="target">
+		<option value="/storage/">/storage/ (20 MiB)</option>
+		<option value="/tiny-upload/">/tiny-upload/ (1 KiB)</option>
+	</select>
+	<button class="primary" id="upload">Upload</button>
+	<span id="upload-result"></span>
+</div>
+
+<div class="panel">
+	<h2>Files in <a href="/storage/">/storage/</a></h2>
+	<div id="list"></div>
+	<p><button id="delete">Delete selected</button> <span id="delete-result"></span></p>
+</div>
+</main>
+
+<script>
+	var $ = function (id) { return document.getElementById(id); };
+
+	$("upload").onclick = function () {
+		var form = new FormData();
+		for (var i = 0; i < $("files").files.length; ++i)
+			form.append("file", $("files").files[i]);
+		fetch($("target").value, { method: "POST", body: form })
+			.then(function (res) { $("upload-result").textContent = res.status + " " + res.statusText; })
+			.catch(function () { $("upload-result").textContent = "connection closed (body too large?)"; })
+			.then(load);
+	};
+
+	// Read the file list from the autoindex page.
+	function load() {
+		fetch("/storage/", { cache: "no-store" }).then(function (r) { return r.text(); }).then(function (html) {
+			var links = new DOMParser().parseFromString(html, "text/html").querySelectorAll("a");
+			$("list").innerHTML = "";
+			links.forEach(function (a) {
+				var href = a.getAttribute("href");
+				var name = href.split("/").pop();
+				if (!name || name[0] === ".") return; // folders, .gitkeep
+				$("list").insertAdjacentHTML("beforeend",
+					'<label><input type="checkbox" value="' + href + '"> <a href="' + href + '">' + name + "</a></label><br>");
+			});
+			if (!$("list").innerHTML) $("list").textContent = "No files yet.";
+		});
+	}
+
+	$("delete").onclick = function () {
+		var checked = $("list").querySelectorAll("input:checked");
+		Promise.all(Array.prototype.map.call(checked, function (cb) {
+			return fetch(cb.value, { method: "DELETE" }).then(function (r) { return r.status; });
+		})).then(function (codes) {
+			$("delete-result").textContent = "DELETE → " + codes.join(", ");
+			load();
+		});
+	};
+
+	load();
+</script>
+</body>
+</html>

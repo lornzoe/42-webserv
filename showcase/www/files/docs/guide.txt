@@ -1,0 +1,1 @@
+reachable as /files/docs/guide.txt and /docs/guide.txt
