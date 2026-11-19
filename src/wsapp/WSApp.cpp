@@ -163,7 +163,9 @@ int WSApp::run()
 						if (current_time - cli.get_last_activity_time() >= CLIENT_TIMEOUT_SEC)
 						{
 							LOG_DEBUG("TIMEOUT FOR CLIENT " << cli.fd());
-							cli.send_response(HttpResponse::buildError(res.errorCode, res.request.path, &cli.servDir()));
+							std::string resp = HttpResponse::buildError(res.errorCode, res.request.path, &cli.servDir());
+							HttpResponse::addHeader(resp, "Connection: close");
+							cli.send_response(resp);
 							_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
 							cli.addStat(CLOSING);
 						}
@@ -171,7 +173,9 @@ int WSApp::run()
 					else if (res.status == INVALID)
 					{
 						LOG_DEBUG("HTTP request is invalid, sending error response with code: " << res.errorCode);
-						cli.send_response(HttpResponse::buildError(res.errorCode, res.request.path, &cli.servDir()));
+						std::string resp = HttpResponse::buildError(res.errorCode, res.request.path, &cli.servDir());
+						HttpResponse::addHeader(resp, "Connection: close");
+						cli.send_response(resp);
 						_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
 						cli.addStat(CLOSING);
 					}
@@ -213,7 +217,9 @@ int WSApp::run()
 							cli.get_cgi_process().killAndReap(); // safe: does nothing if no child
 							cli.rmStat(WAIT_CGI);				 // in case it was set
 							cli.seshCGIdone();
-							cli.send_response(HttpResponse::buildError(500, res.request.path, &cli.servDir()));
+							std::string resp = HttpResponse::buildError(500, res.request.path, &cli.servDir());
+							HttpResponse::addHeader(resp, "Connection: close");
+							cli.send_response(resp);
 							_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
 							cli.addStat(CLOSING);
 						}
@@ -524,7 +530,9 @@ void WSApp::cgi_abort(Client &cli, int code)
 	cgi_cleanup(cli.get_cgi_process());
 	cli.rmStat(WAIT_CGI);
 	cli.seshCGIdone();
-	cli.send_response(HttpResponse::buildError(code, "", &cli.servDir()));
+	std::string resp = HttpResponse::buildError(code, "", &cli.servDir());
+	HttpResponse::addHeader(resp, "Connection: close");
+	cli.send_response(resp);
 	_pol.add(cli.fd(), EPOLLOUT, &cli.ectx());
 	cli.addStat(CLOSING);
 }
@@ -559,13 +567,13 @@ int WSApp::cgi_finish(Client &cli)
 		return -1;
 	}
 	if (cli.isStat(CLOSING)) // request had "Connection: close"
-		resp.insert(resp.find(HEADER_END), CRLF + "Connection: close");
+		HttpResponse::addHeader(resp, "Connection: close");
 	if (cli.isStat(NEWSESH))
 	{
 		sesh_data *		sdata = cli.seshData();
 		if (sdata)
 		{
-			resp.insert(resp.find(HEADER_END), CRLF + SeshCtl::set_cookie_header(sdata->sid));
+			HttpResponse::addHeader(resp, SeshCtl::set_cookie_header(sdata->sid));
 			cli.rmStat(NEWSESH);
 		}
 	}

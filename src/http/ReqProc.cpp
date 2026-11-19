@@ -179,7 +179,7 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 		{
 			SeshProfile::post_update(req.body, *req.sdata);
 			result.resp = HttpResponse::build(303, "text/html", "");
-			result.resp.insert(result.resp.find(HEADER_END), "\r\nLocation: /profile/");
+			HttpResponse::addHeader(result.resp, "Location: /profile/");
 			return result;
 		}
 		// uploads are allowed e.g. locDir.getUpload() != NULL -- 403

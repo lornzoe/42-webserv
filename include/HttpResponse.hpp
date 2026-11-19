@@ -9,6 +9,7 @@ namespace HttpResponse
 {
 	std::string build(int code, const std::string &contentType, const std::string &body,
 					  const std::string additionalHeaders = "");
+	void addHeader(std::string &resp, const std::string &header);
 	std::string buildError(int code, const std::string &uri, ServerDirective const *servDir);
 	std::string buildAutoindex(const std::string &fsDir, const std::string &uriPath, const ServerDirective *servDir);
 	std::string defaultErrorBody(int code);

@@ -130,10 +130,10 @@ ReqProc::status Client::process_request(ParseResult &pars_res)
 	if (resp_res.stat == ReqProc::RESP_RDY)
 	{
 		if (isStat(CLOSING))
-			resp_res.resp.insert(resp_res.resp.find(HEADER_END), "\r\nConnection: close");
+			HttpResponse::addHeader(resp_res.resp, "Connection: close");
 		if (isStat(NEWSESH))
 		{
-			resp_res.resp.insert(resp_res.resp.find(HEADER_END), CRLF + SeshCtl::set_cookie_header(_sdata->sid));
+			HttpResponse::addHeader(resp_res.resp, SeshCtl::set_cookie_header(_sdata->sid));
 			rmStat(NEWSESH);
 		}
 		_sdata = NULL;

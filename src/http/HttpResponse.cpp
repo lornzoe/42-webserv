@@ -44,6 +44,10 @@ std::string HttpResponse::build(int code, const std::string &contentType, const 
 	return ss.str();
 }
 
+void	HttpResponse::addHeader(std::string &resp, const std::string &header) {
+	resp.insert(resp.find(HEADER_END), CRLF + header);
+}
+
 // Looks up a configured custom error page for the given uri/code and, when one
 // exists and can be read, fills `out` with a ready-to-send response.
 static bool getErrorPage(ServerDirective const *servDir, const std::string &uri,
@@ -58,7 +62,7 @@ static bool getErrorPage(ServerDirective const *servDir, const std::string &uri,
 	if (!(errorPage.first && Utils::readFile(errorPage.second, body)))
 		return false;
 
-	out = HttpResponse::build(code, MimeTypes::forPath(errorPage.second), body, "Connection: close");
+	out = HttpResponse::build(code, MimeTypes::forPath(errorPage.second), body, "");
 	return true;
 }
 
@@ -72,7 +76,7 @@ std::string HttpResponse::buildError(int code, const std::string &uri,
 		return response;
 
 	std::string body = HttpResponse::defaultErrorBody(code);
-	return HttpResponse::build(code, "text/html", body, "Connection: close");
+	return HttpResponse::build(code, "text/html", body, "");
 }
 
 namespace
