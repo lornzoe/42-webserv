@@ -142,8 +142,8 @@ ReqProc::status Client::process_request(ParseResult &pars_res)
 	if (resp_res.stat == ReqProc::CGI_REQ)
 	{
 		_sdata->activeCGI++;
-		_cgi.init(pars_res, _server->port(), remote());
-		_cgi.start(resp_res.cgiScript, resp_res.cgiRunner);
+		_cgi.init(pars_res, _server->port(), remote(), resp_res.cgiScript);
+		_cgi.start(resp_res.cgiRunner);
 	}
 	return resp_res.stat;
 }

@@ -12,11 +12,13 @@ CgiProcess::~CgiProcess()
 	killAndReap();
 }
 
-void CgiProcess::init(ParseResult const &pars_res, int server_port, const remote_info &rinfo)
+void CgiProcess::init(ParseResult const &pars_res, int server_port, const remote_info &rinfo, std::string script)
 {
 	_pars_res = pars_res;
 	_server_port = server_port;
 	_rinfo = rinfo;
+
+	_script_fs_path = script;
 
 	_cgi_vars.clear();
 	_cgi_outbox.clear();
@@ -24,7 +26,7 @@ void CgiProcess::init(ParseResult const &pars_res, int server_port, const remote
 	_requestBody = pars_res.request.body;
 }
 
-void CgiProcess::start(std::string script, std::string runner)
+void CgiProcess::start(std::string runner)
 {
 	if (!_parent_to_child.create() || !_child_to_parent.create())
 	{
@@ -50,9 +52,25 @@ void CgiProcess::start(std::string script, std::string runner)
 		_parent_to_child.closeAll();
 		_child_to_parent.closeAll();
 
-		const char *argv[] = {runner.c_str(), script.c_str(), NULL};
-
+		// Build envp BEFORE chdir: it does not depend on cwd, but keep it with the other setup.
 		std::vector<const char *> envp = buildEnvp();
+
+		// Run the script from its own directory so relative paths inside it work.
+		std::string scriptName = _script_fs_path;
+		std::string::size_type last_slash = _script_fs_path.rfind('/');
+		if (last_slash != std::string::npos)
+		{
+			std::string dir = _script_fs_path.substr(0, last_slash);
+			scriptName = _script_fs_path.substr(last_slash + 1);
+
+			// Change the current working directory to the script's directory or root if empty.
+			if (chdir(dir.empty() ? "/" : dir.c_str()) == -1)
+			{
+				throw ChildProcessException();
+			}
+		}
+
+		const char *argv[] = {runner.c_str(), scriptName.c_str(), NULL};
 		execve(argv[0], const_cast<char *const *>(argv), const_cast<char *const *>(envp.data()));
 
 		throw ChildProcessException();
@@ -118,14 +136,14 @@ void CgiProcess::populateCgiVars()
 	_cgi_vars.push_back("REQUEST_METHOD=" + _pars_res.request.method);
 	_cgi_vars.push_back("SCRIPT_NAME=" + _pars_res.request.path);
 	_cgi_vars.push_back("REDIRECT_STATUS=200");
-	_cgi_vars.push_back("SCRIPT_FILENAME=" + _pars_res.request.raw_path);
+	_cgi_vars.push_back("SCRIPT_FILENAME=" + _script_fs_path);
 	_cgi_vars.push_back("SERVER_NAME=" + server_name);
 	_cgi_vars.push_back("SERVER_PORT=" + server_port);
 	_cgi_vars.push_back("SERVER_PROTOCOL=HTTP/1.1");
 	_cgi_vars.push_back("SERVER_SOFTWARE=webserv");
 
 	// optional
-	_cgi_vars.push_back("CONTENT_LENGTH=" + Utils::to_string(_pars_res.request.content_length));
+	_cgi_vars.push_back("CONTENT_LENGTH=" + Utils::to_string(_requestBody.size()));
 	std::string content_type = _pars_res.request.getHeader("content-type");
 	if (!content_type.empty())
 	{

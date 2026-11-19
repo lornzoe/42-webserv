@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   HttpRequest.cpp                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/11/19 19:24:00 by lyanga           ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 #include "HttpRequest.hpp"
 #include "ServerDirective.hpp"
 
@@ -182,6 +170,7 @@ namespace
 				pos += 2;
 
 				parsed.body = body;
+				parsed.content_length = body.size();
 
 				int errCode;
 				if ((errCode = validateReqst(parsed)) != 0)
