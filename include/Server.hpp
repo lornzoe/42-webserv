@@ -19,7 +19,6 @@ private:
 	std::string				_host;
 	int						_port;
 	std::string				_name;
-	size_t					_clientMaxBodySize;
 
 	Listener				_listener;
 	client_map_t			_clients;
@@ -43,7 +42,6 @@ public:
 
 	client_map_t &	clients() { return _clients; }
 	Client	*		client(int fd);
-	size_t			climax() const { return _clientMaxBodySize; }
 
 	Client *		addClient(int fd, const remote_info &rinfo);
 	bool			rmClient(int fd);

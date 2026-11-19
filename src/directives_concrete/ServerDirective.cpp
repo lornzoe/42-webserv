@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:44:33 by lyanga            #+#    #+#             */
-/*   Updated: 2026/11/05 16:41:41 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/11/19 19:21:00 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -115,6 +115,18 @@ std::vector<const ErrorPageDirective *> ServerDirective::getErrorPages() const
 const ClientMaxBodySizeDirective* ServerDirective::getClientMaxBodySize() const
 {
 	return getChild<ClientMaxBodySizeDirective>();
+}
+
+std::size_t ServerDirective::maxBodyFor(const std::string& uri) const
+{
+	static const std::size_t DEFAULT_CLIENT_MAX_BODY_SIZE = 52428800; // 50 mib
+
+	const LocationDirective* loc = matchLocation(getLocations(), uri);
+	if (loc && loc->getClientMaxBodySize())
+		return loc->getClientMaxBodySize()->getBytes();
+	if (getClientMaxBodySize())
+		return getClientMaxBodySize()->getBytes();
+	return DEFAULT_CLIENT_MAX_BODY_SIZE;
 }
 
 std::vector<const LocationDirective *> ServerDirective::getLocations() const

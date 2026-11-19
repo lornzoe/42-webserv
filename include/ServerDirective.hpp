@@ -6,7 +6,7 @@
 /*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/07/22 15:37:22 by lyanga            #+#    #+#             */
-/*   Updated: 2026/09/14 16:49:22 by lyanga           ###   ########.fr       */
+/*   Updated: 2026/11/19 19:23:27 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -48,6 +48,7 @@ class ServerDirective : public BlockDirective
 		const IndexDirective* getIndex() const;
 		std::vector<const ErrorPageDirective *> getErrorPages() const;
 		const ClientMaxBodySizeDirective* getClientMaxBodySize() const;
+		std::size_t maxBodyFor(const std::string& uri) const;
 		std::vector<const LocationDirective *> getLocations() const;
 		const AutoindexDirective* getAutoindex() const;
 		const UploadStoreDirective* getUploadStore() const;

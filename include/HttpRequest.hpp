@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
+/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:55 by ypua              #+#    #+#             */
-/*   Updated: 2026/10/18 18:40:40 by ypua             ###   ########.fr       */
+/*   Updated: 2026/11/19 19:23:08 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,7 @@
 #include "SeshCtl.hpp"
 
 #include "Utils.hpp"
+#include "ServerDirective.hpp"
 
 enum ParseStatus
 {
@@ -71,7 +72,7 @@ struct ParseResult
 class HttpRequest
 {
 public:
-	static ParseResult parse_http_request(const std::string &inbox, size_t clientMaxBody);
+	static ParseResult parse_http_request(const std::string &inbox, ServerDirective const &servDir);
 };
 
 #endif
