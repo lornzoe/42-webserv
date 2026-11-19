@@ -21,8 +21,8 @@ public:
 	CgiProcess();
 	~CgiProcess();
 
-	void init(ParseResult const &pars_res, int server_port, const remote_info &rinfo);
-	void start(std::string script, std::string runner);
+	void init(ParseResult const &pars_res, int server_port, const remote_info &rinfo, std::string script);
+	void start(std::string runner);
 	int getCgiReadFd() const;
 	void closeCgiReadFd();
 	int getCgiWriteFd() const;
@@ -62,6 +62,7 @@ private:
 	ParseResult _pars_res;
 	std::vector<std::string> _cgi_vars;
 	remote_info _rinfo;
+	std::string _script_fs_path;
 
 	eventCtx _in_eCtx;
 	eventCtx _out_eCtx;
