@@ -43,7 +43,7 @@ private:
 	WSApp &operator=(WSApp const &other);
 
 	static const int CLIENT_TIMEOUT_SEC;
-	static const int SESH_TIMEOUT_SEC = 900;
+	static const int SESH_CLEANTIME_SEC = 60;
 	static const int CGI_TIMEOUT_SECOND;
 
 	void cgi_cleanup(CgiProcess &cgi);

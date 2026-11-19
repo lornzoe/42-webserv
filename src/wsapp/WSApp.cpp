@@ -318,7 +318,7 @@ void	WSApp::sesh_cleanup(std::time_t &last_sesh_cleanup)
 {
 	std::time_t		time_now = std::time(NULL);
 
-	if (std::difftime(time_now, last_sesh_cleanup) >= SESH_TIMEOUT_SEC)
+	if (std::difftime(time_now, last_sesh_cleanup) >= SESH_CLEANTIME_SEC)
 	{
 		LOG_DEBUG("Running session cleanup check");
 		std::vector<Server *>::iterator it = _servs.begin();

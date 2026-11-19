@@ -24,7 +24,7 @@ struct sesh_data
 class SeshCtl
 {
 private:
-	static const int	_timeout = 3600;
+	static const int	_timeout = 600;
 	const Server &		_server;
 	std::map<std::string, sesh_data>	_sessions;
 
