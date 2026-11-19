@@ -31,7 +31,7 @@ if [ ! -x "$WEBSERV" ]; then
 fi
 
 # configs directory
-CONFIGSDIR="$ROOTDIR/configs"
+CONFIGSDIR="$ROOTDIR/dev/configs"
 echo "CONFIGSDIR: $CONFIGSDIR"
 
 # landing dir for valgrind logs

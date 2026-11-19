@@ -5,7 +5,7 @@ set -eu
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 ROOT_DIR=$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)
 CHECKER="$ROOT_DIR/checker"
-CONFIGS_DIR="$ROOT_DIR/configs"
+CONFIGS_DIR="$ROOT_DIR/dev/configs"
 
 if [ ! -x "$CHECKER" ]; then
 	echo "error: $CHECKER not found or not executable (run 'make' first)" >&2

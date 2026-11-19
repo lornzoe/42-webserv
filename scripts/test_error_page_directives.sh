@@ -4,7 +4,7 @@
 SCRIPT_DIR=$(cd -- "$(dirname -- "$0")" && pwd)
 ROOT_DIR=$(cd -- "$SCRIPT_DIR/.." && pwd)
 WEBSERV="$ROOT_DIR/webserv"
-CONF="$ROOT_DIR/configs/error_page_test.conf"
+CONF="$ROOT_DIR/dev/configs/error_page_test.conf"
 
 # helper functions
 linebreak() {
@@ -17,7 +17,7 @@ title() {
     linebreak
 }
 
-# --- launch webserv with configs/error_page_test.conf ----------------------
+# --- launch webserv with dev/configs/error_page_test.conf ----------------------
 # On Linux we start it ourselves and kill it on exit. 
 # On macOS webserv can't be built/run natively (epoll), so we assume you started it in a container.
 WS_PID=""

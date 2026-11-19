@@ -3,7 +3,7 @@
 
 int main(int argc, char **argv)
 {
-	const char *DEFAULT_CONFIG_PATH = "configs/basic.conf";
+	const char *DEFAULT_CONFIG_PATH = "dev/configs/basic.conf";
 	const char *config_file_path;
 
 	if (argc != 2)

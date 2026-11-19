@@ -80,8 +80,8 @@ $(OBJ_DIR)/%.o: %.cpp
 	$(CXX) $(CXXFLAGS) -MF $(DEP_DIR)/$*.d -c $< -o $@
 
 x: $(NAME)
-	./$(CHECKER_NAME) configs/basic.conf
-	./$(NAME) configs/basic.conf
+	./$(CHECKER_NAME) dev/configs/basic.conf
+	./$(NAME) dev/configs/basic.conf
 
 debug: CXXFLAGS += -DDEBUG -g -O0
 
