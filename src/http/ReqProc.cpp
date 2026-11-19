@@ -61,6 +61,15 @@ namespace
 		}
 		return false;
 	}
+
+	// 301 for GET, 308 otherwise so POST/DELETE keep their method and body
+	std::string buildSlashRedirect(ParsedRequest const &req)
+	{
+		std::string target = req.raw_path + '/';
+		if (!req.query.empty())
+			target += "?" + req.query;
+		return HttpResponse::build(req.method == "GET" ? 301 : 308, "", "", "Location: " + target);
+	}
 }
 
 ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const &servDir)
@@ -75,11 +84,7 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 	if (needsLocationSlashRedirect(req.path, servDir))
 	{
 		LOG_DEBUG("uri path of " << req.path << " has a slashed location, should send redirect");
-		std::string target = req.raw_path + '/';
-		if (!req.query.empty())
-			target += "?" + req.query;
-		// Preserve the method and body when redirecting POST or DELETE.
-		result.resp = HttpResponse::build(req.method == "GET" ? 301 : 308, "", "", "Location: " + target);
+		result.resp = buildSlashRedirect(req);
 		return result;
 	}
 
@@ -122,6 +127,15 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 
 	if (!ServerDirective::resolveFsPath(servDir, req.path, locDir, fsPath))
 		return result.resp = HttpResponse::buildError(403, req.path, &servDir), result;
+
+	struct stat dirSt;
+	if (req.path[req.path.size() - 1] != '/'
+		&& stat(fsPath.c_str(), &dirSt) == 0 && S_ISDIR(dirSt.st_mode))
+	{
+		LOG_DEBUG("directory " << req.path << " requested without trailing slash, redirecting");
+		result.resp = buildSlashRedirect(req);
+		return result;
+	}
 
 	const CgiDirective *cgi = servDir.findCgi(fsPath);
 	if (cgi)

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>webserv showcase</title>
+	<link rel="icon" href="/static/logo.svg">
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+<h1><img src="/static/logo.svg" alt="" width="32"> webserv showcase</h1>
+<p class="muted">Config: <code>showcase/full.conf</code>. <b>Try</b> opens the <a href="/playground/">playground</a>.</p>
+<nav class="quick">
+	<a href="/playground/">Request playground →</a>
+	<a href="/cgi/">CGI demos →</a>
+	<a href="/uploads/">Uploads →</a>
+	<a href="/profile/">Session profile →</a>
+	<a href="/files/">Files (autoindex) →</a>
+	<a href="/multi-index/">Multi-index →</a>
+	<a class="port" data-port="8082" href="/">Site B (:8082) →</a>
+</nav>
+
+<h2>Static files &amp; MIME</h2>
+<table>
+<tr><td>JPEG</td><td><a href="/static/felis.jpg">/static/felis.jpg</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>txt / json / csv / svg</td><td><a href="/static/sample.txt">.txt</a> <a href="/static/sample.json">.json</a> <a href="/static/sample.csv">.csv</a> <a href="/static/logo.svg">.svg</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>Unknown type → octet-stream</td><td><a href="/static/pasta.webp">/static/pasta.webp</a></td><td><span class="chip ok">200</span></td></tr>
+</table>
+
+<h2>Routing</h2>
+<table>
+<tr><td>autoindex on</td><td><a href="/files/">/files/</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>autoindex off, no index</td><td><a href="/noindex/">/noindex/</a></td><td><span class="chip err">403</span></td></tr>
+<tr><td>Index fallback (home.htm)</td><td><a href="/multi-index/">/multi-index/</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>alias</td><td><a href="/gallery/felis.jpg">/gallery/felis.jpg</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>root override</td><td><a href="/docs/guide.txt">/docs/guide.txt</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>Missing trailing slash</td><td><a href="/files">/files</a></td><td><span class="chip redir">301</span></td></tr>
+<tr><td>Path traversal</td><td><a href="/playground/?method=GET&amp;path=/files/%2e%2e/%2e%2e/%2e%2e/etc/passwd">Try</a></td><td><span class="chip err">400</span></td></tr>
+</table>
+
+<h2>Methods</h2>
+<table>
+<tr><td>Upload, list, DELETE</td><td><a href="/uploads/">/uploads/</a></td><td><span class="chip ok">201 / 200</span></td></tr>
+<tr><td>DELETE not allowed</td><td><a href="/playground/?method=DELETE&amp;path=/readonly/keep-me.txt">Try</a></td><td><span class="chip err">405</span></td></tr>
+<tr><td>DELETE missing file</td><td><a href="/playground/?method=DELETE&amp;path=/storage/nope.txt">Try</a></td><td><span class="chip err">404</span></td></tr>
+<tr><td>Unknown method</td><td><a href="/playground/?method=FOO&amp;path=/">Try</a></td><td><span class="chip err">501</span></td></tr>
+<tr><td>Upload not multipart</td><td><a href="/playground/?method=POST&amp;path=/storage/&amp;type=text/plain&amp;body=hi">Try</a></td><td><span class="chip err">415</span></td></tr>
+<tr><td>POST, no upload_store</td><td><a href="/playground/?method=POST&amp;path=/limits/&amp;type=text/plain&amp;body=hi">Try</a></td><td><span class="chip err">403</span></td></tr>
+</table>
+
+<h2>Body size limit</h2>
+<table>
+<tr><td>≤ 100 bytes on /limits/</td><td><a href="/playground/?method=POST&amp;path=/limits/echo.py&amp;type=plain/text&amp;body=short">Try</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>&gt; 100 bytes on /limits/</td><td><a href="/playground/?method=POST&amp;path=/limits/echo.py&amp;type=plain/text&amp;repeat=200">Try</a></td><td><span class="chip err">413</span></td></tr>
+<tr><td>&gt; 1 KiB on /tiny-upload/</td><td><a href="/uploads/">/uploads/</a></td><td><span class="chip err">413</span></td></tr>
+</table>
+
+<h2>Redirects &amp; return</h2>
+<table>
+<tr><td>return 301</td><td><a href="/old/">/old/</a></td><td><span class="chip redir">301</span></td></tr>
+<tr><td>return 302</td><td><a href="/temp/">/temp/</a></td><td><span class="chip redir">302</span></td></tr>
+<tr><td>return 303</td><td><a href="/see-other/">/see-other/</a></td><td><span class="chip redir">303</span></td></tr>
+<tr><td>307 / 308 keep POST</td><td><a href="/playground/?method=POST&amp;path=/keep-method/&amp;body=hi&amp;follow=1">307</a> <a href="/playground/?method=POST&amp;path=/moved-for-good/&amp;body=hi&amp;follow=1">308</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>External</td><td><a href="/nginx/">/nginx/</a></td><td><span class="chip redir">301</span></td></tr>
+<tr><td>return 200 "text"</td><td><a href="/health/">/health/</a></td><td><span class="chip ok">200</span></td></tr>
+</table>
+
+<h2>Error pages</h2>
+<table>
+<tr><td>Server-level</td><td><a href="/missing">/missing</a></td><td><span class="chip err">404</span></td></tr>
+<tr><td>Location-level</td><td><a href="/private/missing">/private/missing</a></td><td><span class="chip err">404</span></td></tr>
+<tr><td>return 404</td><td><a href="/gone/">/gone/</a></td><td><span class="chip err">404</span></td></tr>
+<tr><td>Built-in default</td><td><a class="port" data-port="8082" href="/nope">:8082/nope</a></td><td><span class="chip err">404</span></td></tr>
+</table>
+
+<h2>CGI (Python + Perl)</h2>
+<table>
+<tr><td>List apps (GET/POST/DELETE)</td><td><a href="/cgi/">/cgi/</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>Env + query string</td><td><a href="/cgi/env.py?name=webserv">/cgi/env.py</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>Runs in script dir</td><td><a href="/cgi/cwd.py">/cgi/cwd.py</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>POST body to stdin</td><td><a href="/playground/?method=POST&amp;path=/cgi/echo.py&amp;body=name%3Dwebserv">Try</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>Status / Location header</td><td><a href="/cgi/status.py?code=409">409</a> <a href="/cgi/status.py?go=/files/">302</a></td><td><span class="chip">script-set</span></td></tr>
+<tr><td>Syntax error / crash / bad output</td><td><a href="/cgi/syntax.py">syntax</a> <a href="/cgi/error.py">crash</a> <a href="/cgi/badheaders.pl">bad</a></td><td><span class="chip err">502</span></td></tr>
+<tr><td>Infinite loop</td><td><a href="/cgi/loop.py">/cgi/loop.py</a></td><td><span class="chip err">504</span></td></tr>
+</table>
+
+<h2>Bonus: cookies &amp; sessions</h2>
+<table>
+<tr><td>Session profile</td><td><a href="/profile/">/profile/</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>Cookie from CGI</td><td><a href="/cgi/cookie.py">/cgi/cookie.py</a></td><td><span class="chip ok">200</span></td></tr>
+</table>
+
+<h2>Ports</h2>
+<table>
+<tr><td>Same site, 127.0.0.1:8081</td><td><a class="port" data-port="8081" data-host="127.0.0.1" href="/">:8081</a></td><td><span class="chip ok">200</span></td></tr>
+<tr><td>Site B, :8082</td><td><a class="port" data-port="8082" href="/">:8082</a></td><td><span class="chip ok">200</span></td></tr>
+</table>
+</main>
+<script>
+	document.querySelectorAll("a.port").forEach(function (a) {
+		a.href = location.protocol + "//" + (a.dataset.host || location.hostname) + ":" + a.dataset.port + a.getAttribute("href");
+	});
+</script>
+</body>
+</html>

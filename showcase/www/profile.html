@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Session profile — webserv</title>
+	<link rel="stylesheet" href="/style.css">
+	<style>
+		.food-image { display: block; max-width: 260px; margin-top: 12px; border-radius: 8px; }
+		.updated { color: var(--ok); font-weight: 600; }
+	</style>
+</head>
+<body>
+<main>
+<a href="/">← Showcase</a>
+<h1>Session profile</h1>
+
+<table>
+	<tr><td>Session ID</td><td><code>{{SID}}</code></td></tr>
+	<tr><td>Name</td><td>{{NAME}}</td></tr>
+	<tr><td>Favourite food</td><td>{{FAV_FOOD}}</td></tr>
+	<tr><td>Profile visits</td><td>{{PROFILE_VISITS}}</td></tr>
+</table>
+{{UPDATED_MESSAGE}}
+{{FOOD_IMAGE}}
+
+<form class="panel" action="/profile" method="POST">
+	<input type="text" name="name" placeholder="New name">
+	<select name="fav_food">
+		{{FOOD_OPTIONS}}
+	</select>
+	<button class="primary" type="submit">Save</button>
+</form>
+</main>
+</body>
+</html>

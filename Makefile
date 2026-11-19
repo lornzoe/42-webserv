@@ -6,7 +6,7 @@
 #    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/11/16 13:41:57 by lyanga           ###   ########.fr        #
+#    Updated: 2026/11/19 19:32:31 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -67,7 +67,7 @@ CHECKER_SRCS = $(CHECKER_SRC_FILES) $(addprefix $(SRC_DIR)/, ConfigChecker.cpp)
 CHECKER_OBJS = $(addprefix $(OBJ_DIR)/, $(CHECKER_SRCS:.cpp=.o))
 CHECKER_DEPS = $(addprefix $(DEP_DIR)/, $(CHECKER_SRCS:.cpp=.d))
 
-all: $(NAME) $(CHECKER_NAME)
+all: $(NAME)
 
 $(NAME): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(OBJS) -o $(NAME)
@@ -79,12 +79,10 @@ $(OBJ_DIR)/%.o: %.cpp
 	@mkdir -p $(dir $@) $(dir $(DEP_DIR)/$*.d)
 	$(CXX) $(CXXFLAGS) -MF $(DEP_DIR)/$*.d -c $< -o $@
 
-x: $(NAME)
-	./$(CHECKER_NAME) configs/basic.conf
-	./$(NAME) configs/basic.conf
+checker: CXXFLAGS += -DDEBUG -g -O0
+checker: $(CHECKER_NAME)
 
 debug: CXXFLAGS += -DDEBUG -g -O0
-
 debug: re
 
 clean:
@@ -97,4 +95,4 @@ re: fclean all
 
 -include $(DEPS) $(CHECKER_DEPS)
 
-.PHONY: all clean fclean re x checker debug
+.PHONY: all clean fclean re debug

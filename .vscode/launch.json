@@ -6,7 +6,7 @@
       "type": "cppdbg",
       "request": "launch",
       "program": "${workspaceFolder}/webserv",
-      "args": ["configs/basic.conf"],
+      "args": ["dev/configs/basic.conf"],
       "cwd": "${workspaceFolder}",
       "stopAtEntry": false,
       "MIMode": "gdb",

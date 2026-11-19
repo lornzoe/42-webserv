@@ -11,3 +11,14 @@ compile_commands.json
 __references/nginx/logs/
 __references/nginx/tmp/
 __obsidian
+
+# dev 
+dev/html/upload_storage/*
+dev/html/uploads/*
+!dev/html/upload_storage/.gitkeep
+!dev/html/uploads/.gitkeep
+
+# showcase
+showcase/www/storage/*
+!showcase/www/storage/.gitkeep
+showcase/www/cgi/**/data.json

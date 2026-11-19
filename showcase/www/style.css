@@ -1,0 +1,41 @@
+:root {
+	--bg: #f6f7f9; --surface: #fff; --text: #1c1f24; --muted: #5b6370; --border: #e1e4e8;
+	--accent: #2f6fde; --ok: #1f8a4c; --redir: #8a5a00; --err: #c0392b; --code: #eef0f3;
+}
+@media (prefers-color-scheme: dark) {
+	:root {
+		--bg: #14161a; --surface: #1c1f25; --text: #e7e9ec; --muted: #9aa3ae; --border: #2c3038;
+		--accent: #6b9cff; --ok: #4cc583; --redir: #e6b84d; --err: #ff7b6b; --code: #23272f;
+	}
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.5 system-ui, sans-serif; }
+main { max-width: 760px; margin: 0 auto; padding: 16px 16px 48px; }
+h1 { display: flex; align-items: center; gap: 10px; font-size: 1.5rem; }
+h2 { font-size: 1.05rem; margin: 28px 0 8px; }
+a { color: var(--accent); }
+code, pre { font-family: ui-monospace, Menlo, monospace; font-size: 0.88em; background: var(--code); border-radius: 4px; }
+code { padding: 1px 4px; }
+pre { padding: 10px; white-space: pre-wrap; word-break: break-word; }
+.muted { color: var(--muted); }
+
+table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; }
+td, th { padding: 6px 10px; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+td:nth-child(3) { width: 1%; white-space: nowrap; }
+td a { margin-right: 8px; }
+td a[href^="/playground/"] { background: var(--accent); color: #fff; text-decoration: none; padding: 2px 10px; border-radius: 5px; font-size: 0.85rem; font-weight: 600; }
+
+.quick { display: flex; flex-wrap: wrap; gap: 8px; }
+.quick a { padding: 8px 14px; border-radius: 8px; border: 1px solid var(--accent); font-weight: 600; text-decoration: none; }
+.quick a:hover { background: var(--accent); color: #fff; }
+
+.panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; margin: 12px 0; }
+.chip { font: 600 0.75rem ui-monospace, monospace; padding: 1px 7px; border-radius: 99px; color: var(--accent); border: 1px solid currentColor; }
+.chip.ok { color: var(--ok); }
+.chip.redir { color: var(--redir); }
+.chip.err { color: var(--err); }
+
+input, select, textarea, button { font: inherit; padding: 5px 9px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: var(--text); }
+textarea { width: 100%; min-height: 70px; }
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; cursor: pointer; }

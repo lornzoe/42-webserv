@@ -3,14 +3,15 @@
 /*                                                        :::      ::::::::   */
 /*   HttpRequest.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ypua <ypua@student.42.singapore.sg>        +#+  +:+       +#+        */
+/*   By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/03 19:37:57 by ypua              #+#    #+#             */
-/*   Updated: 2026/10/18 17:36:49 by ypua             ###   ########.fr       */
+/*   Updated: 2026/11/19 19:24:00 by lyanga           ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "HttpRequest.hpp"
+#include "ServerDirective.hpp"
 
 std::string ParsedRequest::getHeader(const std::string &key) const
 {
@@ -163,7 +164,7 @@ namespace
 				return ParseResult(INVALID);
 
 			if (chunk_size > clientMaxBody - body.size())
-				return ParseResult(INVALID, 413);
+				return ParseResult(INVALID, 413, 0, parsed);
 
 			// Move past "size\r\n"
 			pos = line_end + 2;
@@ -206,7 +207,7 @@ namespace
 	}
 }
 
-ParseResult HttpRequest::parse_http_request(const std::string &inbox, size_t clientMaxBody)
+ParseResult HttpRequest::parse_http_request(const std::string &inbox, ServerDirective const &servDir)
 {
 	static const size_t MAX_HEADER_SIZE = 8192;
 	LOG_DEBUG("Parsing HTTP request of size: " << inbox.size() << " bytes");
@@ -230,6 +231,8 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox, size_t cli
 
 	size_t header_length = header_end + 4;
 
+	size_t clientMaxBody = servDir.maxBodyFor(parsed.path);
+
 	std::map<std::string, std::string>::const_iterator it = parsed.headers.find("transfer-encoding");
 	if (it != parsed.headers.end())
 	{
@@ -242,7 +245,7 @@ ParseResult HttpRequest::parse_http_request(const std::string &inbox, size_t cli
 	// 3. Determine body length
 	size_t content_length = parsed.content_length;
 	if (content_length > clientMaxBody)
-		return ParseResult(INVALID, 413);
+		return ParseResult(INVALID, 413, 0, parsed);
 
 	// 4. Check whether entire body has arrived
 	if (inbox.size() < header_length + content_length)

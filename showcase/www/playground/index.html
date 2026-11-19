@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Playground — webserv</title>
+	<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+<a href="/">← Showcase</a>
+<h1>Request playground</h1>
+
+<div id="presets"></div>
+
+<form class="panel" id="req">
+	<p><input id="method" value="GET" size="8"> <input id="path" value="/" size="40"></p>
+	<p><input id="type" placeholder="Content-Type" size="30">
+		<label><input type="checkbox" id="follow"> follow redirects</label></p>
+	<textarea id="body" placeholder="body"></textarea>
+	<p><button class="primary">Send</button></p>
+</form>
+
+<div class="panel" id="result" hidden>
+	<h2 id="status"></h2>
+	<table id="headers"></table>
+	<pre id="resp-body"></pre>
+</div>
+</main>
+
+<script>
+	var $ = function (id) { return document.getElementById(id); };
+
+	var PRESETS = [
+		["404 Not Found", "GET", "/missing"],
+		["403 Forbidden", "GET", "/noindex/"],
+		["405 Method Not Allowed", "DELETE", "/readonly/keep-me.txt"],
+		["501 Not Implemented", "FOO", "/"],
+		["415 Unsupported Media Type", "POST", "/storage/", "text/plain", "hi"],
+		["413 Payload Too Large", "POST", "/limits/echo.py", "plain/text", "x".repeat(200)],
+		["CGI echo", "POST", "/cgi/echo.py", "text/plain", "hello"]
+	];
+	PRESETS.forEach(function (p) {
+		var b = document.createElement("button");
+		b.textContent = p[0];
+		b.onclick = function () { fill(p[1], p[2], p[3], p[4]); send(); };
+		$("presets").appendChild(b);
+	});
+
+	function fill(method, path, type, body) {
+		$("method").value = method;
+		$("path").value = path;
+		$("type").value = type || "";
+		$("body").value = body || "";
+	}
+
+	function send() {
+		var method = $("method").value.toUpperCase();
+		var opts = { method: method, headers: {}, redirect: $("follow").checked ? "follow" : "manual" };
+		if ($("type").value) opts.headers["Content-Type"] = $("type").value;
+		if ($("body").value && method !== "GET") opts.body = $("body").value;
+
+		$("result").hidden = false;
+		$("headers").innerHTML = "";
+		$("resp-body").textContent = "";
+		fetch($("path").value, opts).then(function (res) {
+			if (res.type === "opaqueredirect") {
+				$("status").textContent = "3xx redirect (see DevTools → Network for Location)";
+				return;
+			}
+			$("status").textContent = res.status + " " + res.statusText;
+			res.headers.forEach(function (v, k) {
+				$("headers").insertRow().innerHTML = "<td>" + k + "</td><td>" + v.replace(/</g, "&lt;") + "</td>";
+			});
+			return res.text().then(function (t) { $("resp-body").textContent = t; });
+		}).catch(function (e) {
+			$("status").textContent = "Network error: " + e;
+		});
+	}
+
+	$("req").onsubmit = function (e) { e.preventDefault(); send(); };
+
+	var q = new URLSearchParams(location.search);
+	if (q.has("method")) {
+		fill(q.get("method"), q.get("path") || "/", q.get("type"),
+			q.has("repeat") ? "x".repeat(+q.get("repeat")) : q.get("body"));
+		$("follow").checked = q.get("follow") === "1";
+		send();
+	}
+</script>
+</body>
+</html>

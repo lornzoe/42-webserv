@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>CGI — webserv</title>
+	<link rel="stylesheet" href="/style.css">
+	<script src="javascript.js" defer></script>
+</head>
+<body>
+<main>
+<a href="/">← Showcase</a>
+<h1>CGI</h1>
+
+<!-- Perl Form -->
+<form id="pl" class="panel">
+	<header><h2>Perl</h2></header>
+	<label><strong>Input:</strong> <input required type="text" /></label>
+	<input type="submit" value="Add" />
+	<h4>List:</h4>
+	<ul></ul>
+</form>
+
+<!-- Python Form -->
+<form id="py" class="panel">
+	<header><h2>Python</h2></header>
+	<label><strong>Input:</strong> <input required type="text" /></label>
+	<input type="submit" value="Add" />
+	<h4>List:</h4>
+	<ul></ul>
+</form>
+
+<h2>Other scripts</h2>
+<table>
+	<tr><td><a href="env.py?name=webserv">env.py</a></td><td>CGI environment + query string</td><td><span class="chip ok">200</span></td></tr>
+	<tr><td><a href="cwd.py">cwd.py</a></td><td>runs in its own directory</td><td><span class="chip ok">200</span></td></tr>
+	<tr><td><a href="status.py?code=201">status.py?code=201</a></td><td><code>Status:</code> header</td><td><span class="chip ok">201</span></td></tr>
+	<tr><td><a href="status.py?go=/files/">status.py?go=/files/</a></td><td><code>Location:</code> header</td><td><span class="chip redir">302</span></td></tr>
+	<tr><td><a href="cookie.py">cookie.py</a></td><td><code>Set-Cookie</code> from a script</td><td><span class="chip ok">200</span></td></tr>
+	<tr><td><a href="syntax.py">syntax.py</a></td><td>syntax error</td><td><span class="chip err">502</span></td></tr>
+	<tr><td><a href="error.py">error.py</a></td><td>crashes after headers</td><td><span class="chip err">502</span></td></tr>
+	<tr><td><a href="badheaders.pl">badheaders.pl</a></td><td>malformed output</td><td><span class="chip err">502</span></td></tr>
+	<tr><td><a href="loop.py">loop.py</a></td><td>infinite loop</td><td><span class="chip err">504</span></td></tr>
+</table>
+</main>
+</body>
+</html>
