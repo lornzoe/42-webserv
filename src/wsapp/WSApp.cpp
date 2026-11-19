@@ -60,14 +60,14 @@ int WSApp::run()
 
 	// if stdin is in a terminal
 	// fill in std eventctx, add it to epoll watching for epollin
-	//  if the add fails, mark the ctx as unused 
+	//  if the add fails, mark the ctx as unused
 	_stdinCtx.fd = STDIN_FILENO;
 	_stdinCtx.type = CONSOLE;
 	_stdinCtx.owner = this;
 	if (_pol.add(STDIN_FILENO, EPOLLIN, &_stdinCtx) == -1)
 		_stdinCtx.fd = -1;
 
-	std::time_t	last_sesh_cleanup = std::time(NULL);
+	std::time_t last_sesh_cleanup = std::time(NULL);
 
 	while (!g_shutdownRequest)
 	{
@@ -146,7 +146,14 @@ int WSApp::run()
 						// Idle keep-alive connection, nothing pending: close quietly.
 						cli.addStat(CLOSING);
 					}
-					// partial request in the inbox, handled by INCOMPLETE branch (408)
+					else
+					{
+						// Partial request never completed: 408 then close.
+						LOG_DEBUG("TIMEOUT FOR CLIENT " << cli.fd());
+						cli.send_response(HttpResponse::buildError(408, "", &cli.servDir()));
+						_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
+						cli.addStat(CLOSING);
+					}
 					++i;
 					continue;
 				}
@@ -159,14 +166,6 @@ int WSApp::run()
 					if (res.status == INCOMPLETE)
 					{
 						LOG_DEBUG("HTTP request is incomplete, waiting for more data.");
-						time_t current_time = time(NULL);
-						if (current_time - cli.get_last_activity_time() >= CLIENT_TIMEOUT_SEC)
-						{
-							LOG_DEBUG("TIMEOUT FOR CLIENT " << cli.fd());
-							cli.send_response(HttpResponse::buildError(res.errorCode, res.request.path, &cli.servDir()));
-							_pol.mod(cli.fd(), EPOLLOUT, &cli.ectx());
-							cli.addStat(CLOSING);
-						}
 					}
 					else if (res.status == INVALID)
 					{
@@ -285,13 +284,13 @@ void WSApp::handle_console(uint32_t events)
 			}
 		}
 
-	// guard against large input w/o newlines 
-	if (_consoleBuf.size() > 1024)
-    	_consoleBuf.clear();
+		// guard against large input w/o newlines
+		if (_consoleBuf.size() > 1024)
+			_consoleBuf.clear();
 	}
-	
+
 	// if events has HUP or ERR:
-    // remove fd 0 from epoll and return
+	// remove fd 0 from epoll and return
 	if (events & (EPOLLHUP | EPOLLERR))
 	{
 		_pol.del(STDIN_FILENO);
@@ -318,9 +317,9 @@ int WSApp::ep_wait()
 	return _epRes.n;
 }
 
-void	WSApp::sesh_cleanup(std::time_t &last_sesh_cleanup)
+void WSApp::sesh_cleanup(std::time_t &last_sesh_cleanup)
 {
-	std::time_t		time_now = std::time(NULL);
+	std::time_t time_now = std::time(NULL);
 
 	if (std::difftime(time_now, last_sesh_cleanup) >= SESH_TIMEOUT_SEC)
 	{
@@ -556,7 +555,7 @@ int WSApp::cgi_finish(Client &cli)
 		resp.insert(resp.find(HEADER_END), CRLF + "Connection: close");
 	if (cli.isStat(NEWSESH))
 	{
-		sesh_data *		sdata = cli.seshData();
+		sesh_data *sdata = cli.seshData();
 		if (sdata)
 		{
 			resp.insert(resp.find(HEADER_END), CRLF + SeshCtl::set_cookie_header(sdata->sid));
