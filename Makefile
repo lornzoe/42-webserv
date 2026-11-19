@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: ypua <ypua@student.42.fr>                  +#+  +:+       +#+         #
+#    By: lyanga <lyanga@student.42singapore.sg>     +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2026/07/11 20:58:40 by lyanga            #+#    #+#              #
-#    Updated: 2026/10/15 19:42:35 by ypua             ###   ########.fr        #
+#    Updated: 2026/11/16 13:41:57 by lyanga           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -83,7 +83,8 @@ x: $(NAME)
 	./$(CHECKER_NAME) configs/basic.conf
 	./$(NAME) configs/basic.conf
 
-debug: CXXFLAGS += -DDEBUG
+debug: CXXFLAGS += -DDEBUG -g -O0
+
 debug: re
 
 clean:

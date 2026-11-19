@@ -9,6 +9,7 @@
 #include <vector>
 #include <map>
 #include <cerrno>
+#include <string>
 
 class WSApp
 {
@@ -16,6 +17,8 @@ private:
 	Config const *_conf;
 	Poller _pol;
 	std::vector<Server *> _servs;
+	eventCtx _stdinCtx;
+	std::string _consoleBuf;
 
 	struct epoll_res
 	{
@@ -32,6 +35,7 @@ private:
 	int hndl_Cli(eventCtx *ctx, uint32_t events);
 	int handle_cgi_in(eventCtx *ctx);
 	int handle_cgi_out(eventCtx *ctx);
+	void handle_console(uint32_t events);
 
 	Client *findCgiClient(CgiProcess &cgi_process);
 
