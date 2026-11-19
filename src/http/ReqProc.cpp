@@ -193,7 +193,7 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 		{
 			SeshProfile::post_update(req.body, *req.sdata);
 			result.resp = HttpResponse::build(303, "text/html", "");
-			result.resp.insert(result.resp.find(HEADER_END), "\r\nLocation: /profile/");
+			HttpResponse::addHeader(result.resp, "Location: /profile/");
 			return result;
 		}
 		// uploads are allowed e.g. locDir.getUpload() != NULL -- 403
@@ -245,9 +245,9 @@ ReqProc::result ReqProc::process(ParsedRequest const &req, ServerDirective const
 		int code;
 
 		if (stat(fsPath.c_str(), &st) == -1)
-			code = 204;
+			code = 404;
 		else if (S_ISREG(st.st_mode))
-			code = std::remove(fsPath.c_str()) == 0 ? 200 : 403;
+			code = std::remove(fsPath.c_str()) == 0 ? 204 : 403;
 		else
 			code = 403;
 
