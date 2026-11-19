@@ -249,13 +249,17 @@ void WSApp::handle_console(uint32_t events)
 
 		ssize_t n = read(STDIN_FILENO, buf, sizeof(buf));
 
-		if (n < 0)
+		if (n < 0) // error
 		{
 			_pol.del(STDIN_FILENO);
 			return;
 		}
-		if (n == 0)
+		if (n == 0) // eof / ctrl+d 
+		{
+			_pol.del(STDIN_FILENO);
+			g_shutdownRequest = true;
 			return;
+		}
 
 		_consoleBuf.append(buf, n);
 
