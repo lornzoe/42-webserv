@@ -8,7 +8,7 @@ Webserv is an HTTP/1.1 server we built from scratch in C++98 to understand how a
 
 **HTTP** (OSI application layer, layer 7) gives the browser and server a shared language. `GET` asks for a file, `200 OK` signals success, and `Content-Type` tells the browser how to interpret the body. The browser writes its request to a **socket**, its local endpoint for the connection. **TCP** (transport layer, layer 4) carries the bytes in order and retransmits lost data. At the other end, Webserv reads the request and writes the response through its own connected socket.
 
-### What happens when you open `/docs/guide.txt`?
+### What does our webserv do when you go to `/docs/guide.txt`?
 
 1. **Connect.** When the browser connects to port 8080, `accept()` gives the `Listener` a new socket for that connection. The listening socket stays available for the next browser. In the OSI model, the **session layer (layer 5)** describes how two parties manage an ongoing exchange. In Webserv, the `Server` gives the connected socket to a `Client` object, which tracks reads and writes across successive HTTP requests.
 2. **Read.** A single HTTP request can arrive across several reads. `Client` buffers the bytes until the parser can read the request line, headers, and any body. For uploads, it uses `Content-Length` or chunked encoding to find the end of the body.
@@ -25,8 +25,25 @@ One server process handles these connections with non-blocking sockets and a sin
 - **Sessions.** A `sid` cookie identifies a profile stored in server memory. Save a name on the profile page, then reload to see the name persist and the visit count increase.
 
 ## Instructions
+### Compiling
+Build on Linux with `make` and a C++98 compiler.
+```sh
+make
+```
+Additional Makefile rules:
+- `make clean` to remove the build/ directory, `make fclean` to also remove the `webserv` binary, and `make re` rebuilds from scratch.
+- `make checker` makes a checker binary that is used to only verify config compatibility.
+- `make debug` recompiles with debug flags (`-g -O0`)
 
-Build on Linux with `make` and a C++98 compiler. The showcase also needs executable interpreters at `/usr/bin/python3` and `/usr/bin/perl`. If yours are elsewhere, update the two `cgi` paths in [the showcase configuration](showcase/full.conf).
+### Usage
+The webserv binary can be run with:
+```
+./webserv [config file]
+```
+If no config file is provided, a hardcoded config file path will be used (set to `)
+
+The showcase also needs executable interpreters at `/usr/bin/python3` and `/usr/bin/perl`. If yours are elsewhere, update the two `cgi` paths in [the showcase configuration](showcase/full.conf).
+
 
 From the repository root, build and start the showcase.
 
@@ -49,10 +66,10 @@ Press `Ctrl+C` to stop the server. Running `./webserv` without an argument loads
 - Communication between a server and a CGI script — [RFC 3875](https://www.rfc-editor.org/rfc/rfc3875.html).
 
 ### AI use
+
+AI tools (e.g. Claude, Gemini) were used to assist in the following:
 - Concept clarification
 - Summarization of reference material
-- Generation of html demonstration pages
-- Generation of testing scripts
+- Generation of certain testing scripts
 - Debugging review
-
-Examples include our [HTTP RFC guide](__references/rfc_reference_guide.md), [request playground](showcase/www/playground/index.html), and [test scripts](scripts/).
+- Creation of web resources (e.g. HTML, CSS, JS files).
