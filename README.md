@@ -88,7 +88,7 @@ To stop the server, press `Ctrl+C` or `Ctrl+D`, or type `exit` in its terminal.
 
 ### Configuration files
 
-Each file in [`dev/configs/`](dev/configs/) exercises a specific feature:
+Each file in [`dev/configs/`](dev/configs/) (excluding `showcase/full.conf`) exercises/tests a specific feature:
 
 | Feature | Config |
 | --- | --- |
