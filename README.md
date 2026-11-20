@@ -8,7 +8,7 @@ Webserv is an HTTP/1.1 server we built from scratch in C++98 to understand how a
 
 **HTTP** (OSI application layer, layer 7) gives the browser and server a shared language. `GET` asks for a file, `200 OK` signals success, and `Content-Type` tells the browser how to interpret the body. The browser writes its request to a **socket**, its local endpoint for the connection. **TCP** (transport layer, layer 4) carries the bytes in order and retransmits lost data. At the other end, Webserv reads the request and writes the response through its own connected socket.
 
-### What does our webserv do when you go to `/docs/guide.txt`?
+### What does our webserv do when you go to a URL (e.g.`/docs/guide.txt`)?
 
 1. **Connect.** When the browser connects to port 8080, `accept()` gives the `Listener` a new socket for that connection. The listening socket stays available for the next browser. The connected socket is handed to a `Client` object, which tracks reads and writes for that connection across successive HTTP requests.
 2. **Read.** A single HTTP request can arrive across several reads. `Client` buffers the bytes until the parser can read the request line, headers, and any body. For uploads, it uses `Content-Length` or chunked encoding to find the end of the body.
@@ -33,9 +33,9 @@ One server process handles these connections with non-blocking sockets and a sin
 
 ### Technical choices
 
-- **`epoll` instead of `poll`.** The subject allows any equivalent; `epoll` scales better with many connections. This makes Webserv **Linux-only**.
+- **`epoll` instead of `poll`.** As the subject allows any equivalent; `epoll` scales better with many connections.
 - **One loop for all I/O.** Listening sockets, client sockets, CGI pipes, and the server's own stdin are all registered in the same `epoll` instance. Nothing is read from or written to a socket or pipe without `epoll` reporting it ready first.
-- **No `errno` after I/O.** The return value of `read`/`recv`/`write`/`send` alone decides what happens next.
+- **No `errno` after I/O.** The return value of `read`/`recv`/`write`/`send` alone is used to determine the next action.
 - **Main classes.**
   - `WSApp` owns the event loop and timeouts.
   - `Poller` wraps `epoll`.
@@ -60,7 +60,7 @@ The showcase needs executable interpreters at `/usr/bin/python3` and `/usr/bin/p
 
 ### Requirements
 
-Webserv uses `epoll`, so it builds and runs on **Linux only**, with `make` and a C++98 compiler. On macOS, open the repository in the provided [dev container](.devcontainer/) (e.g. with VS Code's Dev Containers extension) and build there.
+Since webserv uses `epoll`, it builds and runs on Linux only, with `make` and a C++98 compiler.
 
 ### Compiling
 
