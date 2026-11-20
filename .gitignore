@@ -8,8 +8,7 @@ build/*/*
 docs/*
 compile_commands.json
 .cache/
-__references/nginx/logs/
-__references/nginx/tmp/
+__references
 __obsidian
 
 # dev 
